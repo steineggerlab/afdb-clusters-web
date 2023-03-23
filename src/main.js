@@ -39,6 +39,7 @@ Vue.use(Portal);
 
 import App from './App.vue';
 import Search from './Search.vue';
+import Cluster from './Cluster.vue';
 
 window.document.title = "AFDB Clusters";
 
@@ -46,7 +47,8 @@ const router = new VueRouter({
     mode: 'history',
     routes: [
         { path: '/', redirect: { name: 'search' } },
-        { name: 'search', path: '/search', component: Search },
+        { name: 'search', path: '/', component: Search },
+        { name: 'cluster', path: '/cluster/:cluster', component: Cluster },
     ],
     linkActiveClass: 'active'
 });
@@ -94,7 +96,8 @@ Vue.use({
             PlusBox: mdiPlusBox,
             MinusBox: mdiMinusBox,
         };
-        let apiBase = "https://search.foldseek.com";
+        // let apiBase = "https://search.foldseek.com";
+        let apiBase = "http://localhost:3000/api";
         let defaultHeaders = {};
 
         const axiosConfig = {

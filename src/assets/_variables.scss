@@ -33,7 +33,7 @@ $utilities: (
     overflow-wrap: false,
     white-space: false,
     text-decoration: false,
-    text-align: false,
+    // text-align: false,
     order: false,
     // display: false,
     float: false,
@@ -42,10 +42,10 @@ $utilities: (
     flex-grow: false,
     flex-shrink: false,
     flex-wrap: false,
-    justify-content: false,
-    align-items: false,
-    align-content: false,
-    align-self: false,
+    // justify-content: false,
+    // align-items: false,
+    // align-content: false,
+    // align-self: false,
 );
 
 @import '~vuetify/src/styles/styles.sass';
