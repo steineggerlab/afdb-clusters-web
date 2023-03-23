@@ -99,6 +99,10 @@
                             <template v-slot:item.rep_accession="prop">
                                 <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}">{{ prop.value }}</router-link>
                             </template>
+
+                            <template v-slot:item.lca_tax_id="prop">
+                                <TaxSpan :taxonomy="prop.value"></TaxSpan>
+                            </template>
                         </v-data-table>
                     </template>
                 </panel>
@@ -125,12 +129,14 @@
 <script>
 import Panel from "./Panel.vue";
 import FileButton from "./FileButton.vue";
+import TaxSpan from "./TaxSpan.vue";
 
 export default {
     name: "search",
     components: { 
         Panel,
         FileButton,
+        TaxSpan,
     },
     data() {
         return {
@@ -146,66 +152,30 @@ export default {
                     text: "Average Length",
                     value: "avg_len",
                 },
-                // {
-                //     text: "Annotation Score",
-                //     value: "annotationScore",
-                // },
-                // {
-                //     text: "Comments",
-                //     value: "comments",
-                // },
-                // {
-                //     text: "Entry Audit",
-                //     value: "entryAudit",
-                // },
-                // {
-                //     text: "Entry Type",
-                //     value: "entryType",
-                // },
-                // {
-                //     text: "Extra Attributes",
-                //     value: "extraAttributes",
-                // },
-                // {
-                //     text: "Features",
-                //     value: "features",
-                // },
-                // {
-                //     text: "Genes",
-                //     value: "genes",
-                // },
-                // {
-                //     text: "Keywords",
-                //     value: "keywords",
-                // },
-                // {
-                //     text: "Organism",
-                //     value: "organism",
-                // },
-                // {
-                //     text: "Protein Description",
-                //     value: "proteinDescription",
-                // },
-                // {
-                //     text: "Protein Existence",
-                //     value: "proteinExistence",
-                // },
-                // {
-                //     text: "References",
-                //     value: "references",
-                // },
-                // {
-                //     text: "Secondary Accessions",
-                //     value: "secondaryAccessions",
-                // },
-                // {
-                //     text: "Sequence",
-                //     value: "sequence",
-                // },
-                // {
-                //     text: "UniProtKB Cross References",
-                //     value: "uniProtKBCrossReferences",
-                // },
+                {
+                    text: "Average Plddt",
+                    value: "avg_plddt",
+                },
+                {
+                    text: "Number of members",
+                    value: "n_mem",
+                },
+                {
+                    text: "LCA Taxonomy",
+                    value: "lca_tax_id",
+                },
+                {
+                    text: "Is Dark",
+                    value: "is_dark",
+                },
+                {
+                    text: "Rep Plddt",
+                    value: "rep_plddt",
+                },
+                {
+                    text: "Rep Length",
+                    value: "rep_len",
+                },
             ]
         };
     },
@@ -221,7 +191,6 @@ export default {
             this.$axios.post("/" + this.query)
                 .then(response => {
                     this.response = response.data;
-                    console.log(this.response)
                 })
                 .catch(() => {})
                 .finally(() => {

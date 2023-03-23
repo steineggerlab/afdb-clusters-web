@@ -1,9 +1,18 @@
 <template>
     <div class="structure-panel">
-        <div class="structure-wrapper" ref="structurepanel">
+        <div
+            class="structure-wrapper"
+            ref="structurepanel"
+            :class="{ hovered: hovered || isFullscreen }"
+            @mouseover="hovered = true" @mouseleave="hovered = false"
+            :style="{
+                width: width + 'px',
+                height: height + 'px',
+            }"
+            >
             <v-tooltip open-delay="300" bottom attach=".structure-wrapper" background-color="transparent">
                 <template v-slot:activator="{ on }">
-                    <v-icon :light="isFullscreen" v-on="on" style="position: absolute; z-index: 999; right:0">{{ $MDI.HelpCircleOutline }}</v-icon>
+                    <v-icon v-if="toolbar" :light="isFullscreen" v-on="on" class="help">{{ $MDI.HelpCircleOutline }}</v-icon>
                 </template>
                 <span>
                     <dl style="text-align: center;">
@@ -42,7 +51,7 @@
                     </dl>
                 </span>
             </v-tooltip>
-            <div class="toolbar-panel">
+            <div class="toolbar-panel" v-if="toolbar">
                 <v-item-group class="v-btn-toggle" :light="isFullscreen">
                 <v-btn
                     v-bind="tbButtonBindings"
@@ -78,6 +87,7 @@
                 </v-item-group>
             </div>
             <div class="structure-viewer" ref="viewport"></div>
+            <div style="display: none;">{{ cluster }}</div>
         </div>
     </div>
 </template>
@@ -188,13 +198,18 @@ const makeSubPDB = (structure, sele) => {
 export default {
     components: { Panel },
     data: () => ({
+        stage: null,
         representation: null,
         'isFullscreen': false,
+        'hovered': false,
     }),
     props: {
-        'structure': Object,
+        'cluster': { type: String, required: true },
+        'toolbar': { type: Boolean, default: true },
         'bgColorLight': { type: String, default: "white" },
         'bgColorDark': { type: String, default: "#eee" },
+        'width': { type: Number, default: 400 },
+        'height': { type: Number, default: 300 },
     },
     methods: {
         handleResize() {
@@ -239,7 +254,25 @@ ${pdb}
 END
 `
             download(new Blob([result], { type: 'text/plain' }), this.$route.cluster + ".pdb")
-        }
+        },
+        fetchStructure() {
+            if (!this.cluster) {
+                return;
+            }
+            this.$nextTick(() => {
+                this.$axios.get("/structure/" + this.cluster)
+                .then((response) => { 
+                    return pulchra(mockPDB(response.data.coordinates, response.data.seq));
+                })
+                .then((response) => {
+                    this.stage.removeAllComponents();
+                    return this.stage.loadFile(new Blob([response], { type: 'text/plain' }), {ext: 'pdb', firstModelOnly: true})
+                }).then((structure) => {
+                    this.representation = structure.addRepresentation("cartoon")
+                    this.stage.autoView()
+                })
+            })
+        },
     },
     computed: {
         tbIconBindings: function() {
@@ -253,29 +286,28 @@ END
                 'small': true,
                 'style': ''
             }
-        }
+        },
+    },
+    watch: {
+        'cluster': {
+            handler() {
+                this.fetchStructure()
+            },
+            immediate: true,
+        },
     },
     mounted() {
         const bgColor = this.$vuetify.theme.dark ? this.bgColorDark : this.bgColorLight;
         const ambientIntensity = this.$vuetify.theme.dark ? 0.4 : 0.2;
-        this.stage = new Stage(this.$refs.viewport,
-            {
-                backgroundColor: bgColor,
-                ambientIntensity: ambientIntensity,
-                clipNear: -1000,
-                clipFar: 1000,
-                fogFar: 1000,
-                fogNear: -1000,
-                quality: 'high'
-            })
-
-        pulchra(mockPDB(this.structure.coordinates, this.structure.seq))
-            .then((response) => {
-                return this.stage.loadFile(new Blob([response], { type: 'text/plain' }), {ext: 'pdb', firstModelOnly: true})
-            }).then((structure) => {
-                this.representation = structure.addRepresentation("cartoon")
-                this.stage.autoView()
-            })
+        this.stage = new Stage(this.$refs.viewport,{
+            backgroundColor: bgColor,
+            ambientIntensity: ambientIntensity,
+            clipNear: -1000,
+            clipFar: 1000,
+            fogFar: 1000,
+            fogNear: -1000,
+            quality: 'high'
+        });
 
         window.addEventListener('resize', this.handleResize)
         this.stage.signals.fullscreenChanged.add((isFullscreen) => {
@@ -299,11 +331,10 @@ END
 }
 </script>
 
-<style>
+<style scoped>
 .structure-wrapper {
-    width: 400px;
-    height: 300px;
     margin: 0 auto;
+    position: relative;
 }
 
 .theme--dark .structure-wrapper .v-tooltip__content {
@@ -323,8 +354,11 @@ END
     position: relative;
 }
 
-.toolbar-panel {
+.hovered .toolbar-panel {
     display: inline-flex;
+}
+.toolbar-panel {
+    display: none;
     flex-direction: row;
     position: absolute;
     justify-content: center;
@@ -332,5 +366,14 @@ END
     bottom: 0;
     z-index: 1;
     left: 0;
+}
+.structure-wrapper.hovered >>> .help {
+    display: inline-flex;
+}
+.structure-wrapper >>> .help {
+    display: none;
+    position: absolute;
+    z-index: 999;
+    right:0;
 }
 </style>

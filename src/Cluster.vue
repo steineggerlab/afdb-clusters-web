@@ -51,11 +51,20 @@
                     LCA Tax ID
                 </dt>
                 <dd>
-                    {{ response.lca_tax_id }}
+                    <TaxSpan :taxonomy="response.lca_tax_id"></TaxSpan>
+                </dd>
+                <dt>
+                    Lineage
+                </dt>
+                <dd>
+                    <template v-for="(taxonomy, index) in response.lineage" ><TaxSpan :taxonomy="taxonomy" :key="taxonomy.id"></TaxSpan><template v-if="index < (response.lineage.length -1)">&nbsp;&#187;&nbsp;</template></template>
                 </dd>
             </dl>
 
-            <StructureViewer :structure="structure"></StructureViewer>
+            <StructureViewer v-if="cluster" :cluster="cluster" bgColorDark="#1E1E1E"></StructureViewer>
+
+            <h2>Cluster members</h2>
+            <Members v-if="cluster" :cluster="cluster"></Members>
         </template>
     </panel>
 </template>
@@ -63,51 +72,41 @@
 <script>
 import Panel from "./Panel.vue";
 import StructureViewer from "./StructureViewer.vue";
+import Members from "./Members.vue";
+import TaxSpan from "./TaxSpan.vue";
 
 export default {
     name: "cluster",
     components: { 
         Panel,
         StructureViewer,
+        Members,
+        TaxSpan,
     },
     data() {
         return {
             response: null,
-            structure: null,
+            cluster: null,
             fetching: false,
         }
     },
     mounted() {
         this.fetchData();
     },
-    // watch: {
-    //     '$route': function(to, from) {
-    //         if (from.path != to.path) {
-    //             this.fetchData();
-    //         }
-    //     }
-    // },
     methods: {
+        log(value) {
+            console.log(value);
+        },
         fetchData() {
             this.fetching = true;
-            const cluster = this.$route.params.cluster;
-            console.log(cluster)
-            if (!cluster) {
+            this.cluster = this.$route.params.cluster;
+            if (!this.cluster) {
                 return;
             }
 
-            this.$axios.post("/cluster/" + cluster)
+            this.$axios.post("/cluster/" + this.cluster)
                 .then(response => {
                     this.response = response.data;
-                })
-                .catch(() => {})
-                .finally(() => {
-                    this.fetching = false;
-                });
-
-            this.$axios.get("/structure/" + cluster)
-                .then(response => {
-                    this.structure = response.data;
                 })
                 .catch(() => {})
                 .finally(() => {
