@@ -10,3 +10,9 @@ pkg/
 resources/
 backend/.cache/
 .vscode/
+
+data/taxdump.tar.gz
+data/*.dmp
+data/gc.prt
+data/readme.txt
+data/ncbitaxonomy.json
