@@ -11,7 +11,7 @@ import { serializeTree, unserializeTree } from './ncbitaxonomy.mjs';
 import { existsSync } from 'fs';
 
 if (!existsSync('./data/ncbitaxonomy.json')) {
-    serializeTree('./data', './data/ncbitaxonomy.json');
+    await serializeTree('./data', './data/ncbitaxonomy.json');
 }
 const tree = unserializeTree('./data/ncbitaxonomy.json');
 
