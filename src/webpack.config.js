@@ -130,7 +130,7 @@ module.exports = (env, argv) => {
                 test: isProduction ? /\.(js|html|css|svg|woff2?|map|ico|wasm)(\?.*)?$/i : undefined,
                 minRatio: 1
             }),
-            isProduction ? new ImageMinimizerPlugin({
+            false && isProduction ? new ImageMinimizerPlugin({
                 minimizer: {
                     implementation: ImageMinimizerPlugin.imageminMinify,
                     options: {},

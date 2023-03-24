@@ -96,8 +96,8 @@ Vue.use({
             PlusBox: mdiPlusBox,
             MinusBox: mdiMinusBox,
         };
-        // let apiBase = "https://search.foldseek.com";
         let apiBase = "http://localhost:3000/api";
+        // let apiBase = "/api";
         let defaultHeaders = {};
 
         const axiosConfig = {
