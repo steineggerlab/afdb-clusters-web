@@ -117,9 +117,6 @@ module.exports = (env, argv) => {
             new VuetifyLoaderPlugin(),
             new HtmlWebpackPlugin({
                 template: path.resolve(__dirname, './index.html'),
-                templateParameters: {
-                    ENABLE_CSP: isProduction
-                }
             }),
             isProduction ?
                 new MiniCssExtractPlugin({
