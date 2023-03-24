@@ -24,7 +24,7 @@
                              
                             <v-text-field
                                 outlined
-                                label="Query"
+                                label="Uniprot Accession"
                                 style="max-width: 400px; margin: 0 auto;"
                                 v-model="query"
                                 :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
@@ -33,7 +33,8 @@
                                 @keyup.enter="search"
                                 >
                             </v-text-field>
-
+                            
+                            <template v-if="false">
                             <h2 class="text-h6 mb-2">
                                 Select by
                             </h2>
@@ -80,11 +81,12 @@
                                     More
                                 </v-chip>
                             </v-chip-group>
+                            </template>
                         </v-col>
                     </v-row>
                 </v-parallax>
             </v-flex>
-            <v-flex xs12 v-if="response.length > 0">
+            <v-flex xs12 v-if="false && response.length > 0">
                 <panel class="query-panel d-flex fill-height" fill-height>
                     <template slot="header">
                         Select cluster by UniProt member
@@ -99,6 +101,20 @@
                             <template v-slot:item.rep_accession="prop">
                                 <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}">{{ prop.value }}</router-link>
                             </template>
+
+                            <template v-slot:item.avg_len="prop">
+                                {{ prop.value.toFixed(2) }}
+                            </template>
+
+                            <template v-slot:item.avg_plddt="prop">
+                                {{ prop.value.toFixed(2) }}
+                            </template>
+
+
+                            <template v-slot:item.rep_plddt="prop">
+                                {{ prop.value.toFixed(2) }}
+                            </template>
+
 
                             <template v-slot:item.lca_tax_id="prop">
                                 <TaxSpan :taxonomy="prop.value"></TaxSpan>
@@ -140,7 +156,7 @@ export default {
     },
     data() {
         return {
-            query: "O15067",
+            query: "A0A0U4CV73",
             inSearch: false,
             response: [],
             headers: [
@@ -153,7 +169,7 @@ export default {
                     value: "avg_len",
                 },
                 {
-                    text: "Average Plddt",
+                    text: "Average pLDDT",
                     value: "avg_plddt",
                 },
                 {
@@ -169,7 +185,7 @@ export default {
                     value: "is_dark",
                 },
                 {
-                    text: "Rep Plddt",
+                    text: "Rep pLDDT",
                     value: "rep_plddt",
                 },
                 {
@@ -180,7 +196,6 @@ export default {
         };
     },
     mounted() {
-        this.search();
     },
     methods: {
         log(value) {
@@ -190,7 +205,9 @@ export default {
             this.inSearch = true;
             this.$axios.post("/" + this.query)
                 .then(response => {
-                    this.response = response.data;
+                    // this.response = response.data;
+                    console.log(response.data[0].rep_accession)
+                    this.$router.push({ name: 'cluster', params: { cluster: response.data[0].rep_accession } })
                 })
                 .catch(() => {})
                 .finally(() => {

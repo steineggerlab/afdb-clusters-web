@@ -4,7 +4,8 @@ export default function(mem, chainLength, entryLength) {
     const shortSize = Int16Array.BYTES_PER_ELEMENT;
 
     if (entryLength >= (chainLength * 3) * floatSize) {
-        return new Float32Array(mem, 0, chainLength * 3);
+        let buffer = new Float32Array(mem.buffer, 0, chainLength * 3);
+        return buffer;
     }
 
     let buffer = new Float32Array(chainLength * 3);

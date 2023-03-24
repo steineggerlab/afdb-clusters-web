@@ -10,22 +10,27 @@ import { open } from 'sqlite';
 import { serializeTree, unserializeTree } from './ncbitaxonomy.mjs';
 import { existsSync } from 'fs';
 
-if (!existsSync('./data/ncbitaxonomy.json')) {
-    await serializeTree('./data', './data/ncbitaxonomy.json');
+const dataPath = './data';
+
+if (!existsSync(dataPath + '/ncbitaxonomy.json')) {
+    await serializeTree(dataPath, dataPath + '/ncbitaxonomy.json');
 }
-const tree = unserializeTree('./data/ncbitaxonomy.json');
+const tree = unserializeTree(dataPath + '/ncbitaxonomy.json');
 
 const sql = await open({
-    filename: './data/afdb-clusters.sqlite3',
+    filename: dataPath + '/afdb-clusters.sqlite3',
     driver: sqlite3.Database,
     mode: sqlite3.OPEN_READONLY,
 })
 
 const aaDb = new DbReader();
-await aaDb.make('./data/qdb', './data/qdb.index');
+await aaDb.make(dataPath + '/afdb', dataPath + '/afdb.index');
 
 const caDb = new DbReader();
-await caDb.make('./data/qdb_ca', './data/qdb_ca.index');
+await caDb.make(dataPath + '/afdb_ca', dataPath + '/afdb_ca.index');
+
+const avaDb = new DbReader();
+await avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index');
 
 const app = express();
 const port = 3000;
@@ -44,7 +49,7 @@ app.post('/api/:query', async (req, res) => {
     //     .catch(error => {
     //         console.log(error);
     //     });
-    let result = await sql.get("SELECT * FROM member as m LEFT JOIN cluster as c ON m.cluster_id == c.id WHERE accession = ?", "d1jl7a_");
+    let result = await sql.get("SELECT * FROM member as m LEFT JOIN cluster as c ON m.rep_accession == c.rep_accession WHERE m.accession = ?", req.params.query);
     result.lca_tax_id = tree.getNode(result.lca_tax_id);
     res.send([ result ]);
 });
@@ -57,29 +62,60 @@ app.post('/api/cluster/:cluster', async (req, res) => {
 });
 
 app.post('/api/cluster/:cluster/members', async (req, res) => {
-    const cluster_id = await sql.get("SELECT id FROM cluster WHERE rep_accession = ?", req.params.cluster);
-    const total = await sql.get("SELECT COUNT(id) as total FROM member WHERE cluster_id = ?", cluster_id.id);
+    const total = await sql.get("SELECT COUNT(id) as total FROM member WHERE rep_accession = ?", req.params.cluster);
     let result = await sql.all(`
         SELECT * 
             FROM member
-            WHERE cluster_id = ?
+            WHERE rep_accession = ?
             ORDER BY id
             LIMIT ? OFFSET ?;
-        `, cluster_id.id, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
+        `, req.params.cluster, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
     result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id) });
     res.send({ total: total.total, result : result });
 });
 
-app.get('/api/structure/:structure', async (req, res) => {
-    try {
-        const structure = req.params.structure;
-        const aaKey = aaDb.id(structure);
-        const aa = aaDb.data(aaKey.value).toString('utf-8');
-        const aaLength = aaDb.length(aaKey.value) - 2;
+app.post('/api/cluster/:cluster/similars', async (req, res) => {
+    const cluster = req.params.cluster;
+    const avaKey = avaDb.id(cluster);
+    if (avaKey.found == false) {
+        res.send([]);
+        return;
+    }
+    const ava = avaDb.data(avaKey.value).toString('ascii');
+    let ids_evalue = ava.split('\n').map((x) => x.split(' '));
+    ids_evalue.splice(-1);
+    let map = new Map(ids_evalue);
+    const accessions = ids_evalue.map((x) => x[0]);
+    let result = await sql.all(`
+    SELECT *
+        FROM cluster
+        WHERE rep_accession IN (${accessions.map(() => "?").join(",")});
+    `, accessions);
+    result.forEach((x) => {
+        x.evalue = map.get(x.rep_accession);
+        x.lca_tax_id = tree.getNode(x.lca_tax_id);
+    });
+    res.send(result);
+});
 
-        const key = caDb.id(structure);
+app.get('/api/structure/:structure', async (req, res) => {
+    const structure = req.params.structure;
+    const aaKey = aaDb.id(structure);
+    if (aaKey.found == false) {
+        res.send({ seq: "", coordinates: [] });
+        return;
+    }
+    const aaLength = aaDb.length(aaKey.value) - 2;
+
+    const key = caDb.id(structure);
+    if (key.found == false) {
+        res.send({ seq: "", coordinates: [] });
+        return;
+    }
+    const size = caDb.length(key.value);
+    try {
+        const aa = aaDb.data(aaKey.value).toString('utf-8');
         const ca = caDb.data(key.value);
-        const size = caDb.length(key.value);
         const result = Array.from(read(ca, aaLength, size)).map((x) => x.toFixed(3));
         res.send({ seq: aa, coordinates: result });
     } catch (e) {
