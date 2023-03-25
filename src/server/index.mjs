@@ -50,10 +50,6 @@ const port = 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use((err, req, res, next) => {
-    res.status(500);
-    res.send({ error: err });
-  })
 
 app.post('/api/:query', async (req, res) => {
     // axios.get("https://rest.uniprot.org/uniprotkb/search?query=" + req.params.query, {
@@ -139,6 +135,11 @@ app.get('/api/structure/:structure', async (req, res) => {
     }
 });
 
+app.use((err, req, res, next) => {
+    res.status(500);
+    res.send({ error: err });
+});
+
 app.listen(port, () => {
     console.log(`AFDB-clusters server listening on port ${port}`)
-})
+});
