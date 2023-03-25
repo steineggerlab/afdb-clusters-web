@@ -149,6 +149,14 @@ export default {
     mounted() {
         this.fetchData();
     },
+    watch: {
+        $route(to, from) {
+            if (to.params.cluster === from.params.cluster) {
+                return;
+            }
+            this.fetchData();
+        }
+    },
     methods: {
         log(value) {
             console.log(value);
