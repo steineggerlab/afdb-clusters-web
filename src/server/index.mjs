@@ -12,25 +12,36 @@ import { existsSync } from 'fs';
 
 const dataPath = './data';
 
+console.time();
+console.log('Loading taxonomy...')
 if (!existsSync(dataPath + '/ncbitaxonomy.json')) {
     await serializeTree(dataPath, dataPath + '/ncbitaxonomy.json');
 }
 const tree = unserializeTree(dataPath + '/ncbitaxonomy.json');
+console.timeLog();
 
+console.log('Loading SQL...')
 const sql = await open({
     filename: dataPath + '/afdb-clusters.sqlite3',
     driver: sqlite3.Database,
     mode: sqlite3.OPEN_READONLY,
 })
+console.timeLog();
 
+console.log('Loading AA database...')
 const aaDb = new DbReader();
 await aaDb.make(dataPath + '/afdb', dataPath + '/afdb.index');
+console.timeLog();
 
+console.log('Loading C-alpha database...')
 const caDb = new DbReader();
 await caDb.make(dataPath + '/afdb_ca', dataPath + '/afdb_ca.index');
+console.timeLog();
 
+console.log('Loading All-vs-all database...')
 const avaDb = new DbReader();
 await avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index');
+console.timeLog();
 
 const app = express();
 const port = 3000;
