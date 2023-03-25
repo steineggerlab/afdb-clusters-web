@@ -19,7 +19,7 @@
             {{ prop.value.toFixed(2) }}
         </template>
         <template v-slot:item.structure="prop">
-            <StructureViewer :cluster="log(prop.item.rep_accession)" :width="50" :height="50" :toolbar="false" bgColorDark="#1E1E1E"></StructureViewer>
+            <StructureViewer :cluster="prop.item.rep_accession" :width="50" :height="50" :toolbar="false" bgColorDark="#1E1E1E"></StructureViewer>
         </template>
         <template v-slot:item.lca_tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
@@ -116,14 +116,12 @@ export default {
         fetchData() {
             this.loading = true;
             const cluster = this.cluster;
-            console.log(cluster)
             if (!cluster) {
                 return;
             }
 
             this.$axios.post("/cluster/" + cluster + "/similars")
                 .then(response => {
-                    console.log(response.data)
                     this.entries = response.data;
                 })
                 .catch(() => {})

@@ -153,6 +153,7 @@ export default {
             if (to.params.cluster === from.params.cluster) {
                 return;
             }
+
             this.fetchData();
         }
     },

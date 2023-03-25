@@ -206,7 +206,6 @@ export default {
             this.$axios.post("/" + this.query)
                 .then(response => {
                     // this.response = response.data;
-                    console.log(response.data[0].rep_accession)
                     this.$router.push({ name: 'cluster', params: { cluster: response.data[0].rep_accession } })
                 })
                 .catch(() => {})
