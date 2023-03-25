@@ -10,39 +10,38 @@ export default function(mem, chainLength, entryLength) {
 
     let buffer = new Float32Array(chainLength * 3);
 
-    const data = new Uint8Array(mem, 0, entryLength);
     let offset = 0;
     let diffSum = 0;
-    let start = new Int32Array(data.buffer, offset, 1)[0];
+    let start = mem.readUInt32LE(offset);
     offset += intSize;
     buffer[0] = start / 1000.0;
 
     for (let i = 1; i < chainLength; ++i) {
-        const intDiff = new Int16Array(data.buffer, offset, 1)[0];
+        const intDiff = mem.readUInt16LE(offset);
         offset += shortSize;
         diffSum += intDiff;
         buffer[i] = (start + diffSum) / 1000.0;
     }
 
     diffSum = 0;
-    start = new Int32Array(data.buffer, offset, 1)[0];
+    start = mem.readUInt32LE(offset);
     offset += intSize;
     buffer[chainLength] = start / 1000.0;
 
     for (let i = chainLength + 1; i < 2 * chainLength; ++i) {
-        const intDiff = new Int16Array(data.buffer, offset, 1)[0];
+        const intDiff = mem.readUInt16LE(offset);
         offset += shortSize;
         diffSum += intDiff;
         buffer[i] = (start + diffSum) / 1000.0;
     }
 
     diffSum = 0;
-    start = new Int32Array(data.buffer, offset, 1)[0];
+    start = mem.readUInt32LE(offset);
     offset += intSize;
     buffer[2 * chainLength] = start / 1000.0;
 
     for (let i = 2 * chainLength + 1; i < 3 * chainLength; ++i) {
-        const intDiff = new Int16Array(data.buffer, offset, 1)[0];
+        const intDiff = mem.readUInt16LE(offset);
         offset += shortSize;
         diffSum += intDiff;
         buffer[i] = (start + diffSum) / 1000.0;
