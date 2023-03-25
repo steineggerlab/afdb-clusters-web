@@ -10,6 +10,7 @@ import { open } from 'sqlite';
 import { serializeTree, unserializeTree } from './ncbitaxonomy.mjs';
 import { existsSync } from 'fs';
 
+
 const dataPath = './data';
 
 console.time();
@@ -136,11 +137,6 @@ app.get('/api/structure/:structure', async (req, res) => {
     } catch (e) {
         res.send({ seq: "", coordinates: [] });
     }
-});
-
-app.post('/api/taxonomy', async (req, res) => {
-    // let node = tree.getNode(9606);
-    // tree.lineage(node).forEach(node => console.log(node));
 });
 
 app.listen(port, () => {
