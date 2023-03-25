@@ -13,7 +13,7 @@ public:
 private:
     static Napi::FunctionReference constructor;
     std::vector<std::string> keys;
-    std::vector<uint32_t> offsets;
+    std::vector<uint64_t> offsets;
     std::vector<uint32_t> lengths;
     void readFile(const std::string& filename);
     Napi::Value ReadFile(const Napi::CallbackInfo& info);
@@ -47,18 +47,34 @@ Napi::Object TSVReader::Init(Napi::Env env, Napi::Object exports) {
 TSVReader::TSVReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<TSVReader>(info) {}
 
 void TSVReader::readFile(const std::string& filename) {
-    std::ifstream inFile(filename);
-    std::string line;
-    while (std::getline(inFile, line)) {
-        std::istringstream ss(line);
-        std::string key;
-        uint32_t offset, length;
-        if (ss >> key >> offset >> length) {
-            keys.push_back(key);
-            offsets.push_back(offset);
-            lengths.push_back(length);
+    FILE* handle = fopen(filename.c_str(), "r");
+    char line[1024];
+    while (fgets(line, 1024, handle) != nullptr) {
+        char* pos = line;
+
+        // extract key
+        char* end_pos = strchr(pos, '\t');
+        if (end_pos != nullptr) {
+            keys.emplace_back(pos, end_pos - pos);
+            pos = end_pos + 1;
+        }
+
+        // extract offset
+        end_pos = strchr(pos, '\t');
+        if (end_pos != nullptr) {
+            std::string offset = std::string(pos, end_pos - pos);
+            offsets.emplace_back(std::strtoull(offset.c_str(), NULL, 10));
+            pos = end_pos + 1;
+        }
+
+        // extract length
+        if (pos != nullptr && pos[0] != '\0') {
+            std::string length = std::string(pos, strchr(pos, '\n') - pos);
+            uint32_t length_int = std::strtoul(length.c_str(), NULL, 10);
+            lengths.emplace_back(length_int);
         }
     }
+    fclose(handle);
 }
 
 Napi::Value TSVReader::ReadFile(const Napi::CallbackInfo& info) {
@@ -130,4 +146,5 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   TSVReader::Init(env, exports);
   return exports;
 }
+
 NODE_API_MODULE(tsvreader, Init)
