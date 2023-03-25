@@ -39,6 +39,11 @@ const caDb = new DbReader();
 await caDb.make(dataPath + '/afdb_ca', dataPath + '/afdb_ca.index');
 console.timeLog();
 
+console.log('Loading pLDDT database...')
+const plddtDB = new DbReader();
+await plddtDB.make(dataPath + '/afdb_plddt', dataPath + '/afdb_plddt.index');
+console.timeLog();
+
 console.log('Loading All-vs-all database...')
 const avaDb = new DbReader();
 await avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index');
@@ -114,25 +119,26 @@ app.get('/api/structure/:structure', async (req, res) => {
     const structure = req.params.structure;
     const aaKey = aaDb.id(structure);
     if (aaKey.found == false) {
-        res.send({ seq: "", coordinates: [] });
-        return;
+        throw Error(f`${structure} not found in aa db`);
     }
     const aaLength = aaDb.length(aaKey.value) - 2;
 
     const key = caDb.id(structure);
     if (key.found == false) {
-        res.send({ seq: "", coordinates: [] });
-        return;
+        throw Error(f`${structure} not found in ca db`);
     }
+
+    const plddtKey = plddtDB.id(structure);
+    if (plddtKey.found == false) {
+        throw Error(f`${structure} not found in plddt db`);
+    }
+    const plddt = plddtDB.data(plddtKey.value).toString('ascii');
+
     const size = caDb.length(key.value);
-    try {
-        const aa = aaDb.data(aaKey.value).toString('utf-8');
-        const ca = caDb.data(key.value);
-        const result = Array.from(read(ca, aaLength, size)).map((x) => x.toFixed(3));
-        res.send({ seq: aa, coordinates: result });
-    } catch (e) {
-        res.send({ seq: "", coordinates: [] });
-    }
+    const aa = aaDb.data(aaKey.value).toString('ascii');
+    const ca = caDb.data(key.value);
+    const result = Array.from(read(ca, aaLength, size)).map((x) => x.toFixed(3));
+    res.send({ seq: aa, coordinates: result, plddt: plddt });
 });
 
 app.use((err, req, res, next) => {

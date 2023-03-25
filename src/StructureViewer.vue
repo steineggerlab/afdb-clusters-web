@@ -195,6 +195,21 @@ const makeSubPDB = (structure, sele) => {
     return pdb.join('\n')
 }
 
+var discreteBfactor = ColormakerRegistry.addScheme(function (params) {
+  this.atomColor = function (atom) {
+    if (atom.bfactor >= 9) {
+      return 0x0000F5;  // blue
+    } else if (atom.bfactor >= 7) {
+      return 0x00FFFF;  // cyan
+    } else if (atom.bfactor >= 5) {
+      return 0xFFFF00;  // yellow
+    } else {
+      return 0xFFA500;  // orange
+    }
+  };
+});
+
+
 export default {
     components: { Panel },
     data: () => ({
@@ -259,17 +274,23 @@ END
                 return;
             }
             this.$nextTick(() => {
+                let plddt = null;
                 this.$axios.get("/structure/" + this.cluster)
-                .then((response) => { 
-                    return pulchra(mockPDB(response.data.coordinates, response.data.seq));
-                })
-                .then((response) => {
-                    this.stage.removeAllComponents();
-                    return this.stage.loadFile(new Blob([response], { type: 'text/plain' }), {ext: 'pdb', firstModelOnly: true})
-                }).then((structure) => {
-                    this.representation = structure.addRepresentation("cartoon")
-                    this.stage.autoView()
-                })
+                    .then((response) => { 
+                        this.plddt = response.data.plddt;
+                        return pulchra(mockPDB(response.data.coordinates, response.data.seq));
+                    })
+                    .then((response) => {
+                        this.stage.removeAllComponents();
+                        return this.stage.loadFile(new Blob([response], { type: 'text/plain' }), {ext: 'pdb', firstModelOnly: true})
+                    })
+                    .then((structure) => {
+                        structure.structure.eachAtom((ap) => {
+                            ap.bfactor = (+(this.plddt[ap.resno - 1]));
+                        });
+                        this.representation = structure.addRepresentation("cartoon", { color: discreteBfactor })
+                        this.stage.autoView()
+                    })
             })
         },
     },
