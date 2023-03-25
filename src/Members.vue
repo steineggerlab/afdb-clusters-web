@@ -73,6 +73,9 @@ export default {
             },
             deep: true,
         },
+        cluster() {
+            this.fetchData();
+        }
     },
     methods: {
         log(value) {

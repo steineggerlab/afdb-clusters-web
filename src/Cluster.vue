@@ -92,7 +92,7 @@
             Representative structure
         </template>
         <template slot="content" v-if="response">
-            <StructureViewer v-if="cluster" :cluster="cluster" bgColorDark="#1E1E1E"></StructureViewer>
+            <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" bgColorDark="#1E1E1E"></StructureViewer>
         </template>
     </Panel>
     </v-flex>
@@ -103,7 +103,7 @@
             Cluster members
         </template>
         <template slot="content" v-if="response">
-            <Members v-if="cluster" :cluster="cluster"></Members>
+            <Members v-if="$route.params.cluster" :cluster="$route.params.cluster"></Members>
         </template>
     </Panel>
     </v-flex>
@@ -114,7 +114,7 @@
             Similar clusters
         </template>
         <template slot="content" v-if="response">
-            <Similars v-if="cluster" :cluster="cluster"></Similars>
+            <Similars v-if="$route.params.cluster" :cluster="$route.params.cluster"></Similars>
         </template>
     </Panel>
     </v-flex>
@@ -142,7 +142,6 @@ export default {
     data() {
         return {
             response: null,
-            cluster: null,
             fetching: false,
         }
     },
@@ -168,7 +167,7 @@ export default {
                 return;
             }
 
-            this.$axios.post("/cluster/" + this.cluster)
+            this.$axios.post("/cluster/" + this.$route.params.cluster)
                 .then(response => {
                     this.response = response.data;
                 })
