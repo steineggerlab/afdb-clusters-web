@@ -21,6 +21,11 @@
         <template v-slot:item.structure="prop">
             <StructureViewer :cluster="prop.item.rep_accession" :width="50" :height="50" :toolbar="false" bgColorDark="#1E1E1E"></StructureViewer>
         </template>
+
+        <template v-slot:header.lca_tax_id="{ header }">
+                <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/similars/taxonomy/' + b"></TaxonomyAutocomplete>
+        </template>
+
         <template v-slot:item.lca_tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
         </template>
@@ -31,14 +36,16 @@
 import TaxSpan from "./TaxSpan.vue";
 import StructureViewer from "./StructureViewer.vue";
 import UniprotLink from "./UniprotLink.vue";
+import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 
 export default {
     name: "Similars",
     components: {
-    TaxSpan,
-    StructureViewer,
-    UniprotLink
-},
+        TaxSpan,
+        StructureViewer,
+        UniprotLink,
+        TaxonomyAutocomplete
+    },
     props: ["cluster"],
     data() {
         return {
@@ -51,10 +58,9 @@ export default {
                 {
                     text: "Accession",
                     value: "rep_accession",
-                    sortable: false,
                 },
                 {
-                    text: "Average Length",
+                    text: "Average length",
                     value: "avg_len",
                 },
                 {
@@ -66,11 +72,12 @@ export default {
                     value: "n_mem",
                 },
                 {
-                    text: "LCA Taxonomy",
+                    text: "Lowest common ancestor",
                     value: "lca_tax_id",
+                    sortable: false,
                 },
                 {
-                    text: "Is Dark",
+                    text: "Dark cluster",
                     value: "is_dark",
                 },
                 {
@@ -78,18 +85,12 @@ export default {
                     value: "rep_plddt",
                 },
                 {
-                    text: "Rep Length",
+                    text: "Rep length",
                     value: "rep_len",
-                },
-                {
-                    text: "Taxonomy",
-                    value: "lca_tax_id",
-                    sortable: false,
                 },
                 {
                     text: "E-value",
                     value: "evalue",
-                    sortable: false,
                 },
             ],
             entries: [],
@@ -120,7 +121,7 @@ export default {
                 return;
             }
 
-            this.$axios.post("/cluster/" + cluster + "/similars")
+            this.$axios.post("/cluster/" + cluster + "/similars", this.options)
                 .then(response => {
                     this.entries = response.data;
                 })

@@ -1,25 +1,21 @@
 <template>
-    <v-tooltip open-delay="300" top>
-        <template v-slot:activator="{ on }">
-            <v-autocomplete
-                :value="value"
-                label="Taxonomic filter"
-                placeholder="Start typing scientific name to search"
-                hide-no-data
-                :items="items"
-                :loading="isLoading"
-                :search-input.sync="search"
-                @input="change"
-                return-object
-                auto-select-first
-                :allow-overflow="false"
-                dense
-                chips
-                deletable-chips
-            ></v-autocomplete>
+    <v-autocomplete
+        :allow-overflow="false"
+        :items="items"
+        :loading="isLoading"
+        :search-input.sync="search"
+        :value="value"
+        @input="change"
+        placeholder="Taxonomic filter"
+        hide-no-data
+        return-object
+        auto-select-first
+        clearable
+    >
+        <template v-slot:item="{ item }">
+                {{ item.text }} ({{ item.rank }})
         </template>
-        <span>Restrict results to taxonomic clade</span>
-    </v-tooltip>
+    </v-autocomplete>
 </template>
 
 <script>
@@ -27,7 +23,7 @@ import { create } from 'axios';
 import { debounce } from './lib/debounce';
 
 export default {
-    props: ['value'],
+    props: ['value', 'cluster', 'urlFunction'],
     data() {
         return {
             items: [],
@@ -43,26 +39,35 @@ export default {
             this.items = [ this.value ];
         },
         search (val) {
-            val && val.length > 2 && val !== this.value && this.querySelections(val)
+            this.items = [];
+            if (val && val.length > 2 && val !== this.value) {
+                this.querySelections(val)
+            }
         },
     },
     methods: {
+        log(value) {
+            console.log(value);
+            return value;
+        },
         change(taxId) {
-          this.$emit('input', taxId);
+            this.$emit('input', taxId);
         },
         querySelections: debounce(function (name) {
             this.loading = true;
             // make a new axios instance to not leak the electron access token
-            const axios = create();
-            axios.get("https://api.ncbi.nlm.nih.gov/datasets/v1/genome/taxon_suggest/" + encodeURIComponent(name) + "?tax_rank_filter=higher_taxon")
+            const url = this.urlFunction(encodeURIComponent(this.cluster), encodeURIComponent(name));
+            this.$axios.get(url)
                 .then(response => {
-                    if (response.status == 200 && response.data.hasOwnProperty("sci_name_and_ids")) {
-                        this.items = response.data.sci_name_and_ids.map((el) => {
-                            return { text: el.sci_name, value: el.tax_id }
-                        });
-                    }
+                    this.items = response.data.map(item => {
+                        return { 
+                            text: item.name, 
+                            value: item.id,
+                            rank: item.rank
+                        }
+                    });
                 }).finally(() => { this.loading = false; });
-        }, 1000, true)
+        }, 500, false)
     },
 }
 </script>

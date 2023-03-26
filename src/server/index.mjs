@@ -80,15 +80,57 @@ app.post('/api/cluster/:cluster', async (req, res) => {
 
 app.post('/api/cluster/:cluster/members', async (req, res) => {
     const total = await sql.get("SELECT COUNT(id) as total FROM member WHERE rep_accession = ?", req.params.cluster);
-    let result = await sql.all(`
+    let result;
+    if (req.body.tax_id) {
+        result = await sql.all(`
+        SELECT * 
+            FROM member
+            WHERE rep_accession = ?
+            ORDER BY id;
+        `, req.params.cluster);
+        result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id) });
+        result = result.filter((x) => {
+            let currNode = x.tax_id;
+            while (currNode.id != 1) {
+                if (currNode.id == req.body.tax_id.value) {
+                    return true;
+                }
+                currNode = tree.getNode(currNode.parent);
+            }
+            return false;
+        });
+        if (result && result.length > 0) {
+            result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+        }
+    } else {
+        result = await sql.all(`
         SELECT * 
             FROM member
             WHERE rep_accession = ?
             ORDER BY id
             LIMIT ? OFFSET ?;
         `, req.params.cluster, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
-    result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id) });
+        result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id) });
+    }
     res.send({ total: total.total, result : result });
+});
+
+app.get('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
+    let result = await sql.all(`
+        SELECT tax_id
+            FROM member
+            WHERE rep_accession = ?;
+        `, req.params.cluster);
+    let suggestions = {};
+    result.forEach((x) => {
+        const node = tree.getNode(x.tax_id);
+        tree.lineage(node).forEach((y) => {
+            if (y.name.toLowerCase().startsWith(req.params.suggest.toLowerCase())) {
+                suggestions[y.id] = y;
+            }
+        });
+    });
+    res.send(Object.values(suggestions).slice(0, 10));
 });
 
 app.post('/api/cluster/:cluster/similars', async (req, res) => {
@@ -112,7 +154,53 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
         x.evalue = map.get(x.rep_accession);
         x.lca_tax_id = tree.getNode(x.lca_tax_id);
     });
-    res.send(result);
+    if (req.body && req.body.tax_id) {
+        result = result.filter((x) => {
+            let currNode = x.lca_tax_id;
+            while (currNode.id != 1) {
+                if (currNode.id == req.body.tax_id.value) {
+                    return true;
+                }
+                currNode = tree.getNode(currNode.parent);
+            }
+            return false;
+        });
+    }
+    res.send(result.sort((a, b) => {
+        const valA = Number(a.evalue);
+        const valB = Number(b.evalue);
+        if (valA < valB) return -1;
+        if (valA > valB) return 1;
+        return 0;
+    }).filter((x) => x.rep_accession != cluster));
+});
+
+app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
+    const cluster = req.params.cluster;
+    const avaKey = avaDb.id(cluster);
+    if (avaKey.found == false) {
+        res.send([]);
+        return;
+    }
+    const ava = avaDb.data(avaKey.value).toString('ascii');
+    let ids_evalue = ava.split('\n').map((x) => x.split(' '));
+    ids_evalue.splice(-1);
+    const accessions = ids_evalue.map((x) => x[0]);
+    let result = await sql.all(`
+    SELECT *
+        FROM cluster
+        WHERE rep_accession IN (${accessions.map(() => "?").join(",")});
+    `, accessions);
+    let suggestions = {};
+    result.forEach((x) => {
+        const node = tree.getNode(x.lca_tax_id);
+        tree.lineage(node).forEach((y) => {
+            if (y.name.toLowerCase().startsWith(req.params.suggest.toLowerCase())) {
+                suggestions[y.id] = y;
+            }
+        });
+    });
+    res.send(Object.values(suggestions).slice(0, 10));
 });
 
 app.get('/api/structure/:structure', async (req, res) => {
