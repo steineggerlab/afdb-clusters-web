@@ -12,6 +12,9 @@
         <template v-slot:item.structure="prop">
             <StructureViewer :cluster="prop.item.accession" :width="50" :height="50" :toolbar="false" bgColorDark="#1E1E1E"></StructureViewer>
         </template>
+        <template v-slot:item.flag="prop">
+            <Fragment :flag="prop.value"></Fragment>
+        </template>
         <template v-slot:header.tax_id="{ header }">
                 <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b"></TaxonomyAutocomplete>
         </template>
@@ -26,6 +29,7 @@ import TaxSpan from "./TaxSpan.vue";
 import StructureViewer from "./StructureViewer.vue";
 import UniprotLink from "./UniprotLink.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
+import Fragment from "./Fragment.vue";
 
 export default {
     name: "members",
@@ -34,6 +38,7 @@ export default {
         StructureViewer,
         UniprotLink,
         TaxonomyAutocomplete,
+        Fragment,
     },
     props: ["cluster"],
     data() {
@@ -56,7 +61,7 @@ export default {
                 //     sortable: false,
                 // },
                 {
-                    text: "Flag",
+                    text: "Clustered step",
                     value: "flag",
                     sortable: false,
                 },
