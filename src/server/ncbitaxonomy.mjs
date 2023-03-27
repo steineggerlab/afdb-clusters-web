@@ -160,9 +160,12 @@ class Tree {
         return c;
     }
 
-    getNode(key) {
-        const k = Number(key);
-        const node = this.nodePool[k];
+    nodeExists(id) {
+        return id in this.nodePool;
+    }
+
+    getNode(id) {
+        const node = this.nodePool[id];
         return {
             id: node.i,
             name: node.n,

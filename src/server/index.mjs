@@ -128,6 +128,9 @@ app.get('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
     let suggestions = {};
     let count = 0;
     result.forEach((x) => {
+        if (tree.nodeExists(x.tax_id) == false) {
+            return;
+        }
         let node = tree.getNode(x.tax_id);
         while (node.id != 1) {
             if (node.id in suggestions || count >= 10) {
@@ -206,6 +209,9 @@ app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => 
     let suggestions = {};
     let count = 0;
     result.forEach((x) => {
+        if (tree.nodeExists(x.tax_id) == false) {
+            return;
+        }
         let node = tree.getNode(x.lca_tax_id);
         while (node.id != 1) {
             if (node.id in suggestions || count >= 10) {
