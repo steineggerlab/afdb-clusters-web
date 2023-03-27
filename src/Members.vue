@@ -1,4 +1,5 @@
 <template>
+    
     <v-data-table
         :headers="headers"
         :items="members"
@@ -6,6 +7,7 @@
         :server-items-length="totalMembers"
         :loading="loading"
     >
+
         <template v-slot:item.accession="prop">
             <UniprotLink :accession="prop.value"></UniprotLink>
         </template>
@@ -14,6 +16,23 @@
         </template>
         <template v-slot:item.flag="prop">
             <Fragment :flag="prop.value"></Fragment>
+        </template>
+        <template v-slot:header.flag="{ header }">
+            {{ header.text }}
+            <v-tooltip top>
+                <template v-slot:activator="{ on }">
+                    <span v-on="on">
+                        <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                    </span>
+                </template>
+                <span>
+                    <img width="600" src="./assets/cluster_step.jpg"><br>
+                    AFDB/Foldseek: Clustered with structural similarity<br>
+                    AFDB50/Mmseqs: Clustered at sequence identity 50%<br>
+                    Fragment: Removed fragments among AFDB50<br>
+                    Singleton: Removed singletons after fragment removal
+                </span>
+            </v-tooltip>
         </template>
         <template v-slot:header.tax_id="{ header }">
                 <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b"></TaxonomyAutocomplete>

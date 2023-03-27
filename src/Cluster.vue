@@ -85,7 +85,6 @@
         </template>
     </panel>
     </v-flex>
-
     <v-flex xs12 md4>
     <Panel style="margin-left: 1em;">
         <template slot="header">
@@ -100,8 +99,9 @@
     <v-flex xs12>
     <Panel style="margin-top: 1em;">
         <template slot="header">
-            Cluster members
+            Cluster Members
         </template>
+        
         <template slot="content" v-if="response">
             <Members v-if="$route.params.cluster" :cluster="$route.params.cluster"></Members>
         </template>
