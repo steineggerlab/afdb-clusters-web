@@ -18,7 +18,7 @@
                                 AlphaFold Clusters
                             </h1>
                             <h4 class="subheading">
-                                Investigate the Foldseek clustered AlphaFold database
+                                Investigate the <a href="https://foldseek.com" target="_blank" rel="noopener">Foldseek</a> clustered <a href="https://alphafold.ebi.ac.uk">AlphaFold database</a>
                             </h4>
                             
                             <br>
