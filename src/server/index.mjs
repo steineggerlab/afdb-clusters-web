@@ -83,10 +83,8 @@ app.post('/api/cluster/:cluster', async (req, res) => {
 });
 
 app.post('/api/cluster/:cluster/members', async (req, res) => {
-    const total = await sql.get("SELECT COUNT(id) as total FROM member WHERE rep_accession = ?", req.params.cluster);
-    let result;
     if (req.body.tax_id) {
-        result = await sql.all(`
+        let result = await sql.all(`
         SELECT * 
             FROM member
             WHERE rep_accession = ?
@@ -103,11 +101,14 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             }
             return false;
         });
+        const total = result.length;
         if (result && result.length > 0) {
             result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
         }
+        res.send({ total: total, result : result });
     } else {
-        result = await sql.all(`
+        const total = await sql.get("SELECT COUNT(id) as total FROM member WHERE rep_accession = ?", req.params.cluster);
+        let result = await sql.all(`
         SELECT * 
             FROM member
             WHERE rep_accession = ?
@@ -115,8 +116,8 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             LIMIT ? OFFSET ?;
         `, req.params.cluster, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
         result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id) });
+        res.send({ total: total.total, result : result });
     }
-    res.send({ total: total.total, result : result });
 });
 
 app.get('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
