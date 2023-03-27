@@ -35,6 +35,17 @@
                 <div>
                 <dt>
                     Dark cluster
+                    <v-tooltip top>
+                        <template v-slot:activator="{ on }">
+                            <span v-on="on">
+                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                            </span>
+                        </template>
+                        <span>
+                            This is a flag only considering members in AFDB clusters.<br>
+                            The members in AFDB clusters are the proteins with 'Clustered step' AFDB/Foldseek.
+                        </span>
+                    </v-tooltip>
                 </dt>
                 <dd>
                     {{ response.is_dark ? 'yes' : 'no' }}
@@ -43,6 +54,16 @@
                 <div>
                 <dt>
                     Average length
+                    <v-tooltip top>
+                        <template v-slot:activator="{ on }">
+                            <span v-on="on">
+                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                            </span>
+                        </template>
+                        <span>
+                            This is the average length of members that has 'Clustered step' as AFDB/Foldseek.<br>
+                        </span>
+                    </v-tooltip>
                 </dt>
                 <dd>
                     {{ response.avg_len.toFixed(2) }} aa
@@ -51,6 +72,16 @@
                 <div>
                 <dt>
                     Average pLDDT
+                    <v-tooltip top>
+                        <template v-slot:activator="{ on }">
+                            <span v-on="on">
+                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                            </span>
+                        </template>
+                        <span>
+                            This is the average pLDDT of members that has 'Clustered step' as AFDB/Foldseek.<br>
+                        </span>
+                    </v-tooltip>
                 </dt>
                 <dd>
                     {{ response.avg_plddt.toFixed(2) }}
@@ -59,6 +90,17 @@
                 <div>
                 <dt>
                     Number of members
+
+                    <v-tooltip top>
+                        <template v-slot:activator="{ on }">
+                            <span v-on="on">
+                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                            </span>
+                        </template>
+                        <span>
+                            This is the number of members with 'Clustered step' AFDB/Foldseek.
+                        </span>
+                    </v-tooltip>
                 </dt>
                 <dd>
                     {{ response.n_mem }}
@@ -67,6 +109,16 @@
                 <div>
                 <dt>
                     Lowest common ancestor
+                    <v-tooltip top>
+                        <template v-slot:activator="{ on }">
+                            <span v-on="on">
+                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                            </span>
+                        </template>
+                        <span>
+                            This is the LCA among the members with 'Clustered step' AFDB/Foldseek.
+                        </span>
+                    </v-tooltip>
                 </dt>
                 <dd>
                     <TaxSpan :taxonomy="response.lca_tax_id"></TaxSpan>
