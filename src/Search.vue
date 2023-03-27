@@ -1,7 +1,7 @@
 <template>
     <v-container grid-list-md fluid px-2 py-1 id="search-container">
         <v-layout wrap>
-            <v-flex xs12 pa-0>
+            <v-flex xs12 pa-0 >
                 <v-parallax
                     :src="require('./assets/bg.png')"
                 >
@@ -35,53 +35,32 @@
                                 >
                             </v-text-field>
                             
-                            <template v-if="false">
+                            <template>
                             <h2 class="text-h6 mb-2">
-                                Select by
+                                Examples
                             </h2>
-
                             <v-chip-group
                                 column
                                 multiple
                                 dark
-                                style="max-width: 400px; margin: 0 auto;"
+                                style="max-width: 400px; margin: 0 auto; "
                             >
-                                <v-chip
-                                    filter
-                                    outlined
-                                >
-                                    Gene Ontology
-                                </v-chip>
-                                <v-chip
-                                    filter
-                                    outlined
-                                >
-                                    Taxonomy
-                                </v-chip>
-                                <v-chip
-                                    filter
-                                    outlined
-                                >
-                                    Keywords
-                                </v-chip>
-                                <v-chip
-                                    filter
-                                    outlined
-                                >
-                                    Dark
-                                </v-chip>
-                                <v-chip
-                                    filter
-                                    outlined
-                                >
-                                    Human
-                                </v-chip>
-                                <v-chip
-                                    filter
-                                    outlined
-                                >
-                                    More
-                                </v-chip>
+
+                                <v-expansion-panels variant="accordion">
+                                    <v-expansion-panel 
+                                    v-for="(item,i) in [2,3,5]"
+                                    :key="i"
+                                    >
+                                    <v-expansion-panel-header >Fig {{ item }}</v-expansion-panel-header>
+                                    <v-expansion-panel-content>
+
+                                        <v-chip v-for="item in examples[item]" :key="item.id"
+                                            outlined v-on:click="query=item.id" >
+                                            <b>{{ item.id }}</b> &emsp; {{ item.desc }}
+                                        </v-chip>
+                                    </v-expansion-panel-content>
+                                    </v-expansion-panel>
+                                </v-expansion-panels>
                             </v-chip-group>
                             </template>
                         </v-col>
@@ -159,6 +138,32 @@ export default {
     data() {
         return {
             query: "A0A0U4CV73",
+            examples: {
+                '2': [
+                {id:'A0A849TG76', desc:'Fig2 B'},
+                {id:'A0A2D8BRH7', desc:'Fig2 B'},
+                {id:'A0A849ZK06', desc:'Fig2 C'},
+                {id:'S0EUL8', desc:'Fig2 D'},],
+                '3': [
+                {id:'A0A2R8Y619', desc:'Fig3 C'},
+                {id:'A0A1G5ASE0', desc:'Fig3 C'},
+                {id:'B4DKH6', desc:'Fig3 C'},
+                {id:'A0A2D5ZNG0', desc:'Fig3 C'},
+                {id:'O14862', desc:'Fig3 C'},
+                {id:'A0A1C5UEQ5', desc:'Fig3 C'},],
+                '5': [
+                {id:'A0A2G2HCA2', desc:'Fig5 A'},
+                {id:'A0A6S6SJ77', desc:'Fig5 A'},
+                {id:'A0A165QK09', desc:'Fig5 A'},
+                {id:'A0A7S2NND9', desc:'Fig5 B'},
+                {id:'A0A110BF64', desc:'Fig5 B'},
+                {id:'A0A4Q1CFA1', desc:'Fig5 C'},
+                {id:'A0A0C9TQR4', desc:'Fig5 C'},
+                {id:'O60443', desc:'Fig5 C'},
+                {id:'A0A1S3QU81', desc:'Fig5 C'},
+                {id:'A0A2C5ZLK3', desc:'Fig5 C'},
+                {id:'A0A317WF00', desc:'Fig5 C'},],
+        },
             inSearch: false,
             response: [],
             headers: [
