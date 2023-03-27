@@ -13,7 +13,8 @@
                     Representative accession
                 </dt>
                 <dd>
-                    <UniprotLink :accession="response.rep_accession"></UniprotLink>
+                    <UniprotLink :accession="response.rep_accession"></UniprotLink><br>
+                    {{ response.description }}
                 </dd>
                 </div>
                 <div>

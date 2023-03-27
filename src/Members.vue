@@ -9,7 +9,8 @@
     >
 
         <template v-slot:item.accession="prop">
-            <UniprotLink :accession="prop.value"></UniprotLink>
+            <UniprotLink :accession="prop.value"></UniprotLink><br>
+            {{ prop.item.description }}
         </template>
         <template v-slot:item.structure="prop">
             <img :src="getImage(prop.item.accession)" style="height:75px"/>

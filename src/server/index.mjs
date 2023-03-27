@@ -44,6 +44,20 @@ const plddtDB = new DbReader();
 await plddtDB.make(dataPath + '/afdb_plddt', dataPath + '/afdb_plddt.index');
 console.timeLog();
 
+console.log('Loading descriptions database...')
+const descDB = new DbReader();
+await descDB.make(dataPath + '/afdb_desc', dataPath + '/afdb_desc.index');
+console.timeLog();
+
+function getDescription(accession) {
+    let descId = descDB.id(accession);
+    if (descId.found == false) {
+        return "";
+    } else {
+        return descDB.data(descId.value).toString('utf8');
+    }
+}
+
 console.log('Loading All-vs-all database...')
 const avaDb = new DbReader();
 await avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index');
@@ -79,6 +93,7 @@ app.post('/api/cluster/:cluster', async (req, res) => {
     let result = await sql.get("SELECT * FROM cluster WHERE rep_accession = ?", req.params.cluster);
     result.lca_tax_id = tree.getNode(result.lca_tax_id);
     result.lineage = tree.lineage(result.lca_tax_id);
+    result.description = getDescription(result.rep_accession);
     res.send(result);
 });
 
@@ -105,6 +120,7 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
         if (result && result.length > 0) {
             result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
         }
+        result.forEach((x) => { x.description = getDescription(x.accession) });
         res.send({ total: total, result : result });
     } else {
         const total = await sql.get("SELECT COUNT(id) as total FROM member WHERE rep_accession = ?", req.params.cluster);
@@ -115,7 +131,7 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             ORDER BY id
             LIMIT ? OFFSET ?;
         `, req.params.cluster, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
-        result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id) });
+        result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id); x.description = getDescription(x.accession) });
         res.send({ total: total.total, result : result });
     }
 });
@@ -207,6 +223,7 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
     })
     sorted = sorted.filter((x) => x.rep_accession != cluster);
     sorted = sorted.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+    sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
     res.send({ total: sorted.length, similars: sorted });
 });
 
