@@ -31,6 +31,7 @@
                                 :disabled="inSearch"
                                 @click:append="search"
                                 @keyup.enter="search"
+                                dark
                                 >
                             </v-text-field>
                             
@@ -42,6 +43,7 @@
                             <v-chip-group
                                 column
                                 multiple
+                                dark
                                 style="max-width: 400px; margin: 0 auto;"
                             >
                                 <v-chip
