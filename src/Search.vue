@@ -25,13 +25,14 @@
                              
                             <v-text-field
                                 outlined
-                                label="Uniprot Accession"
+                                label="UniProt accession"
                                 style="max-width: 400px; margin: 0 auto;"
                                 v-model="query"
                                 :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
                                 :disabled="inSearch"
                                 @click:append="search"
                                 @keyup.enter="search"
+                                @change="selectedExample = null"
                                 dark
                                 >
                             </v-text-field>
@@ -42,8 +43,8 @@
                             </h2>
                             <v-chip-group
                                 column
-                                multiple
                                 dark
+                                v-model="selectedExample"
                                 style="max-width: 400px; margin: 0 auto; "
                             >
 
@@ -128,6 +129,7 @@ export default {
     data() {
         return {
             query: "A0A0U4CV73",
+            selectedExample: null,
             examples: [
                 {id:'A0A849TG76', desc:'predicted \'Transporter\' protein'},
                 {id:'A0A1C5UEQ5', desc:'Interferon-like bacterial protein'},
