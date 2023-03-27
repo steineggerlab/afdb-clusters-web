@@ -180,13 +180,32 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
             return false;
         });
     }
+
+    if (req.body.sortBy.length != 1 && req.body.sortDesc.length != 1) {
+        req.body.sortBy = ['evalue'];
+        req.body.sortDesc = [false];
+    }
+
+    const identity = (x) => x;
+    let castFun = identity;
+    if (req.body.sortBy[0] == 'evalue') {
+        castFun = parseFloat;
+    }
     let sorted = result.sort((a, b) => {
-        const valA = Number(a.evalue);
-        const valB = Number(b.evalue);
-        if (valA < valB) return -1;
-        if (valA > valB) return 1;
-        return 0;
-    }).filter((x) => x.rep_accession != cluster);
+        const sortA = castFun(a[req.body.sortBy[0]]);
+        const sortB = castFun(b[req.body.sortBy[0]]);
+        
+        if (req.body.sortDesc[0]) {
+            if (sortA < sortB) return 1;
+            if (sortA > sortB) return -1;
+            return 0;
+        } else {
+            if (sortA < sortB) return -1;
+            if (sortA > sortB) return 1;
+            return 0;
+        }
+    })
+    sorted = sorted.filter((x) => x.rep_accession != cluster);
     sorted = sorted.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
     res.send({ total: sorted.length, similars: sorted });
 });
