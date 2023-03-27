@@ -67,6 +67,10 @@ app.post('/api/:query', async (req, res) => {
     //         console.log(error);
     //     });
     let result = await sql.get("SELECT * FROM member as m LEFT JOIN cluster as c ON m.rep_accession == c.rep_accession WHERE m.accession = ?", req.params.query);
+    if (!result) {
+        res.send([]);
+        return;
+    }
     result.lca_tax_id = tree.getNode(result.lca_tax_id);
     res.send([ result ]);
 });
@@ -122,15 +126,21 @@ app.get('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
             WHERE rep_accession = ?;
         `, req.params.cluster);
     let suggestions = {};
+    let count = 0;
     result.forEach((x) => {
-        const node = tree.getNode(x.tax_id);
-        tree.lineage(node).forEach((y) => {
-            if (y.name.toLowerCase().startsWith(req.params.suggest.toLowerCase())) {
-                suggestions[y.id] = y;
+        let node = tree.getNode(x.tax_id);
+        while (node.id != 1) {
+            if (node.id in suggestions || count >= 10) {
+                break;
             }
-        });
+            if (node.name.toLowerCase().includes(req.params.suggest.toLowerCase())) {
+                suggestions[node.id] = node;
+                count++;
+            }
+            node = tree.getNode(node.parent);
+        }
     });
-    res.send(Object.values(suggestions).slice(0, 10));
+    res.send(Object.values(suggestions));
 });
 
 app.post('/api/cluster/:cluster/similars', async (req, res) => {
@@ -166,13 +176,15 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
             return false;
         });
     }
-    res.send(result.sort((a, b) => {
+    let sorted = result.sort((a, b) => {
         const valA = Number(a.evalue);
         const valB = Number(b.evalue);
         if (valA < valB) return -1;
         if (valA > valB) return 1;
         return 0;
-    }).filter((x) => x.rep_accession != cluster));
+    }).filter((x) => x.rep_accession != cluster);
+    sorted = sorted.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+    res.send({ total: sorted.length, similars: sorted });
 });
 
 app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
@@ -192,15 +204,21 @@ app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => 
         WHERE rep_accession IN (${accessions.map(() => "?").join(",")});
     `, accessions);
     let suggestions = {};
+    let count = 0;
     result.forEach((x) => {
-        const node = tree.getNode(x.lca_tax_id);
-        tree.lineage(node).forEach((y) => {
-            if (y.name.toLowerCase().startsWith(req.params.suggest.toLowerCase())) {
-                suggestions[y.id] = y;
+        let node = tree.getNode(x.lca_tax_id);
+        while (node.id != 1) {
+            if (node.id in suggestions || count >= 10) {
+                break;
             }
-        });
+            if (node.name.toLowerCase().includes(req.params.suggest.toLowerCase())) {
+                suggestions[node.id] = node;
+                count++;
+            }
+            node = tree.getNode(node.parent);
+        }
     });
-    res.send(Object.values(suggestions).slice(0, 10));
+    res.send(Object.values(suggestions));
 });
 
 app.get('/api/structure/:structure', async (req, res) => {

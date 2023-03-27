@@ -3,6 +3,7 @@
         :headers="headers"
         :items="entries"
         :options.sync="options"
+        :server-items-length="totalEntries"
         :loading="loading"
     >
         <template v-slot:item.rep_accession="prop">
@@ -19,7 +20,7 @@
             {{ prop.value.toFixed(2) }}
         </template>
         <template v-slot:item.structure="prop">
-            <StructureViewer :cluster="prop.item.rep_accession" :width="50" :height="50" :toolbar="false" bgColorDark="#1E1E1E"></StructureViewer>
+            <img :src="getImage(prop.item.rep_accession)" style="height:75px"/>
         </template>
 
         <template v-slot:header.lca_tax_id="{ header }">
@@ -94,8 +95,10 @@ export default {
                 },
             ],
             entries: [],
+            totalEntries: 0,
             loading: false,
-            options: {}
+            options: {},
+            images: []
         }
     },
     watch: {
@@ -110,6 +113,13 @@ export default {
         }
     },
     methods: {
+        getImage(acession) {
+            const image = this.images.find(image => image.accession === acession);
+            if (image) {
+                return image.url;
+            }
+            return "";
+        },
         log(value) {
             console.log(value);
             return value;
@@ -123,7 +133,25 @@ export default {
 
             this.$axios.post("/cluster/" + cluster + "/similars", this.options)
                 .then(response => {
-                    this.entries = response.data;
+                    this.entries = response.data.similars;
+                    this.totalEntries = response.data.total;
+                    for (let i = 0; i < this.images.length; i++) {
+                        URL.revokeObjectURL(this.images[i].url);
+                    }
+                    this.images = [];
+                    for (let i = 0; i < this.entries.length; i++) {
+                        const accession = this.entries[i].rep_accession;
+                        this.$axios.get("/structure/" + accession)
+                            .then((response) => {
+                                this.$nglService.makeImage(response.data.seq, response.data.plddt, response.data.coordinates)
+                                    .then((image) => {
+                                        this.images.push({ accession: accession, url: URL.createObjectURL(image)});
+                                    })
+                                    .catch(e => {
+                                        console.log(e);
+                                    });
+                            });
+                    }
                 })
                 .catch(() => {})
                 .finally(() => {
