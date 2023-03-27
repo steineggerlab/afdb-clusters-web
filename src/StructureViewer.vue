@@ -5,10 +5,6 @@
             ref="structurepanel"
             :class="{ hovered: hovered || isFullscreen }"
             @mouseover="hovered = true" @mouseleave="hovered = false"
-            :style="{
-                width: width + 'px',
-                height: height + 'px',
-            }"
             >
             <v-tooltip open-delay="300" bottom attach=".structure-wrapper" background-color="transparent">
                 <template v-slot:activator="{ on }">
@@ -223,8 +219,6 @@ export default {
         'toolbar': { type: Boolean, default: true },
         'bgColorLight': { type: String, default: "white" },
         'bgColorDark': { type: String, default: "#eee" },
-        'width': { type: Number, default: 400 },
-        'height': { type: Number, default: 300 },
     },
     methods: {
         handleResize() {
@@ -356,6 +350,8 @@ END
 .structure-wrapper {
     margin: 0 auto;
     position: relative;
+    height: 300px;
+    width: 100%;
 }
 
 .theme--dark .structure-wrapper .v-tooltip__content {

@@ -138,7 +138,7 @@
     </panel>
     </v-flex>
     <v-flex xs12 md4>
-    <Panel style="margin-left: 1em;">
+    <Panel class="repr-structure">
         <template slot="header">
             Representative structure
         </template>
@@ -245,5 +245,17 @@ dl {
 
 dt {
     font-weight: bold;
+}
+
+@media screen and (min-width: 961px) {
+    .repr-structure {
+        margin-left: 1em;
+    }
+}
+
+@media screen and (max-width: 960px) {
+    .repr-structure {
+        margin-top: 1em;
+    }
 }
 </style>
