@@ -1,5 +1,5 @@
 <template>
-    <span :title="'Taxonomic ID: ' + taxonomy.id + ' Rank: ' + taxonomy.rank">{{ taxonomy.name }}</span>
+    <a :href="'https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=Info&id=' + taxonomy.id" :title="'Taxonomic ID: ' + taxonomy.id + ' Rank: ' + taxonomy.rank">{{ taxonomy.name }}</a>
 </template>
 
 <script>
