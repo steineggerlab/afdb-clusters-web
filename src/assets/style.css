@@ -64,3 +64,7 @@ main.content {
         box-shadow: none !important;
     }
 }
+
+.theme--dark.v-card, .theme--dark.v-data-table, .theme--dark.v-sheet {
+    background-color: #2e2e2e;
+}

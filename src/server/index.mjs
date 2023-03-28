@@ -90,9 +90,11 @@ app.post('/api/:query', async (req, res) => {
 });
 
 app.post('/api/cluster/:cluster', async (req, res) => {
-    let result = await sql.get("SELECT * FROM cluster WHERE rep_accession = ?", req.params.cluster);
+    let result = await sql.get("SELECT * FROM cluster as c LEFT JOIN member as m ON c.rep_accession == m.accession WHERE c.rep_accession = ?", req.params.cluster);
     result.lca_tax_id = tree.getNode(result.lca_tax_id);
     result.lineage = tree.lineage(result.lca_tax_id);
+    result.tax_id = tree.getNode(result.tax_id);
+    result.rep_lineage = tree.lineage(result.tax_id);
     result.description = getDescription(result.rep_accession);
     res.send(result);
 });
@@ -105,8 +107,11 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             WHERE rep_accession = ?
             ORDER BY id;
         `, req.params.cluster);
-        result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id) });
         result = result.filter((x) => {
+            if (tree.nodeExists(x.tax_id) == false) {
+                return false;
+            }
+            x.tax_id = tree.getNode(x.tax_id);
             let currNode = x.tax_id;
             while (currNode.id != 1) {
                 if (currNode.id == req.body.tax_id.value) {
@@ -246,7 +251,7 @@ app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => 
     let suggestions = {};
     let count = 0;
     result.forEach((x) => {
-        if (tree.nodeExists(x.tax_id) == false) {
+        if (tree.nodeExists(x.lca_tax_id) == false) {
             return;
         }
         let node = tree.getNode(x.lca_tax_id);

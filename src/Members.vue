@@ -12,8 +12,23 @@
             <UniprotLink :accession="prop.value"></UniprotLink><br>
             {{ prop.item.description }}
         </template>
+        <template v-slot:header.structure="{ header }">
+            {{ header.text }}
+            <v-tooltip top>
+                <template v-slot:activator="{ on }">
+                    <span v-on="on">
+                        <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                    </span>
+                </template>
+                <span>
+                   Click on a structure to superpose it on to the cluster representative in the structure viewer
+                </span>
+            </v-tooltip>
+        </template>
         <template v-slot:item.structure="prop">
-            <img :src="getImage(prop.item.accession)" style="height:75px"/>
+            <div v-ripple="{ class: `primary--text` }" style="text-align: center; cursor: pointer;" @click="$emit('select', prop.item.accession)">
+                <img :src="getImage(prop.item.accession)" style="height:75px"/>
+            </div>
         </template>
         <template v-slot:item.flag="prop">
             <Fragment :flag="prop.value"></Fragment>
