@@ -1,7 +1,8 @@
 <template>
 
 <v-row style="padding:2em;">
-    <v-flex xs12 md8>
+    
+    <v-flex xs12 md6>
     <panel>
         <template slot="header">
             Cluster: {{ response ? response.rep_accession : "Loading..." }}
@@ -138,16 +139,23 @@
         </template>
     </panel>
     </v-flex>
-    <v-flex xs12 md4>
-    <Panel class="repr-structure">
-        <template slot="header">
-            Representative structure
-        </template>
-        <template slot="content" v-if="response">
-            <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" bgColorDark="#1E1E1E"></StructureViewer>
-        </template>
-    </Panel>
+    <v-flex xs12 md3>
+        <Panel class="repr-structure">
+            <template slot="header">
+                Representative structure
+            </template>
+            <template slot="content" v-if="response">
+                <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" bgColorDark="#1E1E1E"></StructureViewer>
+            </template>
+        </Panel>
     </v-flex>
+
+    <v-flex xs12 md3>
+        <template>
+            <Sankey></Sankey>
+        </template>
+    </v-flex>
+
 
     <v-flex xs12>
     <Panel style="margin-top: 1em;">
@@ -174,6 +182,14 @@
 </v-row>
 </template>
 
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+
+<!-- Load the sankey.js function -->
+<script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/sankey.js"></script>
+<script>
+
+</script>
 <script>
 import Panel from "./Panel.vue";
 import StructureViewer from "./StructureViewer.vue";
@@ -181,6 +197,7 @@ import Members from "./Members.vue";
 import TaxSpan from "./TaxSpan.vue";
 import UniprotLink from "./UniprotLink.vue";
 import Similars from "./Similars.vue";
+import Sankey from './Sankey.vue';
 
 export default {
     name: "cluster",
@@ -190,7 +207,8 @@ export default {
     Members,
     TaxSpan,
     UniprotLink,
-    Similars
+    Similars,
+    Sankey
 },
     data() {
         return {
