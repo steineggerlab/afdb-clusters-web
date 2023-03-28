@@ -128,13 +128,14 @@ export default {
     },
     data() {
         return {
-            query: "A0A0U4CV73",
-            selectedExample: null,
+            query: "B4DKH6",
+            selectedExample: 1,
             examples: [
                 {id:'A0A849TG76', desc:'predicted \'Transporter\' protein'},
-                {id:'A0A1C5UEQ5', desc:'Interferon-like bacterial protein'},
-                {id:'A0A2G2HCA2', desc:'predicted to have Frag1 like domain'},
-                {id:'A0A165QK09', desc:'with Frag1 like domain'},],
+                {id:'B4DKH6', desc:'Bactericidal permeability-increasing protein'},
+                {id:'A0A1G5ASE0', desc:'Histone (bacteria)'},
+                {id:'A0A1S3QU81', desc:' Gasdermin containing domain'},
+            ],
             inSearch: false,
             response: [],
             headers: [
