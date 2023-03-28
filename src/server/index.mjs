@@ -227,9 +227,10 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
         }
     })
     sorted = sorted.filter((x) => x.rep_accession != cluster);
+    const total = sorted.length;
     sorted = sorted.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
     sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
-    res.send({ total: sorted.length, similars: sorted });
+    res.send({ total: total, similars: sorted });
 });
 
 app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
