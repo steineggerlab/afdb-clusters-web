@@ -1,6 +1,6 @@
 <template>
 
-<v-row style="padding:2em;">
+<v-row style="margin:1em;">
     <v-flex xs12 md8>
     <panel>
         <template slot="header">
