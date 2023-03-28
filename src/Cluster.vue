@@ -113,6 +113,12 @@
 p    </Panel>
     </v-flex>
 
+    <v-flex xs12 md3>
+        <template>
+            <Sankey></Sankey>
+        </template>
+    </v-flex>
+
     <v-flex xs12>
     <Panel style="margin-top: 1em;" collapsible>
         <template slot="header">
@@ -145,6 +151,7 @@ import Members from "./Members.vue";
 import TaxSpan from "./TaxSpan.vue";
 import UniprotLink from "./UniprotLink.vue";
 import Similars from "./Similars.vue";
+import Sankey from './Sankey.vue';
 
 export default {
     name: "cluster",
@@ -154,7 +161,8 @@ export default {
     Members,
     TaxSpan,
     UniprotLink,
-    Similars
+    Similars,
+    Sankey
 },
     data() {
         return {
