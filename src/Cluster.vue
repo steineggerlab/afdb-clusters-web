@@ -99,7 +99,6 @@
                 </dd>
                 </div>
             </dl>
-
         </template>
     </panel>
     </v-flex>
@@ -109,30 +108,33 @@
             Representative structure
         </template>
         <template slot="content" v-if="response">
-            <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" bgColorDark="#2e2e2e"></StructureViewer>
+            <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" :second="second" bgColorDark="#2e2e2e" @reset="second = ''"></StructureViewer>
+            <span v-if="second">
+                <span style="color:#FFC107">{{ second }}</span> superposed on representative <span style="color:#1E88E5">{{ cluster }}</span>.
+            </span>
         </template>
-    </Panel>
+p    </Panel>
     </v-flex>
 
     <v-flex xs12>
-    <Panel style="margin-top: 1em;">
+    <Panel style="margin-top: 1em;" collapsible>
         <template slot="header">
-            Cluster Members
+            Cluster members
         </template>
         
         <template slot="content" v-if="response">
-            <Members v-if="$route.params.cluster" :cluster="$route.params.cluster"></Members>
+            <Members v-if="$route.params.cluster" :cluster="$route.params.cluster" @select="(accession) => second = accession"></Members>
         </template>
     </Panel>
     </v-flex>
 
     <v-flex xs12>
-    <Panel style="margin-top: 1em;">
+    <Panel style="margin-top: 1em;" collapsible>
         <template slot="header">
             Similar clusters
         </template>
         <template slot="content" v-if="response">
-            <Similars v-if="$route.params.cluster" :cluster="$route.params.cluster"></Similars>
+            <Similars v-if="$route.params.cluster" :cluster="$route.params.cluster" @select="(accession) => second = accession"></Similars>
         </template>
     </Panel>
     </v-flex>
@@ -159,8 +161,10 @@ export default {
 },
     data() {
         return {
+            cluster: null,
             response: null,
             fetching: false,
+            second: "",
         }
     },
     mounted() {
