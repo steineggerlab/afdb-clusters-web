@@ -202,7 +202,7 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
         });
     }
 
-    if (req.body.sortBy.length != 1 && req.body.sortDesc.length != 1) {
+    if (req.body.sortBy.length == 0) {
         req.body.sortBy = ['evalue'];
         req.body.sortDesc = [false];
     }
