@@ -144,7 +144,7 @@
             Representative structure
         </template>
         <template slot="content" v-if="response">
-            <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" bgColorDark="#1E1E1E"></StructureViewer>
+            <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" bgColorDark="#2e2e2e"></StructureViewer>
         </template>
     </Panel>
     </v-flex>
