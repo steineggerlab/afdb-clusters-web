@@ -7,10 +7,11 @@
             Cluster: {{ response ? response.rep_accession : "Loading..." }}
         </template>
         <template slot="content" v-if="response">
-            <dl>
+            <h3>Representative summary</h3>
+            <dl class="dl-3">
                 <div>
                 <dt>
-                    Representative accession
+                    Accession
                 </dt>
                 <dd>
                     <UniprotLink :accession="response.rep_accession"></UniprotLink><br>
@@ -19,7 +20,7 @@
                 </div>
                 <div>
                 <dt>
-                    Representative length
+                    Length
                 </dt>
                 <dd>
                     {{ response.rep_len }} aa
@@ -27,15 +28,24 @@
                 </div>
                 <div>
                 <dt>
-                    Representative pLDDT
+                    pLDDT
                 </dt>
                 <dd>
                     {{ response.rep_plddt.toFixed(2) }}
                 </dd>
                 </div>
-                <div>
+                <div style=" grid-area: 2 / 1 / 3 / 4;">
                 <dt>
-                    Dark cluster
+                    Lowest common ancestor and lineage
+                </dt>
+                <dd>
+                    <template v-for="(taxonomy, index) in response.rep_lineage" ><TaxSpan :taxonomy="taxonomy" :key="taxonomy.id"></TaxSpan><template v-if="index < (response.rep_lineage.length -1)"> &#187;&nbsp;</template></template>
+                </dd>
+                </div>
+                </dl>
+                <v-divider  style="margin-top:0.5em"></v-divider>
+                <h3 style="margin-top:1em">
+                    Cluster summary
                     <v-tooltip top>
                         <template v-slot:activator="{ on }">
                             <span v-on="on">
@@ -43,10 +53,22 @@
                             </span>
                         </template>
                         <span>
-                            This is a flag only considering members in AFDB clusters.<br>
-                            The members in AFDB clusters are the proteins with 'Clustered step' AFDB/Foldseek.
+                            This values are computed among the members with the <strong>clustered step</strong> AFDB/Foldseek.
                         </span>
                     </v-tooltip>
+                </h3>
+                <dl class="dl-4">
+                <div>
+                <dt>
+                    Number of members
+                </dt>
+                <dd>
+                    {{ response.n_mem }}
+                </dd>
+                </div>
+                <div>
+                <dt>
+                    Dark cluster
                 </dt>
                 <dd>
                     {{ response.is_dark ? 'yes' : 'no' }}
@@ -55,16 +77,6 @@
                 <div>
                 <dt>
                     Average length
-                    <v-tooltip top>
-                        <template v-slot:activator="{ on }">
-                            <span v-on="on">
-                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
-                            </span>
-                        </template>
-                        <span>
-                            This is the average length of members that has 'Clustered step' as AFDB/Foldseek.<br>
-                        </span>
-                    </v-tooltip>
                 </dt>
                 <dd>
                     {{ response.avg_len.toFixed(2) }} aa
@@ -73,61 +85,14 @@
                 <div>
                 <dt>
                     Average pLDDT
-                    <v-tooltip top>
-                        <template v-slot:activator="{ on }">
-                            <span v-on="on">
-                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
-                            </span>
-                        </template>
-                        <span>
-                            This is the average pLDDT of members that has 'Clustered step' as AFDB/Foldseek.<br>
-                        </span>
-                    </v-tooltip>
                 </dt>
                 <dd>
                     {{ response.avg_plddt.toFixed(2) }}
                 </dd>
                 </div>
-                <div>
+                <div style=" grid-area: 2 / 1 / 3 / 5;">
                 <dt>
-                    Number of members
-
-                    <v-tooltip top>
-                        <template v-slot:activator="{ on }">
-                            <span v-on="on">
-                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
-                            </span>
-                        </template>
-                        <span>
-                            This is the number of members with 'Clustered step' AFDB/Foldseek.
-                        </span>
-                    </v-tooltip>
-                </dt>
-                <dd>
-                    {{ response.n_mem }}
-                </dd>
-                </div>
-                <div>
-                <dt>
-                    Lowest common ancestor
-                    <v-tooltip top>
-                        <template v-slot:activator="{ on }">
-                            <span v-on="on">
-                                <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
-                            </span>
-                        </template>
-                        <span>
-                            This is the LCA among the members with 'Clustered step' AFDB/Foldseek.
-                        </span>
-                    </v-tooltip>
-                </dt>
-                <dd>
-                    <TaxSpan :taxonomy="response.lca_tax_id"></TaxSpan>
-                </dd>
-                </div>
-                <div>
-                <dt>
-                    Lineage
+                    Lowest common ancestor and lineage
                 </dt>
                 <dd>
                     <template v-for="(taxonomy, index) in response.lineage" ><TaxSpan :taxonomy="taxonomy" :key="taxonomy.id"></TaxSpan><template v-if="index < (response.lineage.length -1)"> &#187;&nbsp;</template></template>
@@ -239,9 +204,16 @@ export default {
 dl {
   display: grid;
   padding-top: .25em;
-  padding-bottom: .25em;
+  padding-bottom: 1em;
   grid-gap: 1em;
+}
+
+.dl-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dl-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 dt {
