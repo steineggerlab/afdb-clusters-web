@@ -107,8 +107,11 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             WHERE rep_accession = ?
             ORDER BY id;
         `, req.params.cluster);
-        result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id) });
         result = result.filter((x) => {
+            if (tree.nodeExists(x.tax_id) == false) {
+                return false;
+            }
+            x.tax_id = tree.getNode(x.tax_id);
             let currNode = x.tax_id;
             while (currNode.id != 1) {
                 if (currNode.id == req.body.tax_id.value) {
@@ -248,7 +251,7 @@ app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => 
     let suggestions = {};
     let count = 0;
     result.forEach((x) => {
-        if (tree.nodeExists(x.tax_id) == false) {
+        if (tree.nodeExists(x.lca_tax_id) == false) {
             return;
         }
         let node = tree.getNode(x.lca_tax_id);
