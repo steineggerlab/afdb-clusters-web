@@ -81,8 +81,8 @@ app.post('/api/:query', async (req, res) => {
     //         console.log(error);
     //     });
     let result = await sql.get("SELECT * FROM member as m LEFT JOIN cluster as c ON m.rep_accession == c.rep_accession WHERE m.accession = ?", req.params.query);
-    if (!result) {
-        res.send([]);
+    if (!result || result.lca_tax_id == null) {
+        res.status(404).send({ error: "No cluster found" });
         return;
     }
     result.lca_tax_id = tree.getNode(result.lca_tax_id);

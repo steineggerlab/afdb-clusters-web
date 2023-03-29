@@ -33,6 +33,9 @@
                                 @click:append="search"
                                 @keyup.enter="search"
                                 @change="selectedExample = null"
+                                @keydown="error = null"
+                                :error="error != null"
+                                :error-messages="error ? error : []"
                                 dark
                                 >
                             </v-text-field>
@@ -138,6 +141,7 @@ export default {
             ],
             inSearch: false,
             response: [],
+            error: null,
             headers: [
                 {
                     text: "Rep Accession",
@@ -182,12 +186,19 @@ export default {
         },
         search() {
             this.inSearch = true;
+            this.error = null;
             this.$axios.post("/" + this.query)
                 .then(response => {
                     // this.response = response.data;
                     this.$router.push({ name: 'cluster', params: { cluster: response.data[0].rep_accession } })
                 })
-                .catch(() => {})
+                .catch((err) => {
+                    if (err.response && err.response.data && err.response.data.error) {
+                        this.error = err.response.data.error;
+                    } else {
+                        this.error = "Unknown error";
+                    }
+                })
                 .finally(() => {
                     this.inSearch = false;
                 });
