@@ -100,13 +100,20 @@ app.post('/api/cluster/:cluster', async (req, res) => {
 });
 
 app.post('/api/cluster/:cluster/members', async (req, res) => {
+    let flagFilter = '';
+    let args = [ req.params.cluster ];
+    if (req.body.flagFilter != null) {
+        flagFilter = 'AND flag = ?';
+        args.push(req.body.flagFilter + 1);
+    }
+
     if (req.body.tax_id) {
         let result = await sql.all(`
         SELECT * 
             FROM member
-            WHERE rep_accession = ?
+            WHERE rep_accession = ? ${flagFilter}
             ORDER BY id;
-        `, req.params.cluster);
+        `, ...args);
         result = result.filter((x) => {
             if (tree.nodeExists(x.tax_id) == false) {
                 return false;
@@ -132,10 +139,10 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
         let result = await sql.all(`
         SELECT * 
             FROM member
-            WHERE rep_accession = ?
+            WHERE rep_accession = ? ${flagFilter}
             ORDER BY id
             LIMIT ? OFFSET ?;
-        `, req.params.cluster, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
+        `, ...args, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
         result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id); x.description = getDescription(x.accession) });
         res.send({ total: total.total, result : result });
     }
