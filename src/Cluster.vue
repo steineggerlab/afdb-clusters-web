@@ -109,9 +109,6 @@
         </template>
         <template slot="content" v-if="response">
             <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" :second="second" bgColorDark="#2e2e2e" @reset="second = ''"></StructureViewer>
-            <span v-if="second">
-                <span style="color:#FFC107">{{ second }}</span> superposed on representative <span style="color:#1E88E5">{{ cluster }}</span>.
-            </span>
         </template>
 p    </Panel>
     </v-flex>

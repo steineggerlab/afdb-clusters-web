@@ -83,8 +83,11 @@
                 </v-item-group>
             </div>
             <div class="structure-viewer" ref="viewport"></div>
-            <div style="display: none;">{{ cluster }}</div>
         </div>
+        <template v-if="second">
+            <span v-if="secondComponent == null">Superposition loading</span>
+            <span v-else><span style="color:#FFC107">{{ second }}</span> superposed on representative <span style="color:#1E88E5">{{ cluster }}</span>.</span>
+        </template>
     </div>
 </template>
 
@@ -92,8 +95,20 @@
 import { Shape, Stage, Selection, download, ColormakerRegistry, PdbWriter } from 'ngl';
 import Panel from './Panel.vue';
 import { pulchra } from 'pulchra-wasm';
-import { tmalign, parse, parseMatrix } from 'tmalign-wasm';
 
+
+const worker = new Worker(new URL('./tmalign-worker.js', import.meta.url));
+const tmalign = function(pdb1, pdb2) {
+    return new Promise((resolve, reject) => {
+        worker.onmessage = function(e) {
+            resolve(e.data);
+        };
+        worker.onerror = function(e) {
+            reject(e);
+        };
+        worker.postMessage({ pdb1, pdb2 });
+    });
+};
 
 // Create NGL arrows from array of ([X, Y, Z], [X, Y, Z]) pairs
 // function createArrows(matches) {
@@ -354,19 +369,20 @@ END
                 }
                 this.$nextTick(() => {
                     this.stage.removeComponent(this.secondComponent);
+                    this.secondComponent = null;
+                    let tmpComponent = null
                     this.fetchStructure(this.second)
                         .then((component) => {
-                            this.stage.autoView();
-                            this.secondComponent = component;
+                            tmpComponent = component;
                             return component;
                         })
-                        .then((component) => {
+                        .then((c) => {
                             let qSubPdb = makeSubPDB(this.component.structure,'')
-                            let tSubPdb = makeSubPDB(this.secondComponent.structure, '')
+                            let tSubPdb = makeSubPDB(c.structure, '')
                             return tmalign(tSubPdb, qSubPdb)
                         })
-                        .then((tm) => {
-                            const { t, u } = parseMatrix(tm.matrix)
+                        .then(({ t, u }) => {
+                            this.secondComponent = tmpComponent;
                             transformStructure(this.secondComponent.structure, t, u)
                             this.component.removeAllRepresentations();
                             this.component.addRepresentation("cartoon", { color: "#1E88E5" });
