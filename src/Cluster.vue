@@ -53,7 +53,7 @@
                             </span>
                         </template>
                         <span>
-                            This values are computed among the members with the <strong>clustered step</strong> AFDB/Foldseek.
+                            These values are computed among the members with the <strong>clustered step</strong> AFDB/Foldseek.
                         </span>
                     </v-tooltip>
                 </h3>
