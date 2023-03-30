@@ -23,14 +23,17 @@ export default {
                 .catch(() => {})
         },
         render(items) {
+            // from spring colors :) (https://wondernote.org/color-palettes-for-web-digital-blog-graphic-design-with-hexadecimal-codes/)
+            const colors = ['#afddd5', '#ffa700', '#ffcccd', '#f56093', '#64864a', '#dfe6e6', '#dfdec0', '#ff7e5a', '#ffbd00', '#7db954', '#feddcb', '#ffc700', '#cee8e5', '#c6b598', '#fee100', '#fac4c4', '#e0e7ad', '#fdbb9f', '#eadcc3', '#eef3b4', '#ffb27b', '#ff284b', '#7abaa1', '#cfeae4'];
             const width = 960;
             const height = 270;
             
             const nodeWidth = 35;
             const nodePadding = 5;
             
+            let atRank = {}; // min at rank 10
+
             // min at rank 10
-            let atRank = {};
             items.links.forEach((link) => {
                 if (link.rank in atRank)
                     atRank[link.rank].push(JSON.parse(JSON.stringify(link)));
@@ -48,16 +51,25 @@ export default {
 
                 filterLinks = filterLinks.concat(atRank[rank]);
             }
+
+
+            let isLeaves = {}; // find the leaves
             
             filterLinks.forEach((link) => {
                 if (!filterNodes.includes(link.source))
                 filterNodes.push(link.source);
                 if (!filterNodes.includes(link.target))
                 filterNodes.push(link.target);
+
+                // find the leaves (at the most right-s)
+                isLeaves[link.source] = false;
+                if (!(link.target in isLeaves)) {
+                  isLeaves[link.target] = true;
+                }
             });
             
             let newNodes = filterNodes.map((node) => {
-                return { id: node };
+                return { id: node, isLeaf: isLeaves[node] };
             });
             
             const svg = d3
@@ -88,7 +100,7 @@ export default {
                     .attr('y', (d) => d.y0)
                     .attr('height', (d) => d.y1 - d.y0)
                     .attr('width', (d) => d.x1 - d.x0 - 2)
-                    .attr('fill', (d) => color.range()[d.index % 10])
+                    .attr('fill', (d) => (d.isLeaf) ? colors[d.index % colors.length] : "#888")
                 .append('title')
                     .text((d) => `${d.id}: ${d.value}`);
                 
