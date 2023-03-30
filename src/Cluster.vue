@@ -149,14 +149,6 @@ p    </Panel>
 </v-row>
 </template>
 
-<!-- Load d3.js -->
-<script src="https://d3js.org/d3.v4.min.js"></script>
-
-<!-- Load the sankey.js function -->
-<script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/sankey.js"></script>
-<script>
-
-</script>
 <script>
 import Panel from "./Panel.vue";
 import StructureViewer from "./StructureViewer.vue";

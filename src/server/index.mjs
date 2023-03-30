@@ -89,6 +89,55 @@ app.post('/api/:query', async (req, res) => {
     res.send([ result ]);
 });
 
+app.get('/api/cluster/:cluster/sankey', async (req, res) => {
+    const cluster = req.params.cluster;
+    let result = await sql.all(`
+    SELECT tax_id
+        FROM member
+        WHERE rep_accession == ?;
+    `, cluster);
+    let graph = {
+        nodes: [],
+        links: []
+    };
+    let prevNodeName = '';
+
+    result.slice(0,1).forEach((x) => {
+        if (tree.nodeExists(x.tax_id) == false) {
+            return;
+        }
+        let node = tree.getNode(x.tax_id);
+        prevNodeName = node.name;
+
+        while (node.id != 1) {
+            // if (node.id in suggestions) {
+            //     break;
+            // }
+
+            // do something with the each nodeand the links/nodes
+            graph.nodes.push({
+                node: graph.nodes.length,
+                name: node.name,
+                id: node.name,
+            })
+            if (prevNodeName !== node.name) {
+                graph.links.push({
+                    source: node.name,
+                    target: prevNodeName,
+                    value: 1,
+                })
+            }
+            console.log(node);
+
+            prevNodeName = node.name;
+            node = tree.getNode(node.parent);
+        }
+    });
+
+    console.log(graph);
+    res.send({result: graph});
+});
+
 app.post('/api/cluster/:cluster', async (req, res) => {
     let result = await sql.get("SELECT * FROM cluster as c LEFT JOIN member as m ON c.rep_accession == m.accession WHERE c.rep_accession = ?", req.params.cluster);
     result.lca_tax_id = tree.getNode(result.lca_tax_id);
