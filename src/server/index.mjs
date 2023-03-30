@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
@@ -10,8 +13,8 @@ import { open } from 'sqlite';
 import { serializeTree, unserializeTree } from './ncbitaxonomy.mjs';
 import { existsSync } from 'fs';
 
-
-const dataPath = './data';
+const dataPath =  process.env.DATA_PATH || './data';
+const port = process.env.EXPRESS_PORT || 3000;
 
 console.time();
 console.log('Loading taxonomy...')
@@ -64,7 +67,6 @@ await avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index');
 console.timeLog();
 
 const app = express();
-const port = 3000;
 
 app.use(cors());
 app.use(express.json());
