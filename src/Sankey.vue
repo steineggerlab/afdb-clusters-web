@@ -98,7 +98,7 @@ export default {
                 .selectAll('g')
                 .data(links)
                 .join('g')
-                    .attr("stroke", d => color(d.color))
+                    .attr("stroke", "#88888844")
                     .style("mix-blend-mode", "multiply");
             
             link.append('path')
@@ -123,8 +123,13 @@ export default {
 </script>
 
 <style>
-svg text {
+.theme--dark svg text {
     fill: white;
+}
+.theme--light svg text {
+    fill: black;
+}
+svg text {
     font-size: min(calc(20px + (8 - 14) * ((100vw - 480px) / (960 - 480))), 20px);
 }
 </style>
