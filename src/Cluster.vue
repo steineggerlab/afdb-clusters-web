@@ -113,10 +113,15 @@
 p    </Panel>
     </v-flex>
 
-    <v-flex xs12 md3>
-        <template>
-            <Sankey></Sankey>
+    <v-flex xs12>
+    <Panel style="margin-top: 1em;">
+        <template slot="header">
+            Sankey
         </template>
+        <template slot="content" >
+            <Sankey :cluster="cluster"></Sankey>
+        </template>
+    </Panel>
     </v-flex>
 
     <v-flex xs12>

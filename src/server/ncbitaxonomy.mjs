@@ -164,13 +164,13 @@ class Tree {
         return id in this.nodePool;
     }
 
-    getNode(id) {
+    getNode(id, numeric_rank = false) {
         const node = this.nodePool[id];
         return {
             id: node.i,
             name: node.n,
             parent: node.p,
-            rank: idx_to_rank[node.r],
+            rank: numeric_rank ? node.r : idx_to_rank[node.r],
         }
     }
 
@@ -224,5 +224,7 @@ export {
     parseTree,
     serializeTree,
     unserializeTree,
-    Tree
+    Tree,
+    rank_to_idx,
+    idx_to_rank,
 }

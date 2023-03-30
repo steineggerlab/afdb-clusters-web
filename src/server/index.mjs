@@ -10,7 +10,7 @@ import read from './compressed_ca.mjs';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 
-import { serializeTree, unserializeTree } from './ncbitaxonomy.mjs';
+import { serializeTree, unserializeTree, idx_to_rank } from './ncbitaxonomy.mjs';
 import { existsSync } from 'fs';
 
 const dataPath =  process.env.DATA_PATH || './data';
@@ -98,46 +98,70 @@ app.get('/api/cluster/:cluster/sankey', async (req, res) => {
         FROM member
         WHERE rep_accession == ?;
     `, cluster);
-    let graph = {
-        nodes: [],
-        links: []
-    };
-    let prevNodeName = '';
 
-    result.slice(0,1).forEach((x) => {
+    let nodes = {};
+    let links = {};
+    const allowedRanks = [28, 27, 24, 12, 8, 4];
+    result.forEach((x) => {
         if (tree.nodeExists(x.tax_id) == false) {
             return;
         }
-        let node = tree.getNode(x.tax_id);
-        prevNodeName = node.name;
-
+        let node = tree.getNode(x.tax_id, true);
         while (node.id != 1) {
-            // if (node.id in suggestions) {
-            //     break;
-            // }
-
-            // do something with the each nodeand the links/nodes
-            graph.nodes.push({
-                node: graph.nodes.length,
-                name: node.name,
-                id: node.name,
-            })
-            if (prevNodeName !== node.name) {
-                graph.links.push({
-                    source: node.name,
-                    target: prevNodeName,
-                    value: 1,
-                })
+            let currentName = node.name;
+            let currentRank = node.rank;
+            // skip all ranks except superkingdom, phylum, class, order, family, genus
+            while (!allowedRanks.includes(currentRank)) {
+                node = tree.getNode(node.parent, true);
+                currentName = node.name;
+                currentRank = node.rank;
+                if (node.id == 1) {
+                    break;
+                }
             }
-            console.log(node);
 
-            prevNodeName = node.name;
-            node = tree.getNode(node.parent);
+            if (!(currentName in nodes)) {
+                nodes[currentName] = {
+                    id: currentName,
+                };
+            }
+
+            node = tree.getNode(node.parent, true);
+            let parentName = node.name;
+            let parentRank = node.rank;
+            while (!allowedRanks.includes(parentRank)) {
+                node = tree.getNode(node.parent, true);
+                parentName = node.name;
+                parentRank = node.rank;
+                if (node.id == 1) {
+                    break;
+                }
+            }
+
+            if (parentName == 'root') {
+                continue;
+            }
+
+            const linkKey = `${currentName}-${node.name}`;
+            if (!(linkKey in links)) {
+                links[linkKey] = {
+                    source: parentName,
+                    target: currentName,
+                    value: 1,
+                    rank: idx_to_rank[currentRank],
+                }
+            } else {
+                links[linkKey].value += 1;
+            }
         }
     });
+    nodes['root'] = { id : 'root' };
 
-    console.log(graph);
-    res.send({result: graph});
+    const asd = {
+        nodes: Object.values(nodes),
+        links: Object.values(links),
+    }
+    res.send({result: asd});
 });
 
 app.post('/api/cluster/:cluster', async (req, res) => {
