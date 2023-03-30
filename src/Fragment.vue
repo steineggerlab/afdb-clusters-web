@@ -38,19 +38,9 @@ export default {
 
 </script>
 
-<style>
-
-.style {
-    color: #BFEFFF;
-    color: #C9FFC9;
-    color: #E4C6FF;
-    color: #FFE4E1;
-}
-
-.asd {
-color: #8FB5D6;
-color: #9ED19F;
-color: #C29BFF;
-color: #FFC8C1;
+<style scoped>
+.v-chip-group .v-chip--active {
+    font-weight: bold;
+    border-width: 2px;
 }
 </style>

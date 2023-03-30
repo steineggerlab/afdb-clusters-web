@@ -33,6 +33,9 @@
                                 @click:append="search"
                                 @keyup.enter="search"
                                 @change="selectedExample = null"
+                                @keydown="error = null"
+                                :error="error != null"
+                                :error-messages="error ? error : []"
                                 dark
                                 >
                             </v-text-field>
@@ -128,15 +131,17 @@ export default {
     },
     data() {
         return {
-            query: "A0A0U4CV73",
-            selectedExample: null,
+            query: "B4DKH6",
+            selectedExample: 1,
             examples: [
                 {id:'A0A849TG76', desc:'predicted \'Transporter\' protein'},
-                {id:'A0A1C5UEQ5', desc:'Interferon-like bacterial protein'},
-                {id:'A0A2G2HCA2', desc:'predicted to have Frag1 like domain'},
-                {id:'A0A165QK09', desc:'with Frag1 like domain'},],
+                {id:'B4DKH6', desc:'Bactericidal permeability-increasing protein'},
+                {id:'A0A1G5ASE0', desc:'Histone (bacteria)'},
+                {id:'A0A1S3QU81', desc:' Gasdermin containing domain'},
+            ],
             inSearch: false,
             response: [],
+            error: null,
             headers: [
                 {
                     text: "Rep Accession",
@@ -181,12 +186,19 @@ export default {
         },
         search() {
             this.inSearch = true;
+            this.error = null;
             this.$axios.post("/" + this.query)
                 .then(response => {
                     // this.response = response.data;
                     this.$router.push({ name: 'cluster', params: { cluster: response.data[0].rep_accession } })
                 })
-                .catch(() => {})
+                .catch((err) => {
+                    if (err.response && err.response.data && err.response.data.error) {
+                        this.error = err.response.data.error;
+                    } else {
+                        this.error = "Unknown error";
+                    }
+                })
                 .finally(() => {
                     this.inSearch = false;
                 });

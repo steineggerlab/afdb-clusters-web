@@ -46,6 +46,12 @@
         <template v-slot:item.lca_tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
         </template>
+
+        <template v-slot:item.actions="{ item }">
+            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=AlphaFoldDB'">
+                <v-img :src="require('./assets/marv-foldseek-small.png')" max-width="16"></v-img>
+            </v-chip>
+        </template>
     </v-data-table>
 </template>
 
@@ -109,6 +115,7 @@ export default {
                     text: "E-value",
                     value: "evalue",
                 },
+                { text: 'Actions', value: 'actions', sortable: false },
             ],
             entries: [],
             totalEntries: 0,
