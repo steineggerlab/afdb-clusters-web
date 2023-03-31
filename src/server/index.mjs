@@ -137,7 +137,7 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
         result.forEach((x) => { x.description = getDescription(x.accession) });
         res.send({ total: total, result : result });
     } else {
-        const total = await sql.get("SELECT COUNT(id) as total FROM member WHERE rep_accession = ?", req.params.cluster);
+        const total = await sql.get(`SELECT COUNT(id) as total FROM member WHERE rep_accession = ? ${flagFilter}`, ...args);
         let result = await sql.all(`
         SELECT * 
             FROM member
