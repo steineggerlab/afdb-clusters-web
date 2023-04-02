@@ -1,8 +1,9 @@
 <template>
-    <v-container grid-list-md fluid px-2 py-1 id="search-container">
+    <v-container grid-list-md fluid px-0 py-0 id="search-container">
         <v-layout wrap>
             <v-flex xs12 pa-0 >
                 <v-parallax
+                    :height="windowHeight"
                     :src="require('./assets/bg.png')"
                 >
                     <v-row
@@ -98,22 +99,22 @@
                     </template>
                 </panel>
             </v-flex>
-            <v-flex xs12>
-                <v-card rounded="0">
-                <v-card-title primary-title class="pb-0 mb-0">
-                    <div class="text-h5 mb-0">Reference</div>
-                </v-card-title>
-                <v-card-title primary-title class="pt-0 mt-0">
-                    <p class="text-subtitle-2 mb-0">
-                        Barrio-Hernandez I, Yeo J, Jänes J, Wein T, Varadi M, Velankar S, Beltrao P, Steinegger M. 
-                        <a href="https://www.biorxiv.org/content/10.1101/2023.03.09.531927v1" target="_blank" rel="noopener">
-                            Clustering predicted structures at the scale of the known protein universe.</a>
-                        bioRxiv (2023)
-                    </p>
-                </v-card-title>
-                </v-card>
-            </v-flex>
         </v-layout>
+        <v-flex style="position:absolute; width:100%; bottom: 0; margin: 0;">
+            <v-card rounded="0">
+            <v-card-title primary-title class="pb-0 mb-0">
+                <div class="text-h5 mb-0">Reference</div>
+            </v-card-title>
+            <v-card-title primary-title class="pt-0 mt-0">
+                <p class="text-subtitle-2 mb-0">
+                    Barrio-Hernandez I, Yeo J, Jänes J, Wein T, Varadi M, Velankar S, Beltrao P, Steinegger M. 
+                    <a href="https://www.biorxiv.org/content/10.1101/2023.03.09.531927v1" target="_blank" rel="noopener">
+                        Clustering predicted structures at the scale of the known protein universe.</a>
+                    bioRxiv (2023)
+                </p>
+            </v-card-title>
+            </v-card>
+        </v-flex>
     </v-container>
 </template>
 
@@ -131,6 +132,7 @@ export default {
     },
     data() {
         return {
+            windowHeight: window.innerHeight- 48,
             query: "B4DKH6",
             selectedExample: 1,
             examples: [
@@ -208,6 +210,9 @@ export default {
 </script>
 
 <style scoped>
+#search-container {
+    padding:0px;
+}
 .search-component >>> .v-input--checkbox {
     margin-top: 0px;
 }
