@@ -98,6 +98,12 @@
                     <template v-for="(taxonomy, index) in response.lineage" ><TaxSpan :taxonomy="taxonomy" :key="taxonomy.id"></TaxSpan><template v-if="index < (response.lineage.length -1)"> &#187;&nbsp;</template></template>
                 </dd>
                 </div>
+                <div style=" grid-area: 3 / 1 / 3 / 5;">
+                    <dt>Annotations</dt>
+                    <dd>
+                        <Annotations :cluster="$route.params.cluster"></Annotations>
+                    </dd>
+                </div>
             </dl>
         </template>
     </panel>
@@ -164,6 +170,7 @@ import TaxSpan from "./TaxSpan.vue";
 import UniprotLink from "./UniprotLink.vue";
 import Similars from "./Similars.vue";
 import Sankey from './Sankey.vue';
+import Annotations from "./Annotations.vue";
 
 export default {
     name: "cluster",
@@ -174,7 +181,8 @@ export default {
     TaxSpan,
     UniprotLink,
     Similars,
-    Sankey
+    Sankey,
+        Annotations
 },
     data() {
         return {

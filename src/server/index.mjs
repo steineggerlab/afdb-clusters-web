@@ -91,6 +91,56 @@ app.post('/api/:query', async (req, res) => {
     res.send([ result ]);
 });
 
+app.get('/api/cluster/:cluster/annotations', async (req, res) => {
+    const cluster = req.params.cluster;
+    // let result = await sql.all(`
+    // SELECT tax_id
+    //     FROM member
+    //     WHERE rep_accession == ?;
+    // `, cluster);
+
+    function color_designation(high_color, low_color, annotations) {
+        let highest_hit = 0;
+        let hit_portion = 0;
+        let rgb = {};
+
+        for (const ele of annotations) {
+            if (highest_hit < ele.hit) {
+                highest_hit = ele.hit;
+            }
+        }
+
+        for (const ele of annotations) {
+            hit_portion = ele.hit / highest_hit;
+
+            rgb = {
+                r: (high_color.r - low_color.r) * hit_portion + low_color.r,
+                g: (high_color.g - low_color.g) * hit_portion + low_color.g,
+                b: (high_color.b - low_color.b) * hit_portion + low_color.b,
+            }
+
+            ele['color'] = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`
+        }
+    }
+    
+    let pfams = [
+        {id:0, pfam: 'PF00931', hit: 34},
+        {id:1, pfam: 'PF01582', hit: 6}
+    ]
+
+    color_designation(
+        {r: 25, g: 118, b: 210},
+        {r: 25, g: 25, b: 25},
+        pfams
+    )
+    
+    let result = {
+        pfams: pfams
+    };
+
+    res.send({result: result});
+});
+
 app.get('/api/cluster/:cluster/sankey', async (req, res) => {
     const cluster = req.params.cluster;
     let result = await sql.all(`
