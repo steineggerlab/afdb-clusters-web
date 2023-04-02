@@ -34,27 +34,51 @@
             <Fragment :flag="prop.value"></Fragment>
         </template>
         <template v-slot:header.flag="{ header }">
-            {{ header.text }}
-            <v-tooltip top>
+            <v-menu
+                :close-on-content-click="false"
+                offset-y>
                 <template v-slot:activator="{ on }">
-                    <span v-on="on">
-                        <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
-                    </span>
+                    <v-btn v-on="on" :outlined="options.flagFilter != null">
+                        {{ header.text }}&nbsp;
+                        <v-tooltip top>
+                            <template v-slot:activator="{ on }">
+                                <span v-on="on">
+                                    <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
+                                </span>
+                            </template>
+                            <span>
+                                <img width="600" src="./assets/cluster_step.jpg"><br>
+                                AFDB/Foldseek: Clustered with structural similarity<br>
+                                AFDB50/Mmseqs: Clustered at sequence identity 50%<br>
+                                Fragment: Removed fragments among AFDB50<br>
+                                Singleton: Removed singletons after fragment removal
+                            </span>
+                        </v-tooltip>
+                    </v-btn>
                 </template>
-                <span>
-                    <img width="600" src="./assets/cluster_step.jpg"><br>
-                    AFDB/Foldseek: Clustered with structural similarity<br>
-                    AFDB50/Mmseqs: Clustered at sequence identity 50%<br>
-                    Fragment: Removed fragments among AFDB50<br>
-                    Singleton: Removed singletons after fragment removal
-                </span>
-            </v-tooltip>
+
+                <v-card style="padding: 2em; width: 250px;">
+                    <h3>Filter by</h3>
+                    <v-chip-group column v-model="options.flagFilter">
+                        <Fragment :flag="1"></Fragment>
+                        <Fragment :flag="2"></Fragment>
+                        <Fragment :flag="3"></Fragment>
+                        <Fragment :flag="4"></Fragment>
+                    </v-chip-group>
+                </v-card>
+            </v-menu>
         </template>
         <template v-slot:header.tax_id="{ header }">
                 <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b"></TaxonomyAutocomplete>
         </template>
         <template v-slot:item.tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
+        </template>
+
+        <template v-slot:item.actions="{ item }">
+            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=AlphaFoldDB'">
+                <v-img :src="require('./assets/marv-foldseek-small.png')" max-width="16"></v-img>
+            </v-chip>
         </template>
     </v-data-table>
 </template>
@@ -84,11 +108,13 @@ export default {
                     text: "Structure",
                     value: "structure",
                     sortable: false,
+                    width: "10%",
                 },
                 {
                     text: "Accession",
                     value: "accession",
                     sortable: false,
+                    width: "35%",
                 },
                 // {
                 //     text: "Length",
@@ -99,11 +125,19 @@ export default {
                     text: "Clustered step",
                     value: "flag",
                     sortable: false,
+                    width: "10%",
                 },
                 {
                     text: "Taxonomy",
                     value: "tax_id",
                     sortable: false,
+                    width: "40%",
+                },
+                {
+                    text: 'Actions',
+                    value: 'actions',
+                    sortable: false,
+                    width: "10%",
                 },
             ],
             members: [],

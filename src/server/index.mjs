@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
@@ -10,8 +13,8 @@ import { open } from 'sqlite';
 import { serializeTree, unserializeTree } from './ncbitaxonomy.mjs';
 import { existsSync } from 'fs';
 
-
-const dataPath = './data';
+const dataPath =  process.env.DATA_PATH || './data';
+const port = process.env.EXPRESS_PORT || 3000;
 
 console.time();
 console.log('Loading taxonomy...')
@@ -64,7 +67,6 @@ await avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index');
 console.timeLog();
 
 const app = express();
-const port = 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -81,8 +83,8 @@ app.post('/api/:query', async (req, res) => {
     //         console.log(error);
     //     });
     let result = await sql.get("SELECT * FROM member as m LEFT JOIN cluster as c ON m.rep_accession == c.rep_accession WHERE m.accession = ?", req.params.query);
-    if (!result) {
-        res.send([]);
+    if (!result || result.lca_tax_id == null) {
+        res.status(404).send({ error: "No cluster found" });
         return;
     }
     result.lca_tax_id = tree.getNode(result.lca_tax_id);
@@ -100,13 +102,20 @@ app.post('/api/cluster/:cluster', async (req, res) => {
 });
 
 app.post('/api/cluster/:cluster/members', async (req, res) => {
+    let flagFilter = '';
+    let args = [ req.params.cluster ];
+    if (req.body.flagFilter != null) {
+        flagFilter = 'AND flag = ?';
+        args.push(req.body.flagFilter + 1);
+    }
+
     if (req.body.tax_id) {
         let result = await sql.all(`
         SELECT * 
             FROM member
-            WHERE rep_accession = ?
+            WHERE rep_accession = ? ${flagFilter}
             ORDER BY id;
-        `, req.params.cluster);
+        `, ...args);
         result = result.filter((x) => {
             if (tree.nodeExists(x.tax_id) == false) {
                 return false;
@@ -128,14 +137,14 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
         result.forEach((x) => { x.description = getDescription(x.accession) });
         res.send({ total: total, result : result });
     } else {
-        const total = await sql.get("SELECT COUNT(id) as total FROM member WHERE rep_accession = ?", req.params.cluster);
+        const total = await sql.get(`SELECT COUNT(id) as total FROM member WHERE rep_accession = ? ${flagFilter}`, ...args);
         let result = await sql.all(`
         SELECT * 
             FROM member
-            WHERE rep_accession = ?
+            WHERE rep_accession = ? ${flagFilter}
             ORDER BY id
             LIMIT ? OFFSET ?;
-        `, req.params.cluster, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
+        `, ...args, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
         result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id); x.description = getDescription(x.accession) });
         res.send({ total: total.total, result : result });
     }
@@ -202,7 +211,7 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
         });
     }
 
-    if (req.body.sortBy.length != 1 && req.body.sortDesc.length != 1) {
+    if (req.body.sortBy.length == 0) {
         req.body.sortBy = ['evalue'];
         req.body.sortDesc = [false];
     }
@@ -227,9 +236,10 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
         }
     })
     sorted = sorted.filter((x) => x.rep_accession != cluster);
+    const total = sorted.length;
     sorted = sorted.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
     sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
-    res.send({ total: sorted.length, similars: sorted });
+    res.send({ total: total, similars: sorted });
 });
 
 app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {

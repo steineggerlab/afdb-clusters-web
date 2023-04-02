@@ -1,8 +1,7 @@
 <template>
 
-<v-row style="padding:2em;">
-    
-    <v-flex xs12 md6>
+<v-row style="margin:1em;">
+    <v-flex xs12 md8>
     <panel>
         <template slot="header">
             Cluster: {{ response ? response.rep_accession : "Loading..." }}
@@ -54,7 +53,7 @@
                             </span>
                         </template>
                         <span>
-                            This values are computed among the members with the <strong>clustered step</strong> AFDB/Foldseek.
+                            These values are computed among the members with the <strong>clustered step</strong> AFDB/Foldseek.
                         </span>
                     </v-tooltip>
                 </h3>
@@ -110,9 +109,6 @@
         </template>
         <template slot="content" v-if="response">
             <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" :second="second" bgColorDark="#2e2e2e" @reset="second = ''"></StructureViewer>
-            <span v-if="second">
-                <span style="color:#FFC107">{{ second }}</span> superposed on representative <span style="color:#1E88E5">{{ cluster }}</span>.
-            </span>
         </template>
 p    </Panel>
     </v-flex>
