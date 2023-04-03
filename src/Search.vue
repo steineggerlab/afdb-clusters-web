@@ -24,45 +24,61 @@
                             
                             <br>
                              
-                            <v-text-field
-                                outlined
-                                label="UniProt accession"
-                                style="max-width: 400px; margin: 0 auto;"
-                                v-model="query"
-                                :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
-                                :disabled="inSearch"
-                                @click:append="search"
-                                @keyup.enter="search"
-                                @change="selectedExample = null"
-                                @keydown="error = null"
-                                :error="error != null"
-                                :error-messages="error ? error : []"
-                                dark
-                                >
-                            </v-text-field>
-                            
-                            <template>
-                            <h2 class="text-h6 mb-2">
-                                Examples
-                            </h2>
-                            <v-chip-group
-                                column
-                                dark
-                                v-model="selectedExample"
-                                style="max-width: 400px; margin: 0 auto; "
-                            >
+                            <v-tabs
+                                class="search-select"
+                                slider-size="1"
+                                v-model="tab"
+                                centered
+                                background-color="transparent">
+                                <v-tab>UniProt</v-tab>
+                                <v-tab>Structure</v-tab>
+                            </v-tabs>
+                            <v-tabs-items v-model="tab" style="padding: 1em;">
+                                <v-tab-item>
+                                    <v-text-field
+                                        outlined
+                                        label="UniProt accession"
+                                        style="max-width: 400px; margin: 0 auto;"
+                                        v-model="query"
+                                        :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
+                                        :disabled="inSearch"
+                                        @click:append="search"
+                                        @keyup.enter="search"
+                                        @change="selectedExample = null"
+                                        @keydown="error = null"
+                                        :error="error != null"
+                                        :error-messages="error ? error : []"
+                                        dark
+                                        >
+                                    </v-text-field>
+                                    
+                                    <template>
+                                    <h2 class="text-h6 mb-2">
+                                        Examples
+                                    </h2>
+                                    <v-chip-group
+                                        column
+                                        dark
+                                        v-model="selectedExample"
+                                        style="max-width: 400px; margin: 0 auto; "
+                                    >
 
-                                <v-chip v-for="item in examples" :key="item.id"
-                                    outlined v-on:click="query=item.id" >
-                                    <b>{{ item.id }}</b> &emsp; {{ item.desc }}
-                                </v-chip>
-                            </v-chip-group>
-                            </template>
+                                        <v-chip v-for="item in examples" :key="item.id"
+                                            outlined v-on:click="query=item.id" >
+                                            <b>{{ item.id }}</b> &emsp; {{ item.desc }}
+                                        </v-chip>
+                                    </v-chip-group>
+                                </template>
+                                </v-tab-item>
+                                <v-tab-item>
+                                    <FoldseekSearchButton @response="foldseekResult"></FoldseekSearchButton>
+                                </v-tab-item>
+                            </v-tabs-items>
                         </v-col>
                     </v-row>
                 </v-parallax>
             </v-flex>
-            <v-flex xs12 v-if="false && response.length > 0">
+            <v-flex xs12 v-if="response.length > 0" ref="results">
                 <panel class="query-panel d-flex fill-height" fill-height>
                     <template slot="header">
                         Select cluster by UniProt member
@@ -120,14 +136,14 @@
 
 <script>
 import Panel from "./Panel.vue";
-import FileButton from "./FileButton.vue";
 import TaxSpan from "./TaxSpan.vue";
+import FoldseekSearchButton from "./FoldseekSearchButton.vue";
 
 export default {
     name: "search",
     components: { 
         Panel,
-        FileButton,
+        FoldseekSearchButton,
         TaxSpan,
     },
     data() {
@@ -135,6 +151,7 @@ export default {
             windowHeight: window.innerHeight- 48,
             query: "B4DKH6",
             selectedExample: 1,
+            tab: 0,
             examples: [
                 {id:'A0A849TG76', desc:'predicted \'Transporter\' protein'},
                 {id:'B4DKH6', desc:'Bactericidal permeability-increasing protein'},
@@ -161,10 +178,10 @@ export default {
                     text: "Number of members",
                     value: "n_mem",
                 },
-                {
-                    text: "LCA Taxonomy",
-                    value: "lca_tax_id",
-                },
+                // {
+                //     text: "LCA Taxonomy",
+                //     value: "lca_tax_id",
+                // },
                 {
                     text: "Is Dark",
                     value: "is_dark",
@@ -191,7 +208,6 @@ export default {
             this.error = null;
             this.$axios.post("/" + this.query)
                 .then(response => {
-                    // this.response = response.data;
                     this.$router.push({ name: 'cluster', params: { cluster: response.data[0].rep_accession } })
                 })
                 .catch((err) => {
@@ -205,6 +221,16 @@ export default {
                     this.inSearch = false;
                 });
         },
+        foldseekResult(result) {
+            this.response = result;
+            this.$nextTick(() => {
+                this.$refs.results.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                    inline: "nearest"
+                })
+            })
+        }
     }
 };
 </script>
@@ -241,5 +267,17 @@ code {
 
 #search-container >>> .v-slide-group__content {
     justify-content: center;
+}
+
+.search-select >>> .v-tabs-bar {
+    height: 36px;
+}
+
+.search-select >>> .v-tab {
+    text-transform: none;
+    padding: 0 24px
+}
+.v-tabs-items {
+    background-color: transparent !important;
 }
 </style>

@@ -4,16 +4,18 @@ dotenv.config();
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
+import { existsSync } from 'fs';
 
 import DbReader from './dbreader.mjs';
 import read from './compressed_ca.mjs';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-
 import { serializeTree, unserializeTree, idx_to_rank } from './ncbitaxonomy.mjs';
-import { existsSync } from 'fs';
+import FileCache from './filecache.mjs';
+import { convertToQueryUrl } from './utils.mjs';
 
 const dataPath =  process.env.DATA_PATH || './data';
+const cachePath = process.env.CACHE_PATH || './data/cache';
 const port = process.env.EXPRESS_PORT || 3000;
 
 console.time();
@@ -67,10 +69,77 @@ await avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index');
 console.timeLog();
 
 const app = express();
-
 app.use(cors());
+app.use(express.text({
+    limit: '50mb',
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const fileCache = new FileCache(cachePath);
+
+async function formatFoldseekResult(result) {
+    const accessions = result.map(r => r.accession);
+    const rows = await sql.all(
+        `SELECT *
+            FROM cluster
+            WHERE rep_accession IN (
+                SELECT DISTINCT rep_accession
+                FROM member
+                WHERE accession IN (${accessions.map(() => '?').join(',')})
+            )
+            `
+        , accessions);
+    return rows;
+}
+app.post('/api/foldseek', async (req, res) => {
+    const pdb = req.body;
+    if (fileCache.contains(pdb)) {
+        const result = JSON.parse(fileCache.get(pdb));
+        res.send(await formatFoldseekResult(result));
+        return;
+    }
+
+    let result = await axios.post('https://search.foldseek.com/api/ticket', convertToQueryUrl({
+        q: pdb,
+        database: ["afdb50", "afdb-swissprot", "afdb-proteome"],
+        mode: "3diaa"
+    }), {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    });
+    let job = result.data;
+    while (job.status == 'PENDING' || job.status == 'RUNNING') {
+        await new Promise(r => setTimeout(r, 1000));
+        result = await axios.get('https://search.foldseek.com/api/ticket/' + job.id);
+        job = result.data;
+    }
+    if (job.status != 'COMPLETE') {
+        throw new Error('Foldseek failed');
+    }
+
+    result = await axios.get('https://search.foldseek.com/api/result/' + job.id + '/0');
+    const aln = result.data;
+    let results = [];
+    for (let i = 0; i < aln.results.length; i++) {
+        let result = aln.results[i];
+        for (let j = 0; j < result.alignments.length; j++) {
+            const target = result.alignments[j].target;
+            const accession = target.match(/AF-(.*)-F\d-model/)[1];
+            results.push({
+                accession: accession,
+                eval: result.alignments[j].eval,
+                score: result.alignments[j].score,
+                seqId: result.alignments[j].seqId,
+                prob: result.alignments[j].prob,
+            });
+        }
+    }
+
+    fileCache.add(pdb, JSON.stringify(results));
+    res.send(await formatFoldseekResult(results))
+});
 
 app.post('/api/:query', async (req, res) => {
     // axios.get("https://rest.uniprot.org/uniprotkb/search?query=" + req.params.query, {
@@ -431,7 +500,7 @@ app.get('/api/structure/:structure', async (req, res) => {
 app.use((err, req, res, next) => {
     console.log(err);
     res.status(500);
-    res.send({ error: err });
+    res.send({ error: err.response && err.response.data ? err.response.data : err.message });
 });
 
 app.listen(port, () => {

@@ -16,3 +16,4 @@ data/*.dmp
 data/gc.prt
 data/readme.txt
 data/ncbitaxonomy.json
+data/cache/*
