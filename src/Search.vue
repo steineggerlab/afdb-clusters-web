@@ -94,7 +94,7 @@
                             :items="response"
                         >
                             <template v-slot:item.rep_accession="prop">
-                                <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}">{{ prop.value }}</router-link>
+                                <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}" target='_blank'>{{ prop.value }}</router-link>
                             </template>
 
                             <template v-slot:item.avg_len="prop">
