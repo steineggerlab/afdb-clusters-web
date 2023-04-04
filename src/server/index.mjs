@@ -92,35 +92,15 @@ async function formatFoldseekResult(result) {
         , accessions);
     return rows;
 }
-app.post('/api/foldseek', async (req, res) => {
-    req.setTimeout(0);
-    const pdb = req.body;
-    if (fileCache.contains(pdb)) {
-        const result = JSON.parse(fileCache.get(pdb));
-        res.send(await formatFoldseekResult(result));
+app.get('/api/foldseek/:jobid', async (req, res) => {
+    if (fileCache.contains(req.params.jobid)) {
+        res.send(await formatFoldseekResult(JSON.parse(fileCache.get(req.params.jobid))));
         return;
     }
-
-    let result = await axios.post('https://search.foldseek.com/api/ticket', convertToQueryUrl({
-        q: pdb,
-        database: ["afdb50", "afdb-swissprot", "afdb-proteome"],
-        mode: "3diaa"
-    }), {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
+    let result = await axios.get('https://search.foldseek.com/api/result/' + req.params.jobid + '/0', {
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
     });
-    let job = result.data;
-    while (job.status == 'PENDING' || job.status == 'RUNNING') {
-        await new Promise(r => setTimeout(r, 1000));
-        result = await axios.get('https://search.foldseek.com/api/ticket/' + job.id);
-        job = result.data;
-    }
-    if (job.status != 'COMPLETE') {
-        throw new Error('Foldseek failed');
-    }
-
-    result = await axios.get('https://search.foldseek.com/api/result/' + job.id + '/0');
     const aln = result.data;
     let results = [];
     for (let i = 0; i < aln.results.length; i++) {
@@ -143,8 +123,7 @@ app.post('/api/foldseek', async (req, res) => {
             });
         }
     }
-
-    fileCache.add(pdb, JSON.stringify(results));
+    fileCache.add(req.params.jobid, JSON.stringify(results));
     res.send(await formatFoldseekResult(results))
 });
 
