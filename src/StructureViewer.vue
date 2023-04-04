@@ -86,7 +86,14 @@
         </div>
         <template v-if="second">
             <span v-if="secondComponent == null">Superposition loading</span>
-            <span v-else><span style="color:#FFC107">{{ second }}</span> superposed on representative <span style="color:#1E88E5">{{ cluster }}</span>.</span>
+            <template v-else>
+                <span style="color:#FFC107">{{ second }}</span> superposed on representative <span style="color:#1E88E5">{{ cluster }}</span>
+                <template v-if="tmOutput">
+                    <br>
+                    <span><strong>TM-score:</strong>&nbsp; {{ tmOutput.tmScore.toFixed(2) }}</span>&nbsp;
+                    <span><strong>RMSD:</strong>&nbsp; {{ tmOutput.rmsd.toFixed(2) }}</span>
+                </template>
+            </template>
         </template>
     </div>
 </template>
@@ -227,6 +234,7 @@ export default {
         stage: null,
         component: null,
         secondComponent: null,
+        tmOutput: null,
         'isFullscreen': false,
         'hovered': false,
     }),
@@ -382,9 +390,10 @@ END
                             let tSubPdb = makeSubPDB(c.structure, '')
                             return tmalign(tSubPdb, qSubPdb)
                         })
-                        .then(({ t, u }) => {
+                        .then((tm) => {
                             this.secondComponent = tmpComponent;
-                            transformStructure(this.secondComponent.structure, t, u)
+                            this.tmOutput = tm.output;
+                            transformStructure(this.secondComponent.structure, tm.matrix.t, tm.matrix.u)
                             this.component.removeAllRepresentations();
                             this.component.addRepresentation("cartoon", { color: "#1E88E5" });
                             this.secondComponent.addRepresentation("cartoon", { color: "#FFC107" });

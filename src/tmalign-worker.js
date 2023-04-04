@@ -1,8 +1,9 @@
-import { tmalign, parseMatrix } from 'tmalign-wasm';
+import { tmalign, parseMatrix, parse } from 'tmalign-wasm';
 
 self.onmessage = ({ data: { pdb1, pdb2 } }) => {
     tmalign(pdb1, pdb2).then((tm) => {
         const {t, u} = parseMatrix(tm.matrix);
-        self.postMessage({ t, u });
+        const output = parse(tm.output);
+        self.postMessage({ matrix: { t, u }, output: output });
     });
 };
