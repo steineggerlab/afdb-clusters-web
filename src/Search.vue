@@ -20,7 +20,7 @@
                                 AlphaFold Clusters
                             </h1>
                             <h4 class="subheading">
-                                Investigate the <a href="https://foldseek.com" target="_blank" rel="noopener">Foldseek</a> clustered <a href="https://alphafold.ebi.ac.uk">AlphaFold database</a>
+                                Investigate the <a href="https://foldseek.com" target="_blank" rel="noopener">Foldseek</a> clustered <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener">AlphaFold database</a>
                             </h4>
                             
                             <br>
