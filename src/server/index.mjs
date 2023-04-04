@@ -405,11 +405,18 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
     `, accessions);
     result.forEach((x) => {
         x.evalue = map.get(x.rep_accession);
-        x.lca_tax_id = tree.getNode(x.lca_tax_id);
+        if (tree.nodeExists(x.lca_tax_id)) {
+            x.lca_tax_id = tree.getNode(x.lca_tax_id);
+        } else {
+            x.lca_tax_id = null;
+        }
     });
     if (req.body && req.body.tax_id) {
         result = result.filter((x) => {
             let currNode = x.lca_tax_id;
+            if (currNode == null) {
+                return false;
+            }
             while (currNode.id != 1) {
                 if (currNode.id == req.body.tax_id.value) {
                     return true;
