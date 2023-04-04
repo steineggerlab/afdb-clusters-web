@@ -124,9 +124,15 @@ app.post('/api/foldseek', async (req, res) => {
     let results = [];
     for (let i = 0; i < aln.results.length; i++) {
         let result = aln.results[i];
+        if (!result.alignments) {
+            continue;
+        }
         for (let j = 0; j < result.alignments.length; j++) {
             const target = result.alignments[j].target;
             const accession = target.match(/AF-(.*)-F\d-model/)[1];
+            if (result.alignments[j].prob < 0.95) {
+                continue;
+            }
             results.push({
                 accession: accession,
                 eval: result.alignments[j].eval,

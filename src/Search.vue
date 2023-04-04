@@ -78,10 +78,10 @@
                     </v-row>
                 </v-parallax>
             </v-flex>
-            <v-flex xs12 v-if="response.length > 0" ref="results">
+            <v-flex xs12 v-if="response != null" ref="results">
                 <panel class="query-panel d-flex fill-height" fill-height>
                     <template slot="header">
-                        Select cluster by UniProt member
+                        Cluster selection
                     </template>
                     <template slot="toolbar-extra">
                     </template>
@@ -158,7 +158,7 @@ export default {
                 {id:'A0A1S3QU81', desc:' Gasdermin containing domain'},
             ],
             inSearch: false,
-            response: [],
+            response: null,
             error: null,
             headers: [
                 {
@@ -198,8 +198,7 @@ export default {
     },
     computed: {
         windowHeight() {
-            if (this.response.length > 0) {
-                console.log("asd");
+            if (this.response != null && this.response.length > 0) {
                 return 500;
             }
             return Math.max(Math.min(860, (window.innerHeight - 48) * 0.8), 500);
