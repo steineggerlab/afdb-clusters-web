@@ -1,5 +1,6 @@
 <template>
     <v-autocomplete
+        :disabled="disabled"
         :allow-overflow="false"
         :items="items"
         :loading="isLoading"
@@ -19,11 +20,10 @@
 </template>
 
 <script>
-import { create } from 'axios';
 import { debounce } from './lib/debounce';
 
 export default {
-    props: ['value', 'cluster', 'urlFunction'],
+    props: ['value', 'cluster', 'urlFunction', 'disabled' ],
     data() {
         return {
             items: [],
@@ -36,10 +36,9 @@ export default {
     },
     watch: {
         value(val) {
-            this.items = [ this.value ];
+            this.items = [ val ];
         },
-        search (val) {
-            this.items = [];
+        search(val) {
             if (val && val.length > 2 && val !== this.value) {
                 this.querySelections(val)
             }

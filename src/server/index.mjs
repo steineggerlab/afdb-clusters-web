@@ -210,14 +210,8 @@ app.get('/api/cluster/:cluster/annotations', async (req, res) => {
     res.send({result: result});
 });
 
-app.get('/api/cluster/:cluster/sankey', async (req, res) => {
-    const cluster = req.params.cluster;
-    let result = await sql.all(`
-    SELECT tax_id
-        FROM member
-        WHERE rep_accession == ?;
-    `, cluster);
 
+function makeSankey(result) {
     let nodes = {};
     let links = {};
     const allowedRanks = [28, 27, 24, 12, 8, 4];
@@ -227,60 +221,83 @@ app.get('/api/cluster/:cluster/sankey', async (req, res) => {
         }
         let node = tree.getNode(x.tax_id, true);
         while (node.id != 1) {
-            let currentName = node.name;
-            let currentRank = node.rank;
+            let currentNode = node;
             // skip all ranks except superkingdom, phylum, class, order, family, genus
-            while (!allowedRanks.includes(currentRank)) {
+            while (!allowedRanks.includes(currentNode.rank)) {
                 node = tree.getNode(node.parent, true);
-                currentName = node.name;
-                currentRank = node.rank;
-                if (node.id == 1) {
+                currentNode = node;
+                if (currentNode.id == 1) {
                     break;
                 }
             }
 
-            if (!(currentName in nodes)) {
-                nodes[currentName] = {
-                    id: currentName,
+            if (!(currentNode.id in nodes)) {
+                nodes[currentNode.id] = {
+                    id: currentNode.id,
+                    name: currentNode.name,
                 };
             }
 
             node = tree.getNode(node.parent, true);
-            let parentName = node.name;
-            let parentRank = node.rank;
-            while (!allowedRanks.includes(parentRank)) {
+            let parentNode = node;
+            while (!allowedRanks.includes(parentNode.rank)) {
                 node = tree.getNode(node.parent, true);
-                parentName = node.name;
-                parentRank = node.rank;
-                if (node.id == 1) {
+                parentNode = node;
+                if (parentNode.id == 1) {
                     break;
                 }
             }
 
-            if (parentName == 'root') {
+            if (parentNode.name == 'root') {
                 continue;
             }
 
-            const linkKey = `${currentName}-${node.name}`;
+            const linkKey = `${currentNode.id}-${parentNode.id}`;
             if (!(linkKey in links)) {
                 links[linkKey] = {
-                    source: parentName,
-                    target: currentName,
+                    source: parentNode.id,
+                    target: currentNode.id,
                     value: 1,
-                    rank: idx_to_rank[currentRank],
+                    rank: idx_to_rank[currentNode.rank],
+                    name: currentNode.name,
                 }
             } else {
                 links[linkKey].value += 1;
             }
         }
     });
-    nodes['root'] = { id : 'root' };
+    // nodes['root'] = { id : 'root' };
+    return { nodes : Object.values(nodes), links : Object.values(links) };
+}
 
-    const asd = {
-        nodes: Object.values(nodes),
-        links: Object.values(links),
+app.get('/api/cluster/:cluster/sankey-members', async (req, res) => {
+    const cluster = req.params.cluster;
+    let result = await sql.all(`
+    SELECT tax_id
+        FROM member
+        WHERE rep_accession == ?;
+    `, cluster);
+    res.send({result: makeSankey(result)});
+});
+
+app.get('/api/cluster/:cluster/sankey-similars', async (req, res) => {
+    const cluster = req.params.cluster;
+    const avaKey = avaDb.id(cluster);
+    if (avaKey.found == false) {
+        res.send([]);
+        return;
     }
-    res.send({result: asd});
+    const ava = avaDb.data(avaKey.value).toString('ascii');
+    let ids_evalue = ava.split('\n').map((x) => x.split(' '));
+    ids_evalue.splice(-1);
+    let map = new Map(ids_evalue);
+    const accessions = ids_evalue.map((x) => x[0]);
+    let result = await sql.all(`
+    SELECT lca_tax_id as tax_id
+        FROM cluster
+        WHERE rep_accession IN (${accessions.map(() => "?").join(",")});
+    `, accessions);
+    res.send({result: makeSankey(result)});
 });
 
 app.post('/api/cluster/:cluster', async (req, res) => {

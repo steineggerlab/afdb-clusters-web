@@ -1,5 +1,6 @@
 <template>
-    
+    <div>
+    <Sankey :cluster="cluster" type="members" @select="sankeySelect"></Sankey>
     <v-data-table
         :headers="headers"
         :items="members"
@@ -69,7 +70,7 @@
             </v-menu>
         </template>
         <template v-slot:header.tax_id="{ header }">
-                <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b"></TaxonomyAutocomplete>
+                <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b" :disabled="taxAutocompleteDisabled"></TaxonomyAutocomplete>
         </template>
         <template v-slot:item.tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
@@ -81,6 +82,7 @@
             </v-chip>
         </template>
     </v-data-table>
+    </div>
 </template>
 
 <script>
@@ -89,6 +91,8 @@ import StructureViewer from "./StructureViewer.vue";
 import UniprotLink from "./UniprotLink.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Fragment from "./Fragment.vue";
+import Sankey from './Sankey.vue';
+
 
 export default {
     name: "members",
@@ -98,11 +102,11 @@ export default {
         UniprotLink,
         TaxonomyAutocomplete,
         Fragment,
+        Sankey,
     },
     props: ["cluster"],
     data() {
         return {
-            taxonomyFilter: null,
             headers: [
                 {
                     text: "Structure",
@@ -144,7 +148,8 @@ export default {
             totalMembers: 0,
             loading: false,
             options: {},
-            images: []
+            images: [],
+            taxAutocompleteDisabled: false,
         }
     },
     watch: {
@@ -158,12 +163,17 @@ export default {
             this.fetchData();
         }
     },
-    computed: {
-        taxonomySearch() {
-            return this.taxonomyFilter ? String(this.taxonomyFilter.value) : null;
-        },
-    },
     methods: {
+        sankeySelect(value) {
+            if (value == null) {
+                this.options.tax_id = null;
+                this.taxAutocompleteDisabled = false;
+            } else {
+               this.options.tax_id = { value: value.id, text: value.name };
+               this.taxAutocompleteDisabled = true;
+            }
+            this.fetchData()
+        },
         getImage(acession) {
             const image = this.images.find(image => image.accession === acession);
             if (image) {

@@ -108,7 +108,7 @@
         </template>
     </panel>
     </v-flex>
-    <v-flex xs12 md3>
+    <v-flex xs12 md4>
     <Panel class="repr-structure">
         <template slot="header">
             Representative structure
@@ -117,24 +117,6 @@
             <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" :second="second" bgColorDark="#2e2e2e" @reset="second = ''"></StructureViewer>
         </template>
 p    </Panel>
-    </v-flex>
-
-    <v-flex xs12 md3>
-        <template>
-            <Sankey></Sankey>
-        </template>
-    </v-flex>
-
-
-    <v-flex xs12>
-    <Panel style="margin-top: 1em;">
-        <template slot="header">
-            Sankey
-        </template>
-        <template slot="content" >
-            <Sankey :cluster="cluster"></Sankey>
-        </template>
-    </Panel>
     </v-flex>
 
     <v-flex xs12>
@@ -169,7 +151,6 @@ import Members from "./Members.vue";
 import TaxSpan from "./TaxSpan.vue";
 import UniprotLink from "./UniprotLink.vue";
 import Similars from "./Similars.vue";
-import Sankey from './Sankey.vue';
 // import Annotations from "./Annotations.vue";
 
 export default {
@@ -181,7 +162,6 @@ export default {
     TaxSpan,
     UniprotLink,
     Similars,
-    Sankey,
     // Annotations,
 },
     data() {

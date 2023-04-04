@@ -8,17 +8,26 @@ import { sankey, sankeyLinkHorizontal, sankeyLeft } from 'd3-sankey';
 
 export default {
     name: 'Sankey',
-    props: ['cluster'],
+    props: ['cluster', 'type'],
+    data: () => ({
+        response: null,
+    }),
     watch: {
         cluster() {
             this.fetchData();
         },
+        response() {
+            this.render(this.response);
+        }
+    },
+    mounted() {
+        this.fetchData();
     },
     methods: {
         fetchData() {
-            this.$axios.get("/cluster/" + this.cluster + "/sankey")
+            this.$axios.get("/cluster/" + this.cluster + "/sankey-" + this.type)
                 .then(response => {
-                    this.render(response.data.result);
+                    this.response = response.data.result;
                 })
                 .catch(() => {})
         },
@@ -30,47 +39,24 @@ export default {
             
             const nodeWidth = 35;
             const nodePadding = 5;
-            
-            let atRank = {}; // min at rank 10
 
-            // min at rank 10
-            items.links.forEach((link) => {
-                if (link.rank in atRank)
-                    atRank[link.rank].push(JSON.parse(JSON.stringify(link)));
-                else
-                    atRank[link.rank] = [ JSON.parse(JSON.stringify(link)) ];
-            });
-            // sort each atRank by value
-            for (let rank in atRank) {
-                atRank[rank] = atRank[rank].sort((a, b) => b.value - a.value).slice(0, 10);
+            const atRank = {};
+            for (const link of items.links) {
+                const rank = link.rank;
+                const copyLink = JSON.parse(JSON.stringify(link));
+                atRank[rank] = atRank[rank] || [];
+                atRank[rank].push(copyLink);
             }
-            // flatten
-            let filterNodes = [];
+            
             let filterLinks = [];
-            for (let rank in atRank) {
-
-                filterLinks = filterLinks.concat(atRank[rank]);
+            let keep = new Set();
+            for (const rank in atRank) {
+                const sorted = atRank[rank].sort((a, b) => b.value - a.value)
+                filterLinks = filterLinks.concat(sorted.slice(0, 10));
             }
 
-
-            let isLeaves = {}; // find the leaves
-            
-            filterLinks.forEach((link) => {
-                if (!filterNodes.includes(link.source))
-                filterNodes.push(link.source);
-                if (!filterNodes.includes(link.target))
-                filterNodes.push(link.target);
-
-                // find the leaves (at the most right-s)
-                isLeaves[link.source] = false;
-                if (!(link.target in isLeaves)) {
-                  isLeaves[link.target] = true;
-                }
-            });
-            
-            let newNodes = filterNodes.map((node) => {
-                return { id: node, isLeaf: isLeaves[node] };
-            });
+            const filterNodes = new Set(filterLinks.flatMap(link => [link.source, link.target]));
+            const newNodes = items.nodes.filter(node => filterNodes.has(node.id)).reverse();
             
             const svg = d3
                 .select(this.$refs.svg)
@@ -86,23 +72,36 @@ export default {
                 .nodeWidth(nodeWidth)
                 .nodePadding(nodePadding)
                 .nodeAlign(sankeyLeft)
-                .extent([[0, 0], [width - 125, height - 10]]);
+                .extent([[0, 5], [width - 175, height - 5]]);
 
             const { nodes, links } = s({ nodes: newNodes, links: filterLinks });
-            
             svg.append('g')
                     .attr('stroke', '#000')
                     .attr('stroke-width', '0')
                 .selectAll('rect')
                 .data(nodes)
                 .join('rect')
+                    .attr('class', (d) => 'node taxid-' + d.id)
                     .attr('x', (d) => d.x0 + 1)
                     .attr('y', (d) => d.y0)
                     .attr('height', (d) => d.y1 - d.y0)
                     .attr('width', (d) => d.x1 - d.x0 - 2)
-                    .attr('fill', (d) => (d.isLeaf) ? colors[d.index % colors.length] : "#888")
+                    .attr('fill', (d) => 
+                    {   
+                        return (d.sourceLinks.length == 0) ? colors[d.index % colors.length] : "#888";
+                    })
+                    .on('click', (event, d) => {
+                        if (event.target.classList.contains('active')) {
+                            d3.selectAll('rect.node, text.label').classed('active', false);
+                            this.$emit('select', null);
+                        } else {
+                            d3.selectAll('rect.node, text.label').classed('active', false);
+                            d3.selectAll('.taxid-' + d.id).classed('active', true);
+                            this.$emit('select', { name: d.name, id: d.id });
+                        }
+                    })
                 .append('title')
-                    .text((d) => `${d.id}: ${d.value}`);
+                    .text((d) => `${d.name}: ${d.value}`);
                 
             const link = svg
                 .append('g')
@@ -118,7 +117,7 @@ export default {
                 .attr('stroke-width', (d) => Math.max(1, d.width));
             
             link.append('title')
-                .text((d) => `${d.source.id} → ${d.target.id}: ${d.value}`);
+                .text((d) => `${d.source.name} → ${d.target.name}: ${d.value}`);
             
             svg.append('g')
                 .selectAll('text')
@@ -126,9 +125,20 @@ export default {
                 .join('g')
                     .attr('transform', (d) => `translate(${d.x1 + 3},${d.y0 + ((d.y1 - d.y0) / 2) + 1})`)
                 .append('text')
+                    .attr('class', (d) => 'label taxid-' + d.id)
                     .attr('text-anchor', 'start')
                     .attr('dominant-baseline', 'middle')
-                    .text((d) => d.id);
+                    .text((d) => d.name)
+                    .on('click', (event, d) => {
+                        if (event.target.classList.contains('active')) {
+                            d3.selectAll('rect.node, text.label').classed('active', false);
+                            this.$emit('select', null);
+                        } else {
+                            d3.selectAll('rect.node, text.label').classed('active', false);
+                            d3.selectAll('.taxid-' + d.id).classed('active', true);
+                            this.$emit('select', { name: d.name, id: d.id });
+                        }
+                    })
         }
     }
 };
@@ -141,7 +151,38 @@ export default {
 .theme--light svg text {
     fill: black;
 }
+
 svg text {
-    font-size: min(calc(20px + (8 - 14) * ((100vw - 480px) / (960 - 480))), 20px);
+    cursor: pointer;
+    font-size: calc(30px + (8 - 16) * ((100vw - 320px) / (640 - 320)));
+}
+
+svg text.label.active {
+    font-weight: bold;
+}
+
+svg rect.node {
+    cursor: pointer;
+}
+
+svg rect.node.active {
+    stroke-width: 2px;
+    stroke: #333;
+}
+
+@media (min-width: 641px) {
+    svg text {
+        font-size: calc(16px + (4 - 8) * ((100vw - 640px) / (1280 - 640)));
+    }
+}
+
+@media (min-width: 1280px) {
+    svg {
+        width: 1280px;
+    }
+    
+    svg text {
+        font-size: 10px;
+    }
 }
 </style>
