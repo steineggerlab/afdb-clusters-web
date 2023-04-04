@@ -93,6 +93,7 @@ async function formatFoldseekResult(result) {
     return rows;
 }
 app.post('/api/foldseek', async (req, res) => {
+    req.setTimeout(0);
     const pdb = req.body;
     if (fileCache.contains(pdb)) {
         const result = JSON.parse(fileCache.get(pdb));

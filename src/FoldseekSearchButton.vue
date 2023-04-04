@@ -42,7 +42,8 @@ export default {
             var reader = new FileReader();
             reader.onload = e => {
                 this.$axios.post("/foldseek", e.target.result, {
-                    headers: { 'Content-Type': 'text/plain' }
+                    headers: { 'Content-Type': 'text/plain' },
+                    timeout: 0,
                 })
                 .then(response => {
                     this.$emit('response', response.data);
