@@ -217,10 +217,11 @@ function makeSankey(result) {
                 }
             }
 
-            if (!(currentNode.id in nodes)) {
+            if (!(currentNode.id in nodes) && currentNode.id != 1) {
                 nodes[currentNode.id] = {
                     id: currentNode.id,
                     name: currentNode.name,
+                    rank: idx_to_rank[currentNode.rank],
                 };
             }
 
@@ -234,8 +235,16 @@ function makeSankey(result) {
                 }
             }
 
-            if (parentNode.name == 'root') {
-                continue;
+            if (!(parentNode.id in nodes) && parentNode.id != 1) {
+                nodes[parentNode.id] = {
+                    id: parentNode.id,
+                    name: parentNode.name,
+                    rank: idx_to_rank[parentNode.rank],
+                };
+            }
+
+            if (currentNode.id == 1 || parentNode.id == 1) {
+                break;
             }
 
             const linkKey = `${currentNode.id}-${parentNode.id}`;
@@ -244,8 +253,8 @@ function makeSankey(result) {
                     source: parentNode.id,
                     target: currentNode.id,
                     value: 1,
-                    rank: idx_to_rank[currentNode.rank],
-                    name: currentNode.name,
+                    rank: idx_to_rank[parentNode.rank],
+                    name: parentNode.name,
                 }
             } else {
                 links[linkKey].value += 1;
@@ -276,10 +285,9 @@ app.get('/api/cluster/:cluster/sankey-similars', async (req, res) => {
     const ava = avaDb.data(avaKey.value).toString('ascii');
     let ids_evalue = ava.split('\n').map((x) => x.split(' '));
     ids_evalue.splice(-1);
-    let map = new Map(ids_evalue);
-    const accessions = ids_evalue.map((x) => x[0]);
+    const accessions = ids_evalue.map((x) => x[0]).filter((x) => x != cluster);
     let result = await sql.all(`
-    SELECT lca_tax_id as tax_id
+    SELECT DISTINCT lca_tax_id as tax_id
         FROM cluster
         WHERE rep_accession IN (${accessions.map(() => "?").join(",")});
     `, accessions);

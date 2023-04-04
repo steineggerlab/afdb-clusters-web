@@ -1,5 +1,5 @@
 <template>
-    <svg ref="svg"></svg>
+    <svg class="hide" ref="svg"></svg>
 </template>
 
 <script>
@@ -47,10 +47,10 @@ export default {
                 atRank[rank] = atRank[rank] || [];
                 atRank[rank].push(copyLink);
             }
-            
+
             let filterLinks = [];
             let keep = new Set();
-            for (const rank of ['kingdom']) {
+            for (const rank of ['superkingdom', 'kingdom']) {
                 if (!atRank[rank]) {
                     continue;
                 }
@@ -80,10 +80,16 @@ export default {
 
             const filterNodes = new Set(filterLinks.flatMap(link => [link.source, link.target]));
             const newNodes = items.nodes.filter(node => filterNodes.has(node.id)).reverse();
+
+            if (newNodes.length == 0) {
+                d3.select(this.$refs.svg).classed('hide', true);
+                return;
+            }
             
             const svg = d3
                 .select(this.$refs.svg)
-                .attr('viewBox', [0, 0, width, height]);
+                .attr('viewBox', [0, 0, width, height])
+                .classed('hide', false);
 
             svg.selectAll('*').remove();
             
@@ -173,6 +179,10 @@ export default {
 }
 .theme--light svg text {
     fill: black;
+}
+
+svg.hide {
+    display: none;
 }
 
 svg text {
