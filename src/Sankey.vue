@@ -50,7 +50,17 @@ export default {
             
             let filterLinks = [];
             let keep = new Set();
-            for (const rank of ['kingdom', 'phylum', 'family', 'genus', 'species']) {
+            for (const rank of ['kingdom', 'phylum']) {
+                if (!atRank[rank]) {
+                    continue;
+                }
+                let sorted = atRank[rank].sort((a, b) => b.value - a.value)
+                for (let i = 0; i < sorted.length; i++) {
+                    keep.add(sorted[i].target);
+                    filterLinks.push(sorted[i]);
+                }
+            }
+            for (const rank of ['family', 'genus', 'species']) {
                 if (!atRank[rank]) {
                     continue;
                 }
@@ -58,7 +68,7 @@ export default {
                 let count = 0;
                 while (count < 10 && sorted.length > 0) {
                     let link = sorted.shift();
-                    if (rank != "kingdom" && !keep.has(link.source)) {
+                    if (!keep.has(link.source)) {
                         continue;
                     }
                     keep.add(link.target);
