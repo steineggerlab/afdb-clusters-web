@@ -50,9 +50,21 @@ export default {
             
             let filterLinks = [];
             let keep = new Set();
-            for (const rank in atRank) {
-                const sorted = atRank[rank].sort((a, b) => b.value - a.value)
-                filterLinks = filterLinks.concat(sorted.slice(0, 10));
+            for (const rank of ['kingdom', 'phylum', 'family', 'genus', 'species']) {
+                if (!atRank[rank]) {
+                    continue;
+                }
+                let sorted = atRank[rank].sort((a, b) => b.value - a.value)
+                let count = 0;
+                while (count < 10 && sorted.length > 0) {
+                    let link = sorted.shift();
+                    if (rank != "kingdom" && !keep.has(link.source)) {
+                        continue;
+                    }
+                    keep.add(link.target);
+                    filterLinks.push(link);
+                    count++;
+                }
             }
 
             const filterNodes = new Set(filterLinks.flatMap(link => [link.source, link.target]));
