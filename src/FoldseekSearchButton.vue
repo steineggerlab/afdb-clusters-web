@@ -8,6 +8,7 @@
         x-large
         :color="this.error ? 'error' : 'primary'"
         accept=".pdb,.mmcif,.cif,.mcif,chemical/x-pdb,chemical/x-cif,chemical/x-mmcif"
+        v-bind="$attrs"
     >
     </FileButton>
     <div v-if="error">
@@ -48,7 +49,6 @@ export default {
                 })
                 .catch((err) => {
                     if (err.response && err.response.data && err.response.data.error) {
-                        console.log(err.response.data.error);
                         this.error = err.response.data.error;
                     } else {
                         this.error = "Unknown error";

@@ -5,6 +5,7 @@
                 <v-parallax
                     :height="windowHeight"
                     :src="require('./assets/bg.png')"
+                    dark
                 >
                     <v-row
                         align="center"
@@ -29,7 +30,9 @@
                                 slider-size="1"
                                 v-model="tab"
                                 centered
-                                background-color="transparent">
+                                background-color="transparent"
+                                dark
+                            >
                                 <v-tab>UniProt</v-tab>
                                 <v-tab>Structure</v-tab>
                             </v-tabs>
@@ -71,7 +74,7 @@
                                 </template>
                                 </v-tab-item>
                                 <v-tab-item>
-                                    <FoldseekSearchButton @response="foldseekResult"></FoldseekSearchButton>
+                                    <FoldseekSearchButton @response="foldseekResult" dark></FoldseekSearchButton>
                                 </v-tab-item>
                             </v-tabs-items>
                         </v-col>
