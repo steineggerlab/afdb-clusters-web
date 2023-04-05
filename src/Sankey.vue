@@ -3,8 +3,8 @@
 </template>
 
 <script>
-import * as d3 from 'd3';
-import { sankey, sankeyLinkHorizontal, sankeyLeft } from 'd3-sankey';
+import { select, selectAll } from 'd3';
+import { sankey } from './lib/sankeyD3/sankey.js';
 
 export default {
     name: 'Sankey',
@@ -38,121 +38,126 @@ export default {
             const height = 270;
             
             const nodeWidth = 35;
-            const nodePadding = 5;
+            const nodePadding = 9;
 
-            const atRank = {};
+            const tax_to_layer = {};
+            for (const node of items.nodes) {
+                node.posX = ['superkingdom', 'kingdom', 'phylum', 'family', 'genus', 'species'].indexOf(node.rank);
+                node.posX = node.posX * 100;
+                tax_to_layer[node.id] = node.posX;
+            }
+
+            items.links = items.links.sort((a, b) => {
+                const aLayer = tax_to_layer[a.target];
+                const bLayer = tax_to_layer[b.target];
+                if (aLayer != bLayer) {
+                    return aLayer - bLayer;
+                }
+                return b.value - a.value;
+            });
+
+            let groupedLinks = {};
+            let eliminatedNodes = new Set();
+            let nodeIdx = {};
             for (const link of items.links) {
-                const rank = link.rank;
-                const copyLink = JSON.parse(JSON.stringify(link));
-                atRank[rank] = atRank[rank] || [];
-                atRank[rank].push(copyLink);
-            }
-
-            let filterLinks = [];
-            let keep = new Set();
-            for (const rank of ['superkingdom', 'kingdom']) {
-                if (!atRank[rank]) {
-                    continue;
-                }
-                let sorted = atRank[rank].sort((a, b) => b.value - a.value)
-                for (let i = 0; i < sorted.length; i++) {
-                    keep.add(sorted[i].target);
-                    filterLinks.push(sorted[i]);
-                }
-            }
-            for (const rank of ['phylum', 'family', 'genus', 'species']) {
-                if (!atRank[rank]) {
-                    continue;
-                }
-                let sorted = atRank[rank].sort((a, b) => b.value - a.value)
-                let count = 0;
-                const maxPerRank = rank == "phylum" ? 15 : 10;
-                while (count < maxPerRank && sorted.length > 0) {
-                    let link = sorted.shift();
-                    if (!keep.has(link.source)) {
-                        continue;
+                const key = `${tax_to_layer[link.target]}`;
+                if (groupedLinks[key]) {
+                    if (groupedLinks[key].length < 10 && !eliminatedNodes.has(link.target)) {
+                        nodeIdx[link.source] = groupedLinks[key].length;
+                        nodeIdx[link.target] = groupedLinks[key].length;
+                        groupedLinks[key].push(link);
+                    } else {
+                        eliminatedNodes.add(link.source);
                     }
-                    keep.add(link.target);
-                    filterLinks.push(link);
-                    count++;
+                } else { 
+                    if (!eliminatedNodes.has(link.target)) {
+                        nodeIdx[link.source] = 0;
+                        nodeIdx[link.target] = 0;
+                        groupedLinks[key] = [ link ];
+                    }
                 }
             }
 
-            const filterNodes = new Set(filterLinks.flatMap(link => [link.source, link.target]));
+            const newLinks = [].concat(...Object.values(groupedLinks));
+            const filterNodes = new Set(newLinks.flatMap(link => [link.source, link.target]));
             const newNodes = items.nodes.filter(node => filterNodes.has(node.id)).reverse();
 
             if (newNodes.length == 0) {
-                d3.select(this.$refs.svg).classed('hide', true);
+                select(this.$refs.svg).classed('hide', true);
                 return;
             }
             
-            const svg = d3
-                .select(this.$refs.svg)
+            const svg = select(this.$refs.svg)
                 .attr('viewBox', [0, 0, width, height])
                 .classed('hide', false);
 
             svg.selectAll('*').remove();
             
-            const color = d3.scaleOrdinal(d3.schemeCategory10);
-            
-            const s = sankey()
-                .nodeId((d) => d.id)
-                .nodeSort(undefined)
+            const s = sankey();
+            s
+                .nodes(newNodes)
+                .links(newLinks)
+                .size([width - 170, height - 10])
+                .align('none')
                 .nodeWidth(nodeWidth)
                 .nodePadding(nodePadding)
-                .nodeAlign(sankeyLeft)
-                .extent([[0, 5], [width - 175, height - 5]]);
+                .yOrderComparator((a, b) => {
+                    return b.value - a.value;
+                })
+            s.layout(10);
 
-            const { nodes, links } = s({ nodes: newNodes, links: filterLinks });
-            svg.append('g')
+            const container = svg.append('g')
+                .attr('transform', 'translate(0,5)')
+
+            container.append('g')
                     .attr('stroke', '#000')
                     .attr('stroke-width', '0')
                 .selectAll('rect')
-                .data(nodes)
+                .data(s.nodes())
                 .join('rect')
                     .attr('class', (d) => 'node taxid-' + d.id)
-                    .attr('x', (d) => d.x0 + 1)
-                    .attr('y', (d) => d.y0)
-                    .attr('height', (d) => d.y1 - d.y0)
-                    .attr('width', (d) => d.x1 - d.x0 - 2)
+                    .attr('x', (d) => d.x + 1)
+                    .attr('y', (d) => d.y)
+                    .attr('height', (d) => d.dy)
+                    .attr('width', (d) => d.dx - 2)
                     .attr('fill', (d) => 
                     {   
-                        return (d.sourceLinks.length == 0) ? colors[d.index % colors.length] : "#888";
+                        return (d.sourceLinks.length == 0) ? colors[nodeIdx[d.id] % colors.length] : "#888";
                     })
                     .on('click', (event, d) => {
                         if (event.target.classList.contains('active')) {
-                            d3.selectAll('rect.node, text.label').classed('active', false);
+                            selectAll('rect.node, text.label').classed('active', false);
                             this.$emit('select', null);
                         } else {
-                            d3.selectAll('rect.node, text.label').classed('active', false);
-                            d3.selectAll('.taxid-' + d.id).classed('active', true);
+                            selectAll('rect.node, text.label').classed('active', false);
+                            selectAll('.taxid-' + d.id).classed('active', true);
                             this.$emit('select', { name: d.name, id: d.id });
                         }
                     })
                 .append('title')
                     .text((d) => `${d.name}: ${d.value}`);
                 
-            const link = svg
+            const link = container
                 .append('g')
                     .attr('fill', 'none')
                 .selectAll('g')
-                .data(links)
+                .data(s.links())
                 .join('g')
                     .attr("stroke", "#88888844")
                     .style("mix-blend-mode", "multiply");
             
             link.append('path')
-                .attr('d', sankeyLinkHorizontal())
-                .attr('stroke-width', (d) => Math.max(1, d.width));
+                .attr('d', s.link())
+                .attr('stroke-width', (d) => Math.max(1, d.dy));
             
             link.append('title')
                 .text((d) => `${d.source.name} → ${d.target.name}: ${d.value}`);
             
-            svg.append('g')
+            container.append('g')
                 .selectAll('text')
-                .data(nodes)
+                .data(s.nodes())
                 .join('g')
-                    .attr('transform', (d) => `translate(${d.x1 + 3},${d.y0 + ((d.y1 - d.y0) / 2) + 1})`)
+                    .attr('transform', (d) => `translate(${(d.x + d.dx) + 3},${d.y + ((d.dy) / 2) + 1})`)
                 .append('text')
                     .attr('class', (d) => 'label taxid-' + d.id)
                     .attr('text-anchor', 'start')
@@ -160,11 +165,11 @@ export default {
                     .text((d) => d.name)
                     .on('click', (event, d) => {
                         if (event.target.classList.contains('active')) {
-                            d3.selectAll('rect.node, text.label').classed('active', false);
+                            selectAll('rect.node, text.label').classed('active', false);
                             this.$emit('select', null);
                         } else {
-                            d3.selectAll('rect.node, text.label').classed('active', false);
-                            d3.selectAll('.taxid-' + d.id).classed('active', true);
+                            selectAll('rect.node, text.label').classed('active', false);
+                            selectAll('.taxid-' + d.id).classed('active', true);
                             this.$emit('select', { name: d.name, id: d.id });
                         }
                     })
