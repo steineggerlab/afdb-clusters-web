@@ -8,7 +8,7 @@
   "license": "GPL-3.0-or-later",
   "gypfile": true,
   "scripts": {
-    "server": "cross-env NODE_ENV=production nodemon src/server/index.mjs",
+    "server": "cross-env NODE_ENV=production nodemon --watch .env --watch src/server src/server/index.mjs",
     "frontend": "webpack --mode production --progress --color --config src/webpack.config.js",
     "frontend:watch": "webpack --mode development --watch --progress --color --config src/webpack.config.js",
     "frontend:dev": "webpack serve --mode development --open --hot --static dist/ --config src/webpack.config.js",
