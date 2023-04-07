@@ -24,6 +24,26 @@ private:
         Napi::Env env = info.Env();
         return Napi::Number::New(env, this->keys.size());
     }
+    class ReadFileWorker : public Napi::AsyncWorker {
+    public:
+        ReadFileWorker(Napi::Function& callback, const std::string& filename, TSVReader* reader)
+            : Napi::AsyncWorker(callback), filename(filename), reader(reader)
+        {}
+
+        void Execute() override {
+            reader->readFile(filename);
+        }
+
+        void OnOK() override {
+            // Call the callback function with no arguments
+            Napi::HandleScope scope(Env());
+            Callback().Call({});
+        }
+
+    private:
+        std::string filename;
+        TSVReader* reader;
+    };
 };
 
 Napi::FunctionReference TSVReader::constructor;
@@ -80,13 +100,20 @@ void TSVReader::readFile(const std::string& filename) {
 Napi::Value TSVReader::ReadFile(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
-    if (info.Length() < 1 || !info[0].IsString()) {
-        TypeError::New(env, "Expected a file path").ThrowAsJavaScriptException();
-        return env.Null();
+    // Check the number of arguments
+    if (info.Length() < 1 || info.Length() > 2 || !info[0].IsString() ||
+        (info.Length() == 2 && !info[1].IsFunction())) {
+        Napi::TypeError::New(env, "Invalid arguments").ThrowAsJavaScriptException();
+        return env.Undefined();
     }
 
-    std::string filename = info[0].As<Napi::String>().Utf8Value();
-    readFile(filename);
+    // Get the filename argument and the callback function (if present)
+    std::string filename = info[0].ToString().Utf8Value();
+    Napi::Function callback = info.Length() == 2 ? info[1].As<Napi::Function>() : Napi::Function::New(env, [](const Napi::CallbackInfo&){});
+
+    // Create a ReadFileWorker instance to perform the file reading asynchronously
+    ReadFileWorker* worker = new ReadFileWorker(callback, filename, this);
+    worker->Queue();
 
     return env.Undefined();
 }

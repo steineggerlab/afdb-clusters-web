@@ -16,8 +16,16 @@ export default class DbReader {
         }
 
         this.index = new TSVReader();
-        this.index.readFile(indexFile);
-        this.size = this.index.getSize();
+        return new Promise((resolve, reject) => {
+            this.index.readFile(indexFile, (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    this.size = this.index.getSize();
+                    resolve();
+                }
+            });
+        });
     }
     
     delete() {
