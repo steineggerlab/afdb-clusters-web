@@ -6,6 +6,11 @@
         <template slot="header">
             Cluster: {{ response ? response.rep_accession : "Loading..." }}
         </template>
+
+        <template v-if="response.warning == true" slot="toolbar-extra">
+            <v-chip color="error">Warning</v-chip>
+        </template>
+
         <template slot="content" v-if="response">
             <h3>Representative summary</h3>
             <dl class="dl-3">
@@ -105,6 +110,15 @@
                     </dd>
                 </div> -->
             </dl>
+            <template v-if="response.warning == true">
+                <v-divider  style="margin-top:0.5em"></v-divider>
+                <h3 style="margin-top:1em; color: #F44336; text-decoration: underline;">
+                    Warning!
+                </h3>
+                <p>
+                    This cluster was wrongly merged with another cluster. We are working on a fix.
+                </p>
+            </template>
         </template>
     </panel>
     </v-flex>

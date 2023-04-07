@@ -54,6 +54,11 @@ const descDB = new DbReader();
 await descDB.make(dataPath + '/afdb_desc', dataPath + '/afdb_desc.index');
 console.timeLog();
 
+console.log('Loading warnings database...')
+const warnDB = new DbReader();
+await warnDB.make(dataPath + '/warning_db', dataPath + '/warning_db.index');
+console.timeLog();
+
 function getDescription(accession) {
     let descId = descDB.id(accession);
     if (descId.found == false) {
@@ -301,6 +306,12 @@ app.post('/api/cluster/:cluster', async (req, res) => {
     result.tax_id = tree.getNode(result.tax_id);
     result.rep_lineage = tree.lineage(result.tax_id);
     result.description = getDescription(result.rep_accession);
+    if (warnDB) {
+        const warnKey = warnDB.id(result.rep_accession);
+        result.warning = warnKey.found;
+    } else {
+        result.warning = false;
+    }
     res.send(result);
 });
 
