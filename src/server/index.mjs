@@ -34,29 +34,30 @@ const sql = await open({
 })
 console.timeLog();
 
-console.log('Loading AA database...')
+console.log('Loading Databases...')
+const checkpoints = [];
 const aaDb = new DbReader();
-await aaDb.make(dataPath + '/afdb', dataPath + '/afdb.index');
-console.timeLog();
+checkpoints.push(aaDb.make(dataPath + '/afdb', dataPath + '/afdb.index'));
 
-console.log('Loading C-alpha database...')
 const caDb = new DbReader();
-await caDb.make(dataPath + '/afdb_ca', dataPath + '/afdb_ca.index');
-console.timeLog();
+checkpoints.push(caDb.make(dataPath + '/afdb_ca', dataPath + '/afdb_ca.index'));
 
-console.log('Loading pLDDT database...')
 const plddtDB = new DbReader();
-await plddtDB.make(dataPath + '/afdb_plddt', dataPath + '/afdb_plddt.index');
-console.timeLog();
+checkpoints.push(plddtDB.make(dataPath + '/afdb_plddt', dataPath + '/afdb_plddt.index'));
 
-console.log('Loading descriptions database...')
 const descDB = new DbReader();
-await descDB.make(dataPath + '/afdb_desc', dataPath + '/afdb_desc.index');
-console.timeLog();
+checkpoints.push(descDB.make(dataPath + '/afdb_desc', dataPath + '/afdb_desc.index'));
 
-console.log('Loading warnings database...')
-const warnDB = new DbReader();
-await warnDB.make(dataPath + '/warning_db', dataPath + '/warning_db.index');
+const avaDb = new DbReader();
+checkpoints.push(avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index'));
+
+let warnDB = null;
+if (existsSync(dataPath + '/warning_db')) {
+    warnDB = new DbReader();
+    checkpoints.push(warnDB.make(dataPath + '/warning_db', dataPath + '/warning_db.index'));
+}
+
+await Promise.all(checkpoints);
 console.timeLog();
 
 function getDescription(accession) {
@@ -67,11 +68,6 @@ function getDescription(accession) {
         return descDB.data(descId.value).toString('utf8');
     }
 }
-
-console.log('Loading All-vs-all database...')
-const avaDb = new DbReader();
-await avaDb.make(dataPath + '/ava_db', dataPath + '/ava_db.index');
-console.timeLog();
 
 const app = express();
 app.use(cors());
