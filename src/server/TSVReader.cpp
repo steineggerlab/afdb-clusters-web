@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <sys/stat.h>
 
 using namespace Napi;
 
@@ -66,8 +67,45 @@ Napi::Object TSVReader::Init(Napi::Env env, Napi::Object exports) {
 
 TSVReader::TSVReader(const Napi::CallbackInfo& info) : Napi::ObjectWrap<TSVReader>(info) {}
 
+
+#include <type_traits>
+#include <limits>
+
+template<typename T>
+static inline T fast_atoi(const char* str) {
+    // handle empty string
+    if (*str == '\0') {
+        return 0;
+    }
+
+    T val = 0;
+    int sign = 1;
+    if constexpr (std::is_signed_v<T>) {
+        if (*str == '-') {
+            sign = -1;
+            ++str;
+        }
+    }
+
+    while (*str >= '0' && *str <= '9') {
+        val = val*10 + (*str++ - '0');
+    }
+
+    return sign * val;
+}
+
 void TSVReader::readFile(const std::string& filename) {
     FILE* handle = fopen(filename.c_str(), "r");
+
+    struct stat st;
+    fstat(fileno(handle), &st);
+    uint64_t file_size = st.st_size;
+
+    // reserve approximate number of lines in file (assuming ~32 bytes per line)
+    keys.reserve(file_size / 32);
+    offsets.reserve(file_size / 32);
+    lengths.reserve(file_size / 32);
+
     char line[1024];
     while (fgets(line, 1024, handle) != nullptr) {
         char* pos = line;
@@ -82,16 +120,13 @@ void TSVReader::readFile(const std::string& filename) {
         // extract offset
         end_pos = strchr(pos, '\t');
         if (end_pos != nullptr) {
-            std::string offset = std::string(pos, end_pos - pos);
-            offsets.emplace_back(std::strtoull(offset.c_str(), NULL, 10));
+            offsets.emplace_back(fast_atoi<uint64_t>(pos));
             pos = end_pos + 1;
         }
 
         // extract length
         if (pos != nullptr && pos[0] != '\0') {
-            std::string length = std::string(pos, strchr(pos, '\n') - pos);
-            uint32_t length_int = std::strtoul(length.c_str(), NULL, 10);
-            lengths.emplace_back(length_int);
+            lengths.emplace_back(fast_atoi<uint32_t>(pos));
         }
     }
     fclose(handle);
