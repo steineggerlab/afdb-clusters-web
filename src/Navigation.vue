@@ -21,6 +21,7 @@
 
     <v-spacer></v-spacer>
     <v-toolbar-items v-once class="hidden-sm-and-down">
+        <v-btn text rel="external noopener" target="_blank" href="https://af-protein-universe.streamlit.app/Figure_2_Putative_Novel_Enzymes">Dark enzymes prediction</v-btn>
         <v-btn text rel="external noopener" target="_blank" href="https://afdb-cluster.steineggerlab.workers.dev">Data download</v-btn>
         <v-btn text rel="external noopener" target="_blank" href="https://imsb.ethz.ch/research/beltrao.html">Beltrao Lab</v-btn>
         <v-btn text rel="external noopener" target="_blank" href="https://steineggerlab.com/en/">Steinegger Lab</v-btn>
