@@ -6,16 +6,14 @@
 
 sqlite3 $1 << EOF
 CREATE TABLE member (
-	accession TEXT,
+	accession TEXT PRIMARY KEY,
 	rep_accession TEXT,
 	tax_id TEXT,
-	flag INTEGER,
-	len INTEGER
+	flag INTEGER
 );
 
 CREATE TABLE cluster (
-	id INTEGER PRIMARY KEY,
-	rep_accession TEXT,
+	rep_accession TEXT PRIMARY KEY,
 	rep_len INTEGER,
 	rep_plddt REAL,
 	is_dark BOOLEAN,
@@ -94,3 +92,4 @@ ON cluster(rep_accession);
 DROP TABLE IF EXISTS tmpMember;
 DROP TABLE IF EXISTS tmpCluster;
 EOF
+
