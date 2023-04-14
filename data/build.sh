@@ -61,7 +61,7 @@ UPDATE tmpMember
 SET rep_id = REPLACE(rep_id, 'AF-', ''),
     mem_id = REPLACE(mem_id, 'AF-', '');
 UPDATE tmpMember
-SET rep_id = REPLACE(mem_id, '-F1-model_v3.cif', ''),
+SET rep_id = REPLACE(rep_id, '-F1-model_v3.cif', ''),
     mem_id = REPLACE(mem_id, '-F1-model_v3.cif', '');
 UPDATE tmpCluster
 SET rep_id = REPLACE(rep_id, 'AF-', '');
