@@ -6,6 +6,7 @@
         :loading="isLoading"
         :search-input.sync="search"
         :value="value"
+        :bundle_data="null"
         @input="change"
         placeholder="Taxonomic filter"
         hide-no-data
@@ -23,7 +24,7 @@
 import { debounce } from './lib/debounce';
 
 export default {
-    props: ['value', 'cluster', 'urlFunction', 'disabled' ],
+    props: ['value', 'cluster', 'urlFunction', 'disabled', 'bundle_data' ],
     data() {
         return {
             items: [],
@@ -56,13 +57,16 @@ export default {
             this.loading = true;
             // make a new axios instance to not leak the electron access token
             const url = this.urlFunction(encodeURIComponent(this.cluster), encodeURIComponent(name));
-            this.$axios.get(url)
+            
+            this.$axios.post(url, {
+                bundle_data: (this.bundle_data) ? this.bundle_data : undefined,
+            })
                 .then(response => {
                     this.items = response.data.map(item => {
                         return { 
                             text: item.name, 
                             value: item.id,
-                            rank: item.rank
+                            rank: item.rank,
                         }
                     });
                 }).finally(() => { this.loading = false; });

@@ -17,3 +17,13 @@ data/gc.prt
 data/readme.txt
 data/ncbitaxonomy.json
 data/cache/*
+data/gene_ontology/union_accession_GO.csv
+data/gene_ontology/go2-parent_child.csv
+data/gene_ontology/union_accession_GO.tsv
+data/gene_ontology/2-repId_isDark_nMem_repLen_avgLen_repPlddt_avgPlddt_LCAtaxId.tsv
+data/gene_ontology/rep_GO.csv
+data/afdb-clusters.sqlite3
+data/afdb-clusters.sqlite3
+data/gene_ontology/go2-parent_child.tsv
+data/gene_ontology/server-only-valid-GO_cluRep.tsv
+data/afdb-clusters.sqlite3

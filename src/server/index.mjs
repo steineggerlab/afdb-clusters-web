@@ -93,6 +93,153 @@ async function formatFoldseekResult(result) {
         , accessions);
     return rows;
 }
+
+app.post('/api/go/:goid', async (req, res) => {
+    const goid = req.params.goid;
+    const search_type = req.body.go_search_type;
+    
+    const total = await sql.get(`SELECT COUNT(rep_accession) as total FROM cluster_go WHERE goid = ?`, goid);
+    let result;
+    if (search_type === 'exact') {
+        result = await sql.all(
+            `SELECT *
+                FROM cluster as c
+                LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession
+                WHERE go.goid = ?
+                ORDER BY c.rep_accession
+                ;
+            `, goid);
+    } else {
+        result = await sql.all(
+            `SELECT * FROM cluster as c LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession WHERE go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?) ORDER BY c.rep_accession;
+            `, goid);
+    }
+    
+
+    result.forEach(x => {x.lca_tax_id = tree.getNode(x.lca_tax_id);})
+    // result.lca_tax_id = tree.getNode(result.lca_tax_id);
+    res.send({ total: total.total, result : result });
+});
+
+app.post('/api/cluster/:cluster/search/taxonomy/:suggest', async (req, res) => {
+    const bundle_data = req.body.bundle_data;
+    // console.log('bundle', bundle_data);
+
+    let result = bundle_data.map(x => { return {lca_tax_id: x.lca_tax_id.id}});
+
+    let suggestions = {};
+    let count = 0;
+    result.forEach((x) => {
+        if (tree.nodeExists(x.lca_tax_id) == false) {
+            return;
+        }
+        let node = tree.getNode(x.lca_tax_id);
+        
+        while (node.id != 1) {
+            if (node.id in suggestions || count >= 10) {
+                break;
+            }
+            if (node.name.toLowerCase().includes(req.params.suggest.toLowerCase())) {
+                suggestions[node.id] = node;
+                count++;
+            }
+            node = tree.getNode(node.parent);
+        }
+    });
+    
+    res.send(Object.values(suggestions));
+});
+
+app.post('/api/search/filter', async (req, res) => {
+    const is_dark = req.body.is_dark;
+    const is_tax_filter = req.body.tax_id != undefined;
+    const avg_length_range = req.body.avg_length_range;
+    const avg_plddt_range = req.body.avg_plddt_range;
+    const n_mem_range = req.body.n_mem_range;
+    const rep_length_range = req.body.rep_length_range;
+    const rep_plddt_range = req.body.rep_plddt_range;
+    const search_type = req.body.search_type;
+    const go_search_type = req.body.go_search_type;
+    
+    let result;
+    if (search_type === 'foldseek') {
+        result = req.body.bundle;
+    } else if (search_type === 'go') {
+        const goid = req.body.query_GO;
+        
+        if (go_search_type === 'exact') {
+            result = await sql.all(
+                `SELECT *
+                    FROM cluster as c
+                    LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession
+                    WHERE go.goid = ?
+                    ORDER BY c.rep_accession
+                    ;
+                `, goid);
+        } else {
+            result = await sql.all(
+                `SELECT * FROM cluster as c LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession WHERE go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?) ORDER BY c.rep_accession;
+                `, goid);
+        }
+        result.forEach(x => x.lca_tax_id = tree.getNode(x.lca_tax_id))
+        
+    }
+    
+    result = result.filter((x) => {
+        if (is_dark != undefined) {
+            if (x.is_dark !== is_dark) {
+                return false;
+            }
+        }
+        
+        if (!(x.avg_len >= avg_length_range[0] && x.avg_len <= avg_length_range[1])) {
+            return false;
+        }
+        if (!(x.avg_plddt >= avg_plddt_range[0] && x.avg_plddt <= avg_plddt_range[1])) {
+            return false;
+        }
+        if (!(x.n_mem >= n_mem_range[0] && x.n_mem <= n_mem_range[1])) {
+            return false;
+        }
+        if (!(x.rep_len >= rep_length_range[0] && x.rep_len <= rep_length_range[1])) {
+            return false;
+        }
+        if (!(x.rep_plddt >= rep_plddt_range[0] && x.rep_plddt <= rep_plddt_range[1])) {
+            return false;
+        }
+
+        if (is_tax_filter) {
+            if (tree.nodeExists(x.lca_tax_id.id) == false) {
+                return false;
+            }
+            x.lca_tax_id.id = tree.getNode(x.lca_tax_id.id);
+            let currNode = x.lca_tax_id.id;
+            while (currNode.id != 1) {
+                if (currNode.id == req.body.tax_id.value) {
+                    return true;
+                }
+                currNode = tree.getNode(currNode.parent);
+            }
+        } else {
+            return true;
+        }
+
+        return false;
+    });
+
+    // console.log(result, is_dark, is_tax_filter, req.body.length_range)
+    
+    const total = result.length;
+    if (result && result.length > 0) {
+        result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+    }
+    result.forEach((x) => {
+        x.description = getDescription(x.accession);
+    });
+
+    res.send({ total: total, result : result });
+});
+
 app.get('/api/foldseek/:jobid', async (req, res) => {
     if (fileCache.contains(req.params.jobid)) {
         res.send(await formatFoldseekResult(JSON.parse(fileCache.get(req.params.jobid))));
@@ -106,6 +253,7 @@ app.get('/api/foldseek/:jobid', async (req, res) => {
     let results = [];
     for (let i = 0; i < aln.results.length; i++) {
         let result = aln.results[i];
+        // console.log(aln.results[i]);
         if (!result.alignments) {
             continue;
         }
@@ -326,6 +474,7 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             WHERE rep_accession = ? ${flagFilter}
             ORDER BY rowid;
         `, ...args);
+        
         result = result.filter((x) => {
             if (tree.nodeExists(x.tax_id) == false) {
                 return false;
@@ -360,14 +509,15 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
     }
 });
 
-app.get('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
+app.post('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
     let result = await sql.all(`
         SELECT tax_id
             FROM member
             WHERE rep_accession = ?;
-        `, req.params.cluster);
+        `, req.params.cluster); 
     let suggestions = {};
     let count = 0;
+    
     result.forEach((x) => {
         if (tree.nodeExists(x.tax_id) == false) {
             return;
@@ -412,6 +562,7 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
             x.lca_tax_id = null;
         }
     });
+    // console.log(result)
     if (req.body && req.body.tax_id) {
         result = result.filter((x) => {
             let currNode = x.lca_tax_id;
@@ -459,7 +610,7 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
     res.send({ total: total, similars: sorted });
 });
 
-app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
+app.post('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
     const cluster = req.params.cluster;
     const avaKey = avaDb.id(cluster);
     if (avaKey.found == false) {
@@ -495,6 +646,7 @@ app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => 
     });
     res.send(Object.values(suggestions));
 });
+
 
 app.get('/api/structure/:structure', async (req, res) => {
     const structure = req.params.structure;

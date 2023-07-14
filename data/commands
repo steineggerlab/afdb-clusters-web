@@ -1,0 +1,2 @@
+# pick rep_GO
+awk 'FNR==NR {id[$1]=1; next;} $1 in id {print $1","$2}' 2-repId_isDark_nMem_repLen_avgLen_repPlddt_avgPlddt_LCAtaxId.tsv union_accession_GO.tsv > rep_GO.csv
