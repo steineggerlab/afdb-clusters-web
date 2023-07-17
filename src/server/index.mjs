@@ -213,23 +213,29 @@ app.post('/api/search/filter', async (req, res) => {
         });
     } else if (search_type === 'go') {
         const goid = req.body.query_GO;
+        const filter_params = [avg_length_range[0], avg_length_range[1], 
+        avg_plddt_range[0], avg_plddt_range[1], n_mem_range[0], 
+        n_mem_range[1], rep_length_range[0], rep_length_range[1], 
+        rep_plddt_range[0], rep_plddt_range[1]];
         
         if (go_search_type === 'exact') {
             queries_where.push("go.goid = ?")
         } else {
             queries_where.push("go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)");
         }
-
+        
+        queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
+        queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
+        queries_where.push(`c.n_mem >= ? AND c.n_mem <= ?`);
+        queries_where.push(`c.rep_len >= ? AND c.rep_len <= ?`);
+        queries_where.push(`c.rep_plddt >= ? AND c.rep_plddt <= ?`);
         if (is_dark != undefined) {
-            queries_where.push(`c.is_dark == ${is_dark}`);
+            queries_where.push(`c.is_dark == ?`);
+            filter_params.push(is_dark)
         }
-        queries_where.push(`c.avg_len >= ${avg_length_range[0]} AND c.avg_len <= ${avg_length_range[1]}`);
-        queries_where.push(`c.avg_plddt >= ${avg_plddt_range[0]} AND c.avg_plddt <= ${avg_plddt_range[1]}`);
-        queries_where.push(`c.n_mem >= ${n_mem_range[0]} AND c.n_mem <= ${n_mem_range[1]}`);
-        queries_where.push(`c.rep_len >= ${rep_length_range[0]} AND c.rep_len <= ${rep_length_range[1]}`);
-        queries_where.push(`c.rep_plddt >= ${rep_plddt_range[0]} AND c.rep_plddt <= ${rep_plddt_range[1]}`);
 
         const query_where = queries_where.join(" AND ");
+
 
         result = await sql.all(
             `SELECT *
@@ -238,7 +244,7 @@ app.post('/api/search/filter', async (req, res) => {
                 WHERE ${query_where}
                 ORDER BY c.rep_accession
                 ;
-            `, goid);
+            `, goid, ...filter_params);
 
         result.forEach(x => x.lca_tax_id = tree.getNode(x.lca_tax_id))
 
