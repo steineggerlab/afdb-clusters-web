@@ -120,6 +120,7 @@ app.post('/api/go/:goid', async (req, res) => {
 
     result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
     // result.lca_tax_id = tree.getNode(result.lca_tax_id);
+    
     res.send({ total: total.total, result : result });
 });
 
