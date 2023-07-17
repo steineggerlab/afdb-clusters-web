@@ -164,78 +164,105 @@ app.post('/api/search/filter', async (req, res) => {
     const search_type = req.body.search_type;
     const go_search_type = req.body.go_search_type;
 
-    let query_where = "";
+    let queries_where = [];
     
     let result;
     if (search_type === 'foldseek') {
         result = req.body.bundle;
+
+        result = result.filter((x) => {
+            if (is_dark != undefined) {
+                if (x.is_dark !== is_dark) {
+                    return false;
+                }
+            }
+            
+            if (!(x.avg_len >= avg_length_range[0] && x.avg_len <= avg_length_range[1])) {
+                return false;
+            }
+            if (!(x.avg_plddt >= avg_plddt_range[0] && x.avg_plddt <= avg_plddt_range[1])) {
+                return false;
+            }
+            if (!(x.n_mem >= n_mem_range[0] && x.n_mem <= n_mem_range[1])) {
+                return false;
+            }
+            if (!(x.rep_len >= rep_length_range[0] && x.rep_len <= rep_length_range[1])) {
+                return false;
+            }
+            if (!(x.rep_plddt >= rep_plddt_range[0] && x.rep_plddt <= rep_plddt_range[1])) {
+                return false;
+            }
+    
+            if (is_tax_filter) {
+                if (tree.nodeExists(x.lca_tax_id.id) == false) {
+                    return false;
+                }
+                x.lca_tax_id.id = tree.getNode(x.lca_tax_id.id);
+                let currNode = x.lca_tax_id.id;
+                while (currNode.id != 1) {
+                    if (currNode.id == req.body.tax_id.value) {
+                        return true;
+                    }
+                    currNode = tree.getNode(currNode.parent);
+                }
+            } else {
+                return true;
+            }
+    
+            return false;
+        });
     } else if (search_type === 'go') {
         const goid = req.body.query_GO;
         
         if (go_search_type === 'exact') {
-            result = await sql.all(
-                `SELECT *
-                    FROM cluster as c
-                    LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession
-                    WHERE go.goid = ?
-                    ORDER BY c.rep_accession
-                    ;
-                `, goid);
+            queries_where.push("go.goid = ?")
         } else {
-            result = await sql.all(
-                `SELECT * 
-                    FROM cluster as c 
-                    LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession 
-                    WHERE go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?) 
-                    ORDER BY c.rep_accession;
-                `, goid);
+            queries_where.push("go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)");
         }
-        result.forEach(x => x.lca_tax_id = tree.getNode(x.lca_tax_id))
-    }
-    
-    result = result.filter((x) => {
+
         if (is_dark != undefined) {
-            if (x.is_dark !== is_dark) {
-                return false;
-            }
+            queries_where.push(`c.is_dark == ${is_dark}`);
         }
-        
-        if (!(x.avg_len >= avg_length_range[0] && x.avg_len <= avg_length_range[1])) {
-            return false;
-        }
-        if (!(x.avg_plddt >= avg_plddt_range[0] && x.avg_plddt <= avg_plddt_range[1])) {
-            return false;
-        }
-        if (!(x.n_mem >= n_mem_range[0] && x.n_mem <= n_mem_range[1])) {
-            return false;
-        }
-        if (!(x.rep_len >= rep_length_range[0] && x.rep_len <= rep_length_range[1])) {
-            return false;
-        }
-        if (!(x.rep_plddt >= rep_plddt_range[0] && x.rep_plddt <= rep_plddt_range[1])) {
-            return false;
-        }
+        queries_where.push(`c.avg_len >= ${avg_length_range[0]} AND c.avg_len <= ${avg_length_range[1]}`);
+        queries_where.push(`c.avg_plddt >= ${avg_plddt_range[0]} AND c.avg_plddt <= ${avg_plddt_range[1]}`);
+        queries_where.push(`c.n_mem >= ${n_mem_range[0]} AND c.n_mem <= ${n_mem_range[1]}`);
+        queries_where.push(`c.rep_len >= ${rep_length_range[0]} AND c.rep_len <= ${rep_length_range[1]}`);
+        queries_where.push(`c.rep_plddt >= ${rep_plddt_range[0]} AND c.rep_plddt <= ${rep_plddt_range[1]}`);
 
-        if (is_tax_filter) {
-            if (tree.nodeExists(x.lca_tax_id.id) == false) {
-                return false;
-            }
-            x.lca_tax_id.id = tree.getNode(x.lca_tax_id.id);
-            let currNode = x.lca_tax_id.id;
-            while (currNode.id != 1) {
-                if (currNode.id == req.body.tax_id.value) {
-                    return true;
+        const query_where = queries_where.join(" AND ");
+
+        result = await sql.all(
+            `SELECT *
+                FROM cluster as c
+                LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession
+                WHERE ${query_where}
+                ORDER BY c.rep_accession
+                ;
+            `, goid);
+
+        result.forEach(x => x.lca_tax_id = tree.getNode(x.lca_tax_id))
+
+        result = result.filter((x) => {
+    
+            if (is_tax_filter) {
+                if (tree.nodeExists(x.lca_tax_id.id) == false) {
+                    return false;
                 }
-                currNode = tree.getNode(currNode.parent);
+                x.lca_tax_id.id = tree.getNode(x.lca_tax_id.id);
+                let currNode = x.lca_tax_id.id;
+                while (currNode.id != 1) {
+                    if (currNode.id == req.body.tax_id.value) {
+                        return true;
+                    }
+                    currNode = tree.getNode(currNode.parent);
+                }
+            } else {
+                return true;
             }
-        } else {
-            return true;
-        }
-
-        return false;
-    });
-
-    // console.log(result, is_dark, is_tax_filter, req.body.length_range)
+    
+            return false;
+        });
+    }
     
     const total = result.length;
     if (result && result.length > 0) {
