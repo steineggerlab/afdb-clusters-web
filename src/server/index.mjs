@@ -97,24 +97,27 @@ async function formatFoldseekResult(result) {
 app.post('/api/go/:goid', async (req, res) => {
     const goid = req.params.goid;
     const search_type = req.body.go_search_type;
-    
-    const total = await sql.get(`SELECT COUNT(rep_accession) as total FROM cluster_go WHERE goid = ?`, goid);
+
+    let query_where = "";
     let result;
+
     if (search_type === 'exact') {
-        result = await sql.all(
-            `SELECT *
-                FROM cluster as c
-                LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession
-                WHERE go.goid = ?
-                ORDER BY c.rep_accession
-                ;
-            `, goid);
+        query_where = "go.goid = ?";   
     } else {
-        result = await sql.all(
-            `SELECT * FROM cluster as c LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession WHERE go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?) ORDER BY c.rep_accession;
-            `, goid);
+        query_where = "go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)";
     }
+
+    result = await sql.all(
+        `SELECT *
+            FROM cluster as c
+            LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession
+            WHERE ${query_where}
+            ORDER BY c.rep_accession
+            LIMIT ? OFFSET ?;
+        `, goid, req.body.itemsPerPage, (req.body.page-1));
     
+    const total = await sql.get(`SELECT COUNT(rep_accession) as total FROM cluster_go as go WHERE ${query_where}`, goid);
+
 
     result.forEach(x => {x.lca_tax_id = tree.getNode(x.lca_tax_id);})
     // result.lca_tax_id = tree.getNode(result.lca_tax_id);
@@ -160,6 +163,8 @@ app.post('/api/search/filter', async (req, res) => {
     const rep_plddt_range = req.body.rep_plddt_range;
     const search_type = req.body.search_type;
     const go_search_type = req.body.go_search_type;
+
+    let query_where = "";
     
     let result;
     if (search_type === 'foldseek') {
@@ -178,11 +183,14 @@ app.post('/api/search/filter', async (req, res) => {
                 `, goid);
         } else {
             result = await sql.all(
-                `SELECT * FROM cluster as c LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession WHERE go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?) ORDER BY c.rep_accession;
+                `SELECT * 
+                    FROM cluster as c 
+                    LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession 
+                    WHERE go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?) 
+                    ORDER BY c.rep_accession;
                 `, goid);
         }
         result.forEach(x => x.lca_tax_id = tree.getNode(x.lca_tax_id))
-        
     }
     
     result = result.filter((x) => {

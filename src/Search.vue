@@ -437,7 +437,6 @@ export default {
             if (this.options.search_type === 'go') {
                 options['query_GO'] = this.query_GO;
                 options["go_search_type"] = this.go_search_type;
-                options["bundle"] = this.bundle_original;
             }
             else if (this.options.search_type === 'foldseek') {
                 options["bundle"] = this.bundle_original;
