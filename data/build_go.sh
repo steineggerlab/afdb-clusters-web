@@ -22,5 +22,8 @@ CREATE TABLE go_child (
 CREATE INDEX cluster_go_goid_idx
 ON cluster_go(goid);
 
+CREATE INDEX go_child_parent_idx
+ON go_child (parent);
+
 CREATE INDEX cluster_go_rep_accession_idx
 ON cluster_go(rep_accession);
