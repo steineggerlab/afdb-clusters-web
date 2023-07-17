@@ -118,8 +118,7 @@ app.post('/api/go/:goid', async (req, res) => {
     
     const total = await sql.get(`SELECT COUNT(rep_accession) as total FROM cluster_go as go WHERE ${query_where}`, goid);
 
-
-    result.forEach(x => {x.lca_tax_id = tree.getNode(x.lca_tax_id);})
+    result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
     // result.lca_tax_id = tree.getNode(result.lca_tax_id);
     res.send({ total: total.total, result : result });
 });
@@ -246,10 +245,8 @@ app.post('/api/search/filter', async (req, res) => {
                 ;
             `, goid, ...filter_params);
 
-        result.forEach(x => x.lca_tax_id = tree.getNode(x.lca_tax_id))
-
+        result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
         result = result.filter((x) => {
-    
             if (is_tax_filter) {
                 if (tree.nodeExists(x.lca_tax_id.id) == false) {
                     return false;
