@@ -123,7 +123,7 @@
                             :headers="headers"
                             :items="response"
                             :options.sync="options"
-                            :server-items-length="options.totalMembers"
+                            :server-items-length="total"
                         >
                             <template v-slot:item.rep_accession="prop">
                                 <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}" target='_blank'>{{ prop.value }}</router-link>
@@ -347,17 +347,15 @@ export default {
             ],
             go_search_type: "lower",
             options: {
-                search_type: null,
                 avg_length_range: [Infinity, 0],
                 avg_plddt_range: [Infinity, 0],
                 rep_length_range: [Infinity, 0],
                 rep_plddt_range: [Infinity, 0],
                 n_mem_range: [Infinity, 0],
-                showDarkOnly: false,
                 tax_id: null,
                 is_dark: null,
-                totalMembers: null,
             },
+            search_type: null,
             taxAutocompleteDisabled: false,
             range: [5, 5],
         };
@@ -365,6 +363,7 @@ export default {
     watch : {
         options: {
             handler () {
+                console.log('option handler', this.options)
                 this.filterData()
             },
             deep: true,
@@ -410,16 +409,14 @@ export default {
                 })
                 .then(res => {
                     this.response = res.data.result;
-                    console.log(this.response)
-                    this.options.search_type = "go";
-                    this.bundle_original = res.data.result;
+                    this.search_type = "go";
                     this.init_range();
                 }
                 );
         },
         foldseekResult(result) {
             this.response = result;
-            this.options.search_type = "foldseek";
+            this.search_type = "foldseek";
             this.bundle_original = result;
             this.init_range();
             this.$nextTick(() => {
@@ -431,14 +428,15 @@ export default {
             })
         },
         filterData () {
+            console.log('filter Data called');
             this.loading = true;
-            const options = {};
+            const options = {"search_type": this.search_type};
 
-            if (this.options.search_type === 'go') {
+            if (this.search_type === 'go') {
                 options['query_GO'] = this.query_GO;
                 options["go_search_type"] = this.go_search_type;
             }
-            else if (this.options.search_type === 'foldseek') {
+            else if (this.search_type === 'foldseek') {
                 options["bundle"] = this.bundle_original;
             }
 
@@ -447,7 +445,7 @@ export default {
             this.$axios.post("/search/filter" , request)
                 .then(response => {
                     this.response = response.data.result;
-                    this.options.totalMembers = response.data.total;
+                    this.total = response.data.total;
                 })
                 .catch(() => {})
                 .finally(() => {
@@ -455,7 +453,7 @@ export default {
                 });
         },
         init_range() {
-            this.bundle_original.forEach(x => {
+            this.response.forEach(x => {
                 if (x.avg_len < this.options.avg_length_range[0]) {
                     this.options.avg_length_range[0] = x.avg_len;
                 }
