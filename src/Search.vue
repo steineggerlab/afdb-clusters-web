@@ -126,7 +126,8 @@
                             :server-items-length="total"
                         >
                             <template v-slot:item.rep_accession="prop">
-                                <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}" target='_blank'>{{ prop.value }}</router-link>
+                                <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}" target='_blank'>{{ prop.value }}</router-link><br>
+                                {{ prop.item.description }}
                             </template>
 
                             <template v-slot:item.avg_plddt="prop">
@@ -271,6 +272,7 @@ import FoldseekSearchButton from "./FoldseekSearchButton.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import IsDark from './IsDark.vue';
 import RangeSlider from './RangeSlider.vue';
+import UniprotLink from "./UniprotLink.vue";
 
 export default {
     name: "search",
@@ -280,7 +282,8 @@ export default {
         TaxSpan,
         TaxonomyAutocomplete,
         IsDark,
-        RangeSlider
+        RangeSlider,
+        UniprotLink
     },
     data() {
         return {
@@ -411,6 +414,7 @@ export default {
                     this.response = res.data.result;
                     this.search_type = "go";
                     this.init_range();
+                    this.inSearch = false;
                 }
                 );
         },

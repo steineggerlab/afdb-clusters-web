@@ -273,7 +273,7 @@ app.post('/api/search/filter', async (req, res) => {
         result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
     }
     result.forEach((x) => {
-        x.description = getDescription(x.accession);
+        x.description = getDescription(x.rep_accession);
     });
 
     res.send({ total: total, result : result });
