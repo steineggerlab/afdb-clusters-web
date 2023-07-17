@@ -214,9 +214,9 @@ app.post('/api/search/filter', async (req, res) => {
     } else if (search_type === 'go') {
         const goid = req.body.query_GO;
         const filter_params = [avg_length_range[0], avg_length_range[1], 
-        avg_plddt_range[0], avg_plddt_range[1], n_mem_range[0], 
-        n_mem_range[1], rep_length_range[0], rep_length_range[1], 
-        rep_plddt_range[0], rep_plddt_range[1]];
+            avg_plddt_range[0], avg_plddt_range[1], n_mem_range[0], 
+            n_mem_range[1], rep_length_range[0], rep_length_range[1], 
+            rep_plddt_range[0], rep_plddt_range[1]];
         
         if (go_search_type === 'exact') {
             queries_where.push("go.goid = ?")
