@@ -414,6 +414,7 @@ export default {
                 .then(res => {
                     this.search_type = "go";
                     this.response = res.data.result;
+                    this.bundle_original = res.data.result;
                     this.inSearch = false;
                 }
                 );
