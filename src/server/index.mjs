@@ -234,17 +234,16 @@ app.post('/api/search/filter', async (req, res) => {
             filter_params.push(is_dark)
         }
 
-        const query_where = queries_where.join(" AND ");
-
-
-        result = await sql.all(
-            `SELECT *
-                FROM cluster as c
-                LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession
-                WHERE ${query_where}
-                ORDER BY c.rep_accession
-                ;
-            `, goid, ...filter_params);
+        const query_where = queries_where.slice(1, queries_where.length).join(" AND ");
+        result = await sql.all(`
+            SELECT DISTINCT * 
+                FROM cluster as c 
+                WHERE c.rep_accession in (
+                    SELECT rep_accession 
+                        FROM cluster_go as go 
+                        WHERE ${queries_where[0]}
+                    ) AND ${query_where}
+                `, goid, ...filter_params);
 
         if (is_tax_filter) {
             result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
