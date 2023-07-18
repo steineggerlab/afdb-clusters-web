@@ -213,16 +213,17 @@ app.post('/api/search/filter', async (req, res) => {
         });
     } else if (search_type === 'go') {
         const goid = req.body.query_GO;
-        const filter_params = [avg_length_range[0], avg_length_range[1], 
-            avg_plddt_range[0], avg_plddt_range[1], n_mem_range[0], 
-            n_mem_range[1], rep_length_range[0], rep_length_range[1], 
-            rep_plddt_range[0], rep_plddt_range[1]];
+        const filter_params = [avg_length_range[0], avg_length_range[1] ?? 'INF', 
+            avg_plddt_range[0], avg_plddt_range[1] ?? 'INF', n_mem_range[0], 
+            n_mem_range[1] ?? 'INF', rep_length_range[0], rep_length_range[1] ?? 'INF', 
+            rep_plddt_range[0], rep_plddt_range[1] ?? 'INF'];
         
         if (go_search_type === 'exact') {
             queries_where.push("go.goid = ?")
         } else {
             queries_where.push("go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)");
         }
+        
         
         queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
         queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
@@ -244,7 +245,7 @@ app.post('/api/search/filter', async (req, res) => {
                         WHERE ${queries_where[0]}
                     ) AND ${query_where}
                 `, goid, ...filter_params);
-
+        
         if (is_tax_filter) {
             result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
             result = result.filter((x) => {
