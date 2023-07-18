@@ -288,7 +288,7 @@ export default {
     data() {
         return {
             query: "B4DKH6",
-            query_GO: "GO:0005524",
+            query_GO: "GO:0006955",
             selectedExample: 1,
             tab: 0,
             examples: [
