@@ -307,16 +307,12 @@ export default {
                 {
                     text: "Rep Accession",
                     value: "rep_accession",
+                    sortable: false,
                 },
                 {
                     text: "LCA rank",
                     value: "lca_tax_id.rank"
                 },
-                // {
-                //     text: "LCA",
-                //     value: "lca_tax_id.name",
-                //     sortable: false,
-                // },
                 {
                     text: "LCA",
                     value: "lca_tax_id",
@@ -325,14 +321,17 @@ export default {
                 {
                     text: "Average Length",
                     value: "avg_len",
+                    sortable: false,
                 },
                 {
                     text: "Average pLDDT",
                     value: "avg_plddt",
+                    sortable: false,
                 },
                 {
                     text: "Number of members",
                     value: "n_mem",
+                    sortable: false,
                 },
                 {
                     text: "Dark",
@@ -342,19 +341,21 @@ export default {
                 {
                     text: "Rep pLDDT",
                     value: "rep_plddt",
+                    sortable: false,
                 },
                 {
                     text: "Rep Length",
                     value: "rep_len",
+                    sortable: false,
                 },
             ],
             go_search_type: "lower",
             options: {
-                avg_length_range: [Infinity, 0],
-                avg_plddt_range: [Infinity, 0],
-                rep_length_range: [Infinity, 0],
-                rep_plddt_range: [Infinity, 0],
-                n_mem_range: [Infinity, 0],
+                avg_length_range: [0, Infinity],
+                avg_plddt_range: [0, Infinity],
+                rep_length_range: [0, Infinity],
+                rep_plddt_range: [0, Infinity],
+                n_mem_range: [0, Infinity],
                 tax_id: null,
                 is_dark: null,
             },
@@ -411,9 +412,8 @@ export default {
                     go_search_type: this.go_search_type
                 })
                 .then(res => {
-                    this.response = res.data.result;
                     this.search_type = "go";
-                    this.init_range();
+                    this.response = res.data.result;
                     this.inSearch = false;
                 }
                 );
@@ -422,7 +422,6 @@ export default {
             this.response = result;
             this.search_type = "foldseek";
             this.bundle_original = result;
-            this.init_range();
             this.$nextTick(() => {
                 this.$refs.results.scrollIntoView({
                     behavior: "smooth",
@@ -456,40 +455,6 @@ export default {
                     this.loading = false;
                 });
         },
-        init_range() {
-            this.response.forEach(x => {
-                if (x.avg_len < this.options.avg_length_range[0]) {
-                    this.options.avg_length_range[0] = x.avg_len;
-                }
-                if (x.avg_len > this.options.avg_length_range[1]) {
-                    this.options.avg_length_range[1] = x.avg_len;
-                }
-                if (x.rep_len < this.options.rep_length_range[0]) {
-                    this.options.rep_length_range[0] = x.rep_len;
-                }
-                if (x.rep_len > this.options.rep_length_range[1]) {
-                    this.options.rep_length_range[1] = x.rep_len;
-                }
-                if (x.avg_plddt < this.options.avg_plddt_range[0]) {
-                    this.options.avg_plddt_range[0] = x.avg_plddt;
-                }
-                if (x.avg_plddt > this.options.avg_plddt_range[1]) {
-                    this.options.avg_plddt_range[1] = x.avg_plddt;
-                }
-                if (x.rep_plddt < this.options.rep_plddt_range[0]) {
-                    this.options.rep_plddt_range[0] = x.rep_plddt;
-                }
-                if (x.rep_plddt > this.options.rep_plddt_range[1]) {
-                    this.options.rep_plddt_range[1] = x.rep_plddt;
-                }
-                if (x.n_mem < this.options.n_mem_range[0]) {
-                    this.options.n_mem_range[0] = x.n_mem;
-                }
-                if (x.n_mem > this.options.n_mem_range[1]) {
-                    this.options.n_mem_range[1] = x.n_mem;
-                }
-            });
-        }
     }
 };
 </script>
