@@ -246,9 +246,9 @@ app.post('/api/search/filter', async (req, res) => {
                 ;
             `, goid, ...filter_params);
 
-        result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
-        result = result.filter((x) => {
-            if (is_tax_filter) {
+        if (is_tax_filter) {
+            result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
+            result = result.filter((x) => {
                 if (tree.nodeExists(x.lca_tax_id.id) == false) {
                     return false;
                 }
@@ -260,12 +260,10 @@ app.post('/api/search/filter', async (req, res) => {
                     }
                     currNode = tree.getNode(currNode.parent);
                 }
-            } else {
-                return true;
-            }
-    
-            return false;
-        });
+        
+                return false;
+            });
+        }
     }
     
     const total = result.length;
@@ -274,6 +272,9 @@ app.post('/api/search/filter', async (req, res) => {
     }
     result.forEach((x) => {
         x.description = getDescription(x.rep_accession);
+        if (!is_tax_filter) {
+            if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); 
+        }
     });
 
     res.send({ total: total, result : result });
