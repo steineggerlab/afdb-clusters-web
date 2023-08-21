@@ -3,11 +3,11 @@
 <v-row style="margin:1em;">
     <v-flex xs12 md8>
     <panel>
-        <template slot="header">
+        <template slot="header" v-if="response">
             Cluster: {{ response ? response.rep_accession : "Loading..." }}
         </template>
 
-        <template v-if="response.warning == true" slot="toolbar-extra">
+        <template v-if="response && response.warning == true" slot="toolbar-extra">
             <v-chip color="error">Warning</v-chip>
         </template>
 
@@ -110,7 +110,7 @@
                     </dd>
                 </div> -->
             </dl>
-            <template v-if="response.warning == true">
+            <template v-if="response && response.warning == true">
                 <v-divider  style="margin-top:0.5em"></v-divider>
                 <h3 style="margin-top:1em; color: #F44336; text-decoration: underline;">
                     Warning!
