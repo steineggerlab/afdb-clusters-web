@@ -485,6 +485,10 @@ app.get('/api/cluster/:cluster/sankey-similars', async (req, res) => {
 
 app.post('/api/cluster/:cluster', async (req, res) => {
     let result = await sql.get("SELECT * FROM cluster as c LEFT JOIN member as m ON c.rep_accession == m.accession WHERE c.rep_accession = ?", req.params.cluster);
+    if (!result) {
+        res.status(404).send({ error: "No cluster found" });
+        return;
+    }
     result.lca_tax_id = tree.getNode(result.lca_tax_id);
     result.lineage = tree.lineage(result.lca_tax_id);
     result.tax_id = tree.getNode(result.tax_id);

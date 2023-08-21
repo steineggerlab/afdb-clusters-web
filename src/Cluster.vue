@@ -213,7 +213,17 @@ export default {
                 .then(response => {
                     this.response = response.data;
                 })
-                .catch(() => {})
+                .catch((result) => {
+                    if (!result || !result.response || result.response.status != 404) {
+                        return;
+                    }
+                    this.$axios.post("/" + this.$route.params.cluster)
+                        .then(response => {
+                            console.log(response.data[0].rep_accession);
+                            this.$router.replace({ name: "cluster", params: { cluster: response.data[0].rep_accession } });
+                        })
+                        .catch(() => {});
+                })
                 .finally(() => {
                     this.fetching = false;
                 });
