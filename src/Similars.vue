@@ -64,6 +64,7 @@ import StructureViewer from "./StructureViewer.vue";
 import UniprotLink from "./UniprotLink.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Sankey from "./Sankey.vue";
+import ImageMixin from './ImageMixin';
 
 export default {
     name: "Similars",
@@ -75,6 +76,7 @@ export default {
         Sankey,
     },
     props: ["cluster"],
+    mixins: [ImageMixin],
     data() {
         return {
             headers: [
@@ -126,7 +128,6 @@ export default {
             totalEntries: 0,
             loading: false,
             options: {},
-            images: [],
             taxAutocompleteDisabled: false,
         }
     },
@@ -152,13 +153,6 @@ export default {
             }
             this.fetchData()
         },
-        getImage(acession) {
-            const image = this.images.find(image => image.accession === acession);
-            if (image) {
-                return image.url;
-            }
-            return "";
-        },
         log(value) {
             console.log(value);
             return value;
@@ -174,23 +168,7 @@ export default {
                 .then(response => {
                     this.entries = response.data.similars;
                     this.totalEntries = response.data.total;
-                    for (let i = 0; i < this.images.length; i++) {
-                        URL.revokeObjectURL(this.images[i].url);
-                    }
-                    this.images = [];
-                    for (let i = 0; i < this.entries.length; i++) {
-                        const accession = this.entries[i].rep_accession;
-                        this.$axios.get("/structure/" + accession)
-                            .then((response) => {
-                                this.$nglService.makeImage(response.data.seq, response.data.plddt, response.data.coordinates)
-                                    .then((image) => {
-                                        this.images.push({ accession: accession, url: URL.createObjectURL(image)});
-                                    })
-                                    .catch(e => {
-                                        console.log(e);
-                                    });
-                            });
-                    }
+                    this.fetchImages(this.entries.map(m => m.rep_accession));
                 })
                 .catch(() => {})
                 .finally(() => {

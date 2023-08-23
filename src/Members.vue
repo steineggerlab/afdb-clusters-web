@@ -92,7 +92,7 @@ import UniprotLink from "./UniprotLink.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Fragment from "./Fragment.vue";
 import Sankey from './Sankey.vue';
-
+import ImageMixin from './ImageMixin';
 
 export default {
     name: "members",
@@ -105,6 +105,7 @@ export default {
         Sankey,
     },
     props: ["cluster"],
+    mixins: [ImageMixin],
     data() {
         return {
             headers: [
@@ -148,7 +149,6 @@ export default {
             totalMembers: 0,
             loading: false,
             options: {},
-            images: [],
             taxAutocompleteDisabled: false,
         }
     },
@@ -174,13 +174,6 @@ export default {
             }
             this.fetchData()
         },
-        getImage(acession) {
-            const image = this.images.find(image => image.accession === acession);
-            if (image) {
-                return image.url;
-            }
-            return "";
-        },
         log(value) {
             console.log(value);
             return value;
@@ -195,24 +188,8 @@ export default {
             this.$axios.post("/cluster/" + cluster + "/members", this.options)
                 .then(response => {
                     this.members = response.data.result;
-                    for (let i = 0; i < this.images.length; i++) {
-                        URL.revokeObjectURL(this.images[i].url);
-                    }
-                    this.images = [];
                     this.totalMembers = response.data.total;
-                    for (let i = 0; i < this.members.length; i++) {
-                        const accession = this.members[i].accession;
-                        this.$axios.get("/structure/" + accession)
-                            .then((response) => {
-                                this.$nglService.makeImage(response.data.seq, response.data.plddt, response.data.coordinates)
-                                    .then((image) => {
-                                        this.images.push({ accession: accession, url: URL.createObjectURL(image)});
-                                    })
-                                    .catch(e => {
-                                        console.log(e);
-                                    });
-                            });
-                    }
+                    this.fetchImages(this.members.map(m => m.accession));
                 })
                 .catch(() => {})
                 .finally(() => {
