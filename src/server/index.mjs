@@ -94,6 +94,35 @@ async function formatFoldseekResult(result) {
     return rows;
 }
 
+app.post('/api/lca/:lcaid', async (req, res) => {
+    const lcaid = req.params.lcaid;
+    const search_type = req.body.lca_search_type;
+
+    let query_where = "";
+    let result;
+
+    if (search_type === 'exact') {
+        query_where = "c.lca_tax_id = ?";   
+    } else {
+        query_where = "c.lca_tax_id in (SELECT child FROM taxonomy_lineage as tl WHERE tl.parent = ?)";
+    }
+
+    result = await sql.all(
+        `SELECT *
+            FROM cluster as c
+            WHERE ${query_where}
+            ORDER BY c.rep_accession
+            LIMIT ? OFFSET ?;
+        `, lcaid, req.body.itemsPerPage, (req.body.page-1));
+    
+    const total = await sql.get(`SELECT COUNT(rep_accession) as total FROM cluster as c WHERE ${query_where}`, lcaid);
+
+    result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
+    // result.lca_tax_id = tree.getNode(result.lca_tax_id);
+    
+    res.send({ total: total.total, result : result });
+});
+
 app.post('/api/go/:goid', async (req, res) => {
     const goid = req.params.goid;
     const search_type = req.body.go_search_type;
@@ -163,6 +192,7 @@ app.post('/api/search/filter', async (req, res) => {
     const rep_plddt_range = req.body.rep_plddt_range;
     const search_type = req.body.search_type;
     const go_search_type = req.body.go_search_type;
+    const lca_search_type = req.body.lca_search_type;
 
     let queries_where = [];
     
@@ -211,18 +241,30 @@ app.post('/api/search/filter', async (req, res) => {
     
             return false;
         });
-    } else if (search_type === 'go') {
-        const goid = req.body.query_GO;
+    } else if (search_type === 'go' || search_type === 'lca') {
+        let goid, lcaid;
+        if (search_type === 'go') {
+            goid = req.body.query_GO;
+            if (go_search_type === 'exact') {
+                queries_where.push("go.goid = ?")
+            } else {
+                queries_where.push("go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)");
+            }
+        }
+        else if (search_type === 'lca') {
+            lcaid = req.body.query_LCA;
+            if (lca_search_type === 'exact') {
+                queries_where.push("c.lca_tax_id = ?")
+            } else {
+                queries_where.push("c.lca_tax_id in (SELECT child FROM taxonomy_lineage as tl WHERE tl.parent = ?)");
+            }
+        }
+
         const filter_params = [avg_length_range[0], avg_length_range[1] ?? 'INF', 
             avg_plddt_range[0], avg_plddt_range[1] ?? 'INF', n_mem_range[0], 
             n_mem_range[1] ?? 'INF', rep_length_range[0], rep_length_range[1] ?? 'INF', 
             rep_plddt_range[0], rep_plddt_range[1] ?? 'INF'];
         
-        if (go_search_type === 'exact') {
-            queries_where.push("go.goid = ?")
-        } else {
-            queries_where.push("go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)");
-        }
         
         
         queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
@@ -236,15 +278,25 @@ app.post('/api/search/filter', async (req, res) => {
         }
 
         const query_where = queries_where.slice(1, queries_where.length).join(" AND ");
-        result = await sql.all(`
-            SELECT DISTINCT * 
-                FROM cluster as c 
-                WHERE c.rep_accession in (
-                    SELECT rep_accession 
-                        FROM cluster_go as go 
-                        WHERE ${queries_where[0]}
-                    ) AND ${query_where}
-                `, goid, ...filter_params);
+
+        if (search_type === 'go') {
+            result = await sql.all(`
+                SELECT DISTINCT * 
+                    FROM cluster as c 
+                    WHERE c.rep_accession in (
+                        SELECT rep_accession 
+                            FROM cluster_go as go 
+                            WHERE ${queries_where[0]}
+                        ) AND ${query_where}
+                    `, goid, ...filter_params);
+        }
+        else if (search_type === 'lca') {
+            result = await sql.all(`
+                SELECT DISTINCT * 
+                    FROM cluster as c 
+                    WHERE ${queries_where[0]} AND ${query_where}
+                    `, lcaid, ...filter_params);
+        }
         
         if (is_tax_filter) {
             result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
