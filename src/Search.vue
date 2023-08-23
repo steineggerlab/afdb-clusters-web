@@ -35,6 +35,7 @@
                             >
                                 <v-tab>UniProt</v-tab>
                                 <v-tab>Gene ontology</v-tab>
+                                <v-tab>LCA</v-tab>
                                 <v-tab>Structure</v-tab>
                             </v-tabs>
                             <v-tabs-items v-model="tab" style="padding: 1em;">
@@ -100,6 +101,46 @@
                                         inline>
                                         <v-radio name="go_search_type" label="include lower GO lineage" value="lower" dark></v-radio>
                                         <v-radio name="go_search_type" label="Exact" value="exact" dark ></v-radio>
+                                    </v-radio-group>
+                                </v-tab-item>
+                                <v-tab-item>
+                                    <!-- <v-text-field
+                                        outlined
+                                        label="Taxonomy name"
+                                        style="max-width: 400px; margin: 0 auto;"
+                                        v-model="query_LCA.text"
+                                        :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
+                                        :disabled="inSearch"
+                                        @click:append="LCAsearch"
+                                        @keyup.enter="LCAsearch"
+                                        @change="selectedExample = null"
+                                        @keydown="error = null"
+                                        :error="error != null"
+                                        :error-messages="error ? error : []"
+                                        dark
+                                        >
+                                    </v-text-field> -->
+                                    <TaxonomyNcbiSearch
+                                        :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
+                                        @click:append="LCAsearch"
+                                        @keyup.enter="LCAsearch"
+                                        v-model="query_LCA"
+                                        :value="query_LCA.text"
+                                    ></TaxonomyNcbiSearch>
+                                    <v-btn
+                                        v-on:click="LCAsearch"
+                                        v-on:keyup.enter="LCAsearch"
+                                        :disabled="inSearch"
+                                    >Search</v-btn>
+                                    <v-radio-group 
+                                        style="
+                                            max-width: 400px;
+                                            margin: 0 auto;
+                                            "
+                                        v-model="lca_search_type"
+                                        inline>
+                                        <v-radio name="lca_search_type" label="include lower LCA lineage" value="lower" dark></v-radio>
+                                        <v-radio name="lca_search_type" label="Exact" value="exact" dark ></v-radio>
                                     </v-radio-group>
                                 </v-tab-item>
                                 <v-tab-item>
@@ -273,6 +314,7 @@ import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import IsDark from './IsDark.vue';
 import RangeSlider from './RangeSlider.vue';
 import UniprotLink from "./UniprotLink.vue";
+import TaxonomyNcbiSearch from "./TaxonomyNcbiSearch.vue";
 
 export default {
     name: "search",
@@ -283,12 +325,14 @@ export default {
         TaxonomyAutocomplete,
         IsDark,
         RangeSlider,
-        UniprotLink
+        UniprotLink,
+        TaxonomyNcbiSearch
     },
     data() {
         return {
             query: "B4DKH6",
             query_GO: "GO:0006955",
+            query_LCA: {text: "Homo Sapiens", value: 9606},
             selectedExample: 1,
             tab: 0,
             examples: [
@@ -350,6 +394,7 @@ export default {
                 },
             ],
             go_search_type: "lower",
+            lca_search_type: "lower",
             options: {
                 avg_length_range: [0, Infinity],
                 avg_plddt_range: [0, Infinity],
@@ -419,6 +464,23 @@ export default {
                 }
                 );
         },
+        LCAsearch() {
+            this.inSearch = true;
+            this.error = null;
+            
+            this.$axios.post("/lca/" + this.query_LCA.value, 
+                {
+                    itemsPerPage: 15, page: 1,
+                    lca_search_type: this.lca_search_type
+                })
+                .then(res => {
+                    this.search_type = "lca";
+                    this.response = res.data.result;
+                    this.bundle_original = res.data.result;
+                    this.inSearch = false;
+                }
+                );
+        },
         foldseekResult(result) {
             this.response = result;
             this.search_type = "foldseek";
@@ -439,6 +501,10 @@ export default {
             if (this.search_type === 'go') {
                 options['query_GO'] = this.query_GO;
                 options["go_search_type"] = this.go_search_type;
+            }
+            else if (this.search_type === 'lca') {
+                options['query_LCA'] = this.query_LCA.value;
+                options["lca_search_type"] = this.lca_search_type;
             }
             else if (this.search_type === 'foldseek') {
                 options["bundle"] = this.bundle_original;

@@ -88,6 +88,10 @@ FROM tmpCluster;
 CREATE INDEX cluster_rep_idx
 ON cluster(rep_accession);
 
+-- Index on cluster lca tax id
+CREATE INDEX cluster_lca_tax_id_idx
+ON cluster(lca_tax_id);
+
 -- Cleanup
 DROP TABLE IF EXISTS tmpMember;
 DROP TABLE IF EXISTS tmpCluster;

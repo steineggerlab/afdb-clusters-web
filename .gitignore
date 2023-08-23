@@ -27,3 +27,8 @@ data/afdb-clusters.sqlite3
 data/gene_ontology/go2-parent_child.tsv
 data/gene_ontology/server-only-valid-GO_cluRep.tsv
 data/afdb-clusters.sqlite3
+data/2-repId_isDark_nMem_repLen_avgLen_repPlddt_avgPlddt_LCAtaxId.tsv
+data/afdb-clusters.sqlite3
+data/taxonomy-parent_child.tsv
+data/afdb-clusters.sqlite3
+data/afdb-clusters.sqlite3
