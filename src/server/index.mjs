@@ -451,14 +451,21 @@ function makeSankey(result) {
             let currentNode = node;
             // skip all ranks except superkingdom, phylum, class, order, family, genus
             while (!allowedRanks.includes(currentNode.rank)) {
-                node = tree.getNode(node.parent, true);
-                currentNode = node;
+                currentNode = tree.getNode(currentNode.parent, true);
                 if (currentNode.id == 1) {
                     break;
                 }
             }
 
-            if (!(currentNode.id in nodes) && currentNode.id != 1) {
+            let parentNode = tree.getNode(currentNode.parent, true);
+            while (!allowedRanks.includes(parentNode.rank)) {
+                parentNode = tree.getNode(parentNode.parent, true);
+                if (parentNode.id == 1) {
+                    break;
+                }
+            }
+
+            if (!(currentNode.id in nodes)) {
                 nodes[currentNode.id] = {
                     id: currentNode.id,
                     name: currentNode.name,
@@ -466,17 +473,7 @@ function makeSankey(result) {
                 };
             }
 
-            node = tree.getNode(node.parent, true);
-            let parentNode = node;
-            while (!allowedRanks.includes(parentNode.rank)) {
-                node = tree.getNode(node.parent, true);
-                parentNode = node;
-                if (parentNode.id == 1) {
-                    break;
-                }
-            }
-
-            if (!(parentNode.id in nodes) && parentNode.id != 1) {
+            if (!(parentNode.id in nodes)) {
                 nodes[parentNode.id] = {
                     id: parentNode.id,
                     name: parentNode.name,
@@ -484,6 +481,7 @@ function makeSankey(result) {
                 };
             }
 
+            node = parentNode;
             if (currentNode.id == 1 || parentNode.id == 1) {
                 break;
             }
