@@ -222,17 +222,12 @@ app.post('/api/search/lca/:taxonomy?', async (req, res) => {
         queries_where.push(`c.is_dark == ?`);
         filter_params.push(is_dark)
     }
-    const query_where = queries_where.slice(1, queries_where.length).join(" AND ");
 
     let result = await sql.all(`
-        SELECT DISTINCT *
-            FROM cluster as c
-            WHERE c.rep_accession in (
-            SELECT rep_accession
-                FROM cluster_go as go
-                WHERE ${queries_where[0]}
-            ) AND ${query_where}
-        `, taxid, ...filter_params);
+    SELECT DISTINCT * 
+        FROM cluster as c 
+        WHERE ${queries_where.join(" AND ")}
+    `, taxid, ...filter_params);
 
     return finalizeResult(result, req, res);
 });
