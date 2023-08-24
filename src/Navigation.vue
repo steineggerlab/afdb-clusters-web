@@ -20,13 +20,33 @@
     <img src="./assets/marv-foldseek-small.png" style="margin-left:8px; display: inline-block; width: 48px;height: 48px;vertical-align: middle" aria-hidden="true" />
 
     <v-spacer></v-spacer>
-    <v-toolbar-items v-once class="hidden-sm-and-down">
-        <v-btn text rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis"><img src="./assets/github-mark.png" height="32"/></v-btn>
-        <v-btn text rel="external noopener" target="_blank" href="https://github.com/jurgjn/af-protein-universe">Dark enzymes prediction</v-btn>
-        <v-btn text rel="external noopener" target="_blank" href="https://afdb-cluster.steineggerlab.workers.dev">Data download</v-btn>
-        <v-btn text rel="external noopener" target="_blank" href="https://imsb.ethz.ch/research/beltrao.html">Beltrao Lab</v-btn>
-        <v-btn text rel="external noopener" target="_blank" href="https://steineggerlab.com/en/">Steinegger Lab</v-btn>
+    <v-toolbar-items class="hidden-sm-and-down">
+        <v-btn v-for="link in links" :key="link.title" text :href="link.href" rel="external noopener" target="_blank">{{ link.title }}</v-btn>
+        <v-btn text rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis"><img src="./assets/github-mark.png" height="32" alt="GitHub"/></v-btn>
     </v-toolbar-items>
+    <v-menu class="hidden-md-and-up">
+        <template v-slot:activator="{ on }">
+          <v-btn
+            icon
+            v-on="on"
+            class="hidden-md-and-up"
+          >
+            <v-icon>{{ $MDI.DotsVertical }}</v-icon>
+          </v-btn>
+        </template>
+        <v-list>
+          <v-list-item v-for="link in links" :key="link.title" rel="external noopener" target="_blank" :href="link.href">
+            <v-list-item-content>
+              <v-list-item-title>{{ link.title }}</v-list-item-title>
+             </v-list-item-content>
+          </v-list-item>
+          <v-list-item rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis">
+            <v-list-item-content>
+              <v-list-item-title>GitHub</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+      </v-menu>
 </v-app-bar>
 
 </div>
@@ -35,7 +55,13 @@
 <script>
 export default {
     data: () => ({
-        mini: true
+        mini: true,
+        links: [
+            { title: "Dark enzymes prediction", href: "https://github.com/jurgjn/af-protein-universe" },
+            { title: "Data download", href: "https://afdb-cluster.steineggerlab.workers.dev" },
+            { title: "Beltrao Lab", href: "https://imsb.ethz.ch/research/beltrao.html" },
+            { title: "Steinegger Lab", href: "https://steineggerlab.com/en/" },
+        ]
     }),
     created() {
         this.$root.$on('multi', this.shouldExpand);

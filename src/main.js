@@ -32,6 +32,7 @@ import {
     mdiCircleHalf,
     mdiPlusBox,
     mdiMinusBox,
+    mdiDotsVertical,
 } from '@mdi/js'
 
 Vue.use(VueRouter);
