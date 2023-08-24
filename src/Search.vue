@@ -34,8 +34,8 @@
                                 dark
                             >
                                 <v-tab>UniProt</v-tab>
-                                <v-tab>Gene ontology</v-tab>
-                                <v-tab>LCA</v-tab>
+                                <v-tab>Gene Ontology</v-tab>
+                                <v-tab>Taxonomy</v-tab>
                                 <v-tab>Structure</v-tab>
                             </v-tabs>
                             <v-tabs-items v-model="tab" style="padding: 1em;">
@@ -78,13 +78,13 @@
                                 <v-tab-item>
                                     <v-text-field
                                         outlined
-                                        label="GO ID"
+                                        label="GO Identifier"
                                         style="max-width: 400px; margin: 0 auto;"
-                                        v-model="query_GO"
+                                        v-model="queryGo"
                                         :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
                                         :disabled="inSearch"
-                                        @click:append="GOsearch"
-                                        @keyup.enter="GOsearch"
+                                        @click:append="searchGo"
+                                        @keyup.enter="searchGo"
                                         @change="selectedExample = null"
                                         @keydown="error = null"
                                         :error="error != null"
@@ -97,39 +97,23 @@
                                             max-width: 400px;
                                             margin: 0 auto;
                                             "
-                                        v-model="go_search_type"
+                                        v-model="goSearchType"
                                         inline>
-                                        <v-radio name="go_search_type" label="include lower GO lineage" value="lower" dark></v-radio>
-                                        <v-radio name="go_search_type" label="Exact" value="exact" dark ></v-radio>
+                                        <v-radio name="goSearchType" label="Include lower GO lineage" value="lower" dark></v-radio>
+                                        <v-radio name="goSearchType" label="Exact GO term" value="exact" dark ></v-radio>
                                     </v-radio-group>
                                 </v-tab-item>
                                 <v-tab-item>
-                                    <!-- <v-text-field
-                                        outlined
-                                        label="Taxonomy name"
-                                        style="max-width: 400px; margin: 0 auto;"
-                                        v-model="query_LCA.text"
-                                        :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
-                                        :disabled="inSearch"
-                                        @click:append="LCAsearch"
-                                        @keyup.enter="LCAsearch"
-                                        @change="selectedExample = null"
-                                        @keydown="error = null"
-                                        :error="error != null"
-                                        :error-messages="error ? error : []"
-                                        dark
-                                        >
-                                    </v-text-field> -->
                                     <TaxonomyNcbiSearch
                                         :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
-                                        @click:append="LCAsearch"
-                                        @keyup.enter="LCAsearch"
-                                        v-model="query_LCA"
-                                        :value="query_LCA.text"
+                                        @click:append="searchLCA"
+                                        @keyup.enter="searchLCA"
+                                        v-model="queryLCA"
+                                        :value="queryLCA.text"
                                     ></TaxonomyNcbiSearch>
                                     <v-btn
-                                        v-on:click="LCAsearch"
-                                        v-on:keyup.enter="LCAsearch"
+                                        v-on:click="searchLCA"
+                                        v-on:keyup.enter="searchLCA"
                                         :disabled="inSearch"
                                     >Search</v-btn>
                                     <v-radio-group 
@@ -137,156 +121,23 @@
                                             max-width: 400px;
                                             margin: 0 auto;
                                             "
-                                        v-model="lca_search_type"
+                                        v-model="lcaSearchType"
                                         inline>
-                                        <v-radio name="lca_search_type" label="include lower LCA lineage" value="lower" dark></v-radio>
-                                        <v-radio name="lca_search_type" label="Exact" value="exact" dark ></v-radio>
+                                        <v-radio name="lcaSearchType" label="Include lower LCA lineage" value="lower" dark></v-radio>
+                                        <v-radio name="lcaSearchType" label="Exact LCA identifier" value="exact" dark ></v-radio>
                                     </v-radio-group>
                                 </v-tab-item>
                                 <v-tab-item>
-                                    <FoldseekSearchButton @response="foldseekResult" dark></FoldseekSearchButton>
+                                    <FoldseekSearchButton @response="searchFoldseek($event)" dark></FoldseekSearchButton>
                                 </v-tab-item>
                             </v-tabs-items>
                         </v-col>
                     </v-row>
                 </v-parallax>
             </v-flex>
-            <v-flex xs12 v-if="response != null" ref="results">
-                <panel class="query-panel d-flex fill-height" fill-height>
-                    <template slot="header">
-                        Cluster selection
-                    </template>
-                    <template slot="toolbar-extra">
-                    </template>
-                    <GoTermResultList goterm=""></GoTermResultList>
-                    <template slot="content">
-                        <v-data-table
-                            :headers="headers"
-                            :items="response"
-                            :options.sync="options"
-                            :server-items-length="total"
-                        >
-                            <template v-slot:item.rep_accession="prop">
-                                <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}" target='_blank'>{{ prop.value }}</router-link><br>
-                                {{ prop.item.description }}
-                            </template>
-
-                            <template v-slot:item.avg_plddt="prop">
-                                {{ prop.value.toFixed(2) }}
-                            </template>
-
-
-                            <template v-slot:item.rep_plddt="prop">
-                                {{ prop.value.toFixed(2) }}
-                            </template>
-
-                            <template v-slot:header.lca_tax_id="{ header }">
-                                    <TaxonomyAutocomplete
-                                        cluster="null"
-                                        v-model="options.tax_id"
-                                        :urlFunction="(a, b) => '/cluster/' + a + '/search/taxonomy/' + b"
-                                        :disabled="taxAutocompleteDisabled"
-                                        :bundle_data="bundle_original"
-                                    ></TaxonomyAutocomplete>
-                            </template>
-
-                            <template v-slot:item.lca_tax_id="prop">
-                                <TaxSpan :taxonomy="prop.value"></TaxSpan>
-                            </template>
-
-                            <template v-slot:header.is_dark="{ header }">
-                                <v-menu
-                                    :close-on-content-click="false"
-                                    offset-y>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" :outlined="options.is_dark != null">
-                                            {{ header.text }}
-                                        </v-btn>
-                                    </template>
-
-                                    <v-card style="padding: 2em; width: 250px;">
-                                        <h3>Filter by</h3>
-                                        <v-chip-group column v-model="options.is_dark">
-                                            <IsDark isDark="0"></IsDark>
-                                            <IsDark isDark="1"></IsDark>
-                                        </v-chip-group>
-                                    </v-card>
-                                </v-menu>
-                            </template>
-
-                            <template v-slot:item.is_dark="prop">
-                                <IsDark :isDark="prop.value"></IsDark>
-                            </template>
-
-                            <template v-slot:header.avg_len="{ header }">
-                                <v-menu
-                                    :close-on-content-click="false"
-                                    offset-y>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" >
-                                            {{ header.text }}
-                                        </v-btn>
-                                    </template>
-                                    <RangeSlider :range="options.avg_length_range"></RangeSlider>
-                                </v-menu>
-                            </template>
-
-                            <template v-slot:header.avg_plddt="{ header }">
-                                <v-menu
-                                    :close-on-content-click="false"
-                                    offset-y>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" >
-                                            {{ header.text }}
-                                        </v-btn>
-                                    </template>
-                                    <RangeSlider :range="options.avg_plddt_range"></RangeSlider>
-                                </v-menu>
-                            </template>
-
-                            <template v-slot:header.n_mem="{ header }">
-                                <v-menu
-                                    :close-on-content-click="false"
-                                    offset-y>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" >
-                                            {{ header.text }}
-                                        </v-btn>
-                                    </template>
-                                    <RangeSlider :range="options.n_mem_range"></RangeSlider>
-                                </v-menu>
-                            </template>
-
-                            <template v-slot:header.rep_len="{ header }">
-                                <v-menu
-                                    :close-on-content-click="false"
-                                    offset-y>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" >
-                                            {{ header.text }}
-                                        </v-btn>
-                                    </template>
-                                    <RangeSlider :range="options.rep_length_range"></RangeSlider>
-                                </v-menu>
-                            </template>
-
-                            <template v-slot:header.rep_plddt="{ header }">
-                                <v-menu
-                                    :close-on-content-click="false"
-                                    offset-y>
-                                    <template v-slot:activator="{ on }">
-                                        <v-btn v-on="on" >
-                                            {{ header.text }}
-                                        </v-btn>
-                                    </template>
-                                    <RangeSlider :range="options.rep_plddt_range"></RangeSlider>
-                                </v-menu>
-                            </template>
-
-                        </v-data-table>
-                    </template>
-                </panel>
-            </v-flex>
+            <GoSearchResult v-if="tab == 1" @total="small = $event > 0; inSearch = false;"></GoSearchResult>
+            <LCASearchResult v-else-if="tab == 2" @total="small = $event > 0; inSearch = false;"></LCASearchResult>
+            <FoldseekSearchResult v-else-if="tab == 3" @total="small = $event > 0; inSearch = false;"></FoldseekSearchResult>
             <v-flex>
                 <v-card rounded="0">
                 <v-card-title primary-title class="pb-0 mb-0">
@@ -308,127 +159,79 @@
 
 <script>
 import Panel from "./Panel.vue";
-import TaxSpan from "./TaxSpan.vue";
+import GoSearchResult from "./GoSearchResult.vue";
 import FoldseekSearchButton from "./FoldseekSearchButton.vue";
-import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
-import IsDark from './IsDark.vue';
-import RangeSlider from './RangeSlider.vue';
-import UniprotLink from "./UniprotLink.vue";
 import TaxonomyNcbiSearch from "./TaxonomyNcbiSearch.vue";
+import LCASearchResult from "./LCASearchResult.vue";
+import FoldseekSearchResult from "./FoldseekSearchResult.vue";
 
 export default {
     name: "search",
     components: { 
         Panel,
+        GoSearchResult,
+        TaxonomyNcbiSearch,
+        LCASearchResult,
         FoldseekSearchButton,
-        TaxSpan,
-        TaxonomyAutocomplete,
-        IsDark,
-        RangeSlider,
-        UniprotLink,
-        TaxonomyNcbiSearch
+        FoldseekSearchResult,
     },
     data() {
         return {
-            query: "B4DKH6",
-            query_GO: "GO:0006955",
-            query_LCA: {text: "Homo Sapiens", value: 9606},
-            selectedExample: 1,
             tab: 0,
+            query: "B4DKH6",
+            selectedExample: 1,
             examples: [
                 {id:'A0A849TG76', desc:'predicted \'Transporter\' protein'},
                 {id:'B4DKH6', desc:'Bactericidal permeability-increasing protein'},
                 {id:'A0A1G5ASE0', desc:'Histone (bacteria)'},
                 {id:'A0A1S3QU81', desc:' Gasdermin containing domain'},
             ],
+            queryGo: "GO:0006955",
+            goSearchType: "lower",
+            queryLCA: {text: "Homo Sapiens", value: 9606},
+            lcaSearchType: "lower",
             inSearch: false,
             response: null,
-            bundle_original: null,
-            total: null,
-            page: null,
+            small: false,
             error: null,
-            headers: [
-                {
-                    text: "Rep Accession",
-                    value: "rep_accession",
-                    sortable: false,
-                },
-                {
-                    text: "LCA rank",
-                    value: "lca_tax_id.rank"
-                },
-                {
-                    text: "LCA",
-                    value: "lca_tax_id",
-                    sortable: false,
-                },
-                {
-                    text: "Average Length",
-                    value: "avg_len",
-                    sortable: false,
-                },
-                {
-                    text: "Average pLDDT",
-                    value: "avg_plddt",
-                    sortable: false,
-                },
-                {
-                    text: "Number of members",
-                    value: "n_mem",
-                    sortable: false,
-                },
-                {
-                    text: "Dark",
-                    value: "is_dark",
-                    sortable: false,
-                },
-                {
-                    text: "Rep pLDDT",
-                    value: "rep_plddt",
-                    sortable: false,
-                },
-                {
-                    text: "Rep Length",
-                    value: "rep_len",
-                    sortable: false,
-                },
-            ],
-            go_search_type: "lower",
-            lca_search_type: "lower",
-            options: {
-                avg_length_range: [0, Infinity],
-                avg_plddt_range: [0, Infinity],
-                rep_length_range: [0, Infinity],
-                rep_plddt_range: [0, Infinity],
-                n_mem_range: [0, Infinity],
-                tax_id: null,
-                is_dark: null,
-            },
-            search_type: null,
-            taxAutocompleteDisabled: false,
-            range: [5, 5],
         };
-    },
-    watch : {
-        options: {
-            handler () {
-                console.log('option handler', this.options)
-                this.filterData()
-            },
-            deep: true,
-        }
     },
     computed: {
         windowHeight() {
-            if (this.response != null && this.response.length > 0) {
+            if (this.small) {
                 return 500;
             }
             return Math.max(Math.min(860, (window.innerHeight - 48) * 0.8), 500);
         },
     },
+    mounted() {
+        this.setTab();
+    },
+    watch : {
+        '$route': function(to, from) {
+            if (from.path != to.path) {
+                this.setTab();
+            }
+        }
+    },
     methods: {
         log(value) {
             console.log(value);
+        },
+        setTab() {
+            if (this.$route.params.go) {
+                this.tab = 1;
+                this.queryGo = this.$route.params.go;
+                this.goSearchType = this.$route.params.type;
+            } else if (this.$route.params.taxid) {
+                this.tab = 2;
+                this.queryLCA = {text: "" + this.$route.params.taxid, value: this.$route.params.taxid};
+                this.lcaSearchType = this.$route.params.type;
+            } else if (this.$route.params.jobid) {
+                this.tab = 3;
+            } else {
+                this.tab = 0;
+            }
         },
         search() {
             this.inSearch = true;
@@ -448,80 +251,45 @@ export default {
                     this.inSearch = false;
                 });
         },
-        GOsearch() {
+        searchGo() {
             this.inSearch = true;
             this.error = null;
-            this.$axios.post("/go/" + this.query_GO, 
-                {
-                    itemsPerPage: 15, page: 1,
-                    go_search_type: this.go_search_type
-                })
-                .then(res => {
-                    this.search_type = "go";
-                    this.response = res.data.result;
-                    this.bundle_original = res.data.result;
-                    this.inSearch = false;
-                }
-                );
-        },
-        LCAsearch() {
-            this.inSearch = true;
-            this.error = null;
-            
-            this.$axios.post("/lca/" + this.query_LCA.value, 
-                {
-                    itemsPerPage: 15, page: 1,
-                    lca_search_type: this.lca_search_type
-                })
-                .then(res => {
-                    this.search_type = "lca";
-                    this.response = res.data.result;
-                    this.bundle_original = res.data.result;
-                    this.inSearch = false;
-                }
-                );
-        },
-        foldseekResult(result) {
-            this.response = result;
-            this.search_type = "foldseek";
-            this.bundle_original = result;
-            this.$nextTick(() => {
-                this.$refs.results.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                    inline: "nearest"
-                })
+            this.$router.push({
+                name: "go",
+                params: { go: this.queryGo, type: this.goSearchType }
             })
+            .catch((error) => {
+                if (error && error.name == "NavigationDuplicated") {
+                    this.inSearch = false;
+                }
+            });
         },
-        filterData () {
-            console.log('filter Data called');
-            this.loading = true;
-            const options = {"search_type": this.search_type};
-
-            if (this.search_type === 'go') {
-                options['query_GO'] = this.query_GO;
-                options["go_search_type"] = this.go_search_type;
-            }
-            else if (this.search_type === 'lca') {
-                options['query_LCA'] = this.query_LCA.value;
-                options["lca_search_type"] = this.lca_search_type;
-            }
-            else if (this.search_type === 'foldseek') {
-                options["bundle"] = this.bundle_original;
-            }
-
-            let request = Object.assign({}, this.options, options);
-
-            this.$axios.post("/search/filter" , request)
-                .then(response => {
-                    this.response = response.data.result;
-                    this.total = response.data.total;
-                })
-                .catch(() => {})
-                .finally(() => {
-                    this.loading = false;
-                });
+        searchLCA() {
+            this.inSearch = true;
+            this.error = null;
+            this.$router.push({
+                name: "lca",
+                params: { taxid: this.queryLCA.value, type: this.lcaSearchType }
+            })
+            .catch((error) => {
+                if (error && error.name == "NavigationDuplicated") {
+                    this.inSearch = false;
+                }
+            });
         },
+        searchFoldseek(jobid) {
+            this.inSearch = true;
+            this.error = null;
+            this.$router.push({
+                name: "foldseek",
+                params: { jobid: jobid }
+            })
+            .catch((error) => {
+                if (error && error.name == "NavigationDuplicated") {
+                    this.inSearch = false;
+                }
+            });
+        }
     }
 };
 </script>

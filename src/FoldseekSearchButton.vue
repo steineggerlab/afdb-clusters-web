@@ -89,10 +89,7 @@ export default {
                     })
                 })
                 .then((jobid) => {
-                    return this.$axios.get("/foldseek/" + jobid);
-                })
-                .then((response) => {
-                    this.$emit('response', response.data);
+                    this.$emit('response', jobid);
                 })
                 .catch((err) => {
                     if (err.response && err.response.data && err.response.data.error) {

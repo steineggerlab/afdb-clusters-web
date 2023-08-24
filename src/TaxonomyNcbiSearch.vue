@@ -16,6 +16,8 @@
               auto-select-first
               :allow-overflow="false"
               dark
+              v-bind="$attrs"
+              v-on="$listeners"
           ></v-autocomplete>
       </template>
       <span>Restrict results to taxonomic clade</span>
