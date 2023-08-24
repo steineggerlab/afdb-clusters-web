@@ -21,7 +21,9 @@
                 </template>
     
                 <template v-slot:item.rep_accession="prop">
-                    <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}" target='_blank'>{{ prop.value }}</router-link><br>
+                    <ExternalLinks :accession="prop.value">
+                        <router-link slot="accession" :to="{ name: 'cluster', params: { cluster: prop.value }}" target='_blank'>{{ prop.value }}</router-link>
+                    </ExternalLinks>><br>
                     {{ prop.item.description }}
                 </template>
     
@@ -148,7 +150,7 @@
     import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
     import IsDark from './IsDark.vue';
     import RangeSlider from './RangeSlider.vue';
-    import UniprotLink from "./UniprotLink.vue";
+    import ExternalLinks from "./ExternalLinks.vue";
     import ImageMixin from "./ImageMixin";
     
     export default {
@@ -159,7 +161,7 @@
             TaxonomyAutocomplete,
             IsDark,
             RangeSlider,
-            UniprotLink
+            ExternalLinks
         },
         mixins: [ImageMixin],
         data() {

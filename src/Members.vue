@@ -10,7 +10,7 @@
     >
 
         <template v-slot:item.accession="prop">
-            <UniprotLink :accession="prop.value"></UniprotLink><br>
+            <ExternalLinks :accession="prop.value"></ExternalLinks><br>
             {{ prop.item.description }}
         </template>
         <template v-slot:header.structure="{ header }">
@@ -76,12 +76,6 @@
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
         </template>
 
-        <template v-slot:item.uniprot3d="{ item }">
-            <v-chip title="Search with Foldseek" :href="'https://uniprot3d.org/atlas/AFDB90v4/#' + item.accession" target="_blank">
-                <v-img :src="require('./assets/uniprot3d-removebg-preview.png')" max-width="16"></v-img>
-            </v-chip>
-        </template>
-
         <template v-slot:item.actions="{ item }">
             <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=AlphaFoldDB'" target="_blank">
                 <v-img :src="require('./assets/marv-foldseek-small.png')" max-width="16"></v-img>
@@ -94,7 +88,7 @@
 <script>
 import TaxSpan from "./TaxSpan.vue";
 import StructureViewer from "./StructureViewer.vue";
-import UniprotLink from "./UniprotLink.vue";
+import ExternalLinks from "./ExternalLinks.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Fragment from "./Fragment.vue";
 import Sankey from './Sankey.vue';
@@ -105,7 +99,7 @@ export default {
     components: {
         TaxSpan,
         StructureViewer,
-        UniprotLink,
+        ExternalLinks,
         TaxonomyAutocomplete,
         Fragment,
         Sankey,
@@ -143,12 +137,6 @@ export default {
                     value: "tax_id",
                     sortable: false,
                     width: "40%",
-                },
-                {
-                    text: "uniprot3d",
-                    value: "uniprot3d",
-                    sortable: false,
-                    width: "10%",
                 },
                 {
                     text: 'Actions',

@@ -32,6 +32,7 @@ import {
     mdiCircleHalf,
     mdiPlusBox,
     mdiMinusBox,
+    mdiOpenInNew,
     mdiDotsVertical,
 } from '@mdi/js'
 
@@ -100,6 +101,8 @@ Vue.use({
             CircleHalf: mdiCircleHalf,
             PlusBox: mdiPlusBox,
             MinusBox: mdiMinusBox,
+            DotsVertical: mdiDotsVertical,
+            OpenInNew: mdiOpenInNew,
         };
         let apiBase = "http://localhost:3000/api";
         // let apiBase = "/api";

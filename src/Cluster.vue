@@ -19,7 +19,7 @@
                     Accession
                 </dt>
                 <dd>
-                    <UniprotLink :accession="response.rep_accession"></UniprotLink><br>
+                    <ExternalLinks :accession="response.rep_accession"></ExternalLinks><br>
                     {{ response.description }}
                 </dd>
                 </div>
@@ -163,7 +163,7 @@ import Panel from "./Panel.vue";
 import StructureViewer from "./StructureViewer.vue";
 import Members from "./Members.vue";
 import TaxSpan from "./TaxSpan.vue";
-import UniprotLink from "./UniprotLink.vue";
+import ExternalLinks from "./ExternalLinks.vue";
 import Similars from "./Similars.vue";
 // import Annotations from "./Annotations.vue";
 
@@ -174,7 +174,7 @@ export default {
     StructureViewer,
     Members,
     TaxSpan,
-    UniprotLink,
+    ExternalLinks,
     Similars,
     // Annotations,
 },

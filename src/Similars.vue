@@ -61,7 +61,7 @@
 <script>
 import TaxSpan from "./TaxSpan.vue";
 import StructureViewer from "./StructureViewer.vue";
-import UniprotLink from "./UniprotLink.vue";
+import ExternalLinks from "./ExternalLinks.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Sankey from "./Sankey.vue";
 import ImageMixin from './ImageMixin';
@@ -71,7 +71,7 @@ export default {
     components: {
         TaxSpan,
         StructureViewer,
-        UniprotLink,
+        ExternalLinks,
         TaxonomyAutocomplete,
         Sankey,
     },
