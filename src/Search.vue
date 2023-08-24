@@ -45,7 +45,7 @@
                                         label="UniProt accession"
                                         style="max-width: 400px; margin: 0 auto;"
                                         v-model="query"
-                                        :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
+                                        :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
                                         :disabled="inSearch"
                                         @click:append="search"
                                         @keyup.enter="search"
@@ -81,7 +81,7 @@
                                         label="GO Identifier"
                                         style="max-width: 400px; margin: 0 auto;"
                                         v-model="queryGo"
-                                        :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
+                                        :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
                                         :disabled="inSearch"
                                         @click:append="searchGo"
                                         @keyup.enter="searchGo"
@@ -105,7 +105,7 @@
                                 </v-tab-item>
                                 <v-tab-item>
                                     <TaxonomyNcbiSearch
-                                        :append-icon="inSearch ? $MDI.mdiProgressWrench : $MDI.Magnify"
+                                        :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
                                         @click:append="searchLCA"
                                         @keyup.enter="searchLCA"
                                         v-model="queryLCA"
