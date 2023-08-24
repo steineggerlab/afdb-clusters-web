@@ -76,8 +76,14 @@
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
         </template>
 
+        <template v-slot:item.uniprot3d="{ item }">
+            <v-chip title="Search with Foldseek" :href="'https://uniprot3d.org/atlas/AFDB90v4/#' + item.accession" target="_blank">
+                <v-img :src="require('./assets/uniprot3d-removebg-preview.png')" max-width="16"></v-img>
+            </v-chip>
+        </template>
+
         <template v-slot:item.actions="{ item }">
-            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=AlphaFoldDB'">
+            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=AlphaFoldDB'" target="_blank">
                 <v-img :src="require('./assets/marv-foldseek-small.png')" max-width="16"></v-img>
             </v-chip>
         </template>
@@ -137,6 +143,12 @@ export default {
                     value: "tax_id",
                     sortable: false,
                     width: "40%",
+                },
+                {
+                    text: "uniprot3d",
+                    value: "uniprot3d",
+                    sortable: false,
+                    width: "10%",
                 },
                 {
                     text: 'Actions',
