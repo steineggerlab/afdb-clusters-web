@@ -36,6 +36,36 @@ function convertToQueryUrl(obj) {
     return params.toString();
 }
 
+function extractAtomRecords(pdbContent) {
+    const lines = pdbContent.split('\n');
+
+    let inFirstModel = false;
+    let firstChainIdentified = false;
+    let firstChainId = '';
+
+    const atomRecords = [];
+    for (const line of lines) {
+        if (line.startsWith('MODEL')) {
+            if (inFirstModel) break;
+            inFirstModel = true;
+            continue;
+        }
+
+        if (line.startsWith('ATOM')) {
+            const currentChainId = line.substring(21, 22).trim();
+            if (!firstChainIdentified) {
+                firstChainId = currentChainId;
+                firstChainIdentified = true;
+            }
+            if (currentChainId !== firstChainId) break;
+
+            atomRecords.push(line);
+        }
+    }
+
+    return atomRecords.join('\n');
+}
+
 export default {
     name: "search",
     components: { 
@@ -59,7 +89,7 @@ export default {
             reader.onload = e => {
                 new Promise((resolve, reject) => {
                     this.$axios.post('https://search.foldseek.com/api/ticket', convertToQueryUrl({
-                        q: e.target.result,
+                        q: extractAtomRecords(e.target.result),
                         database: ["afdb50", "afdb-swissprot", "afdb-proteome"],
                         mode: "3diaa"
                     }), {
