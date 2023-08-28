@@ -18,7 +18,11 @@
                 dark
                 v-bind="$attrs"
                 v-on="$listeners"
-            ></v-autocomplete>
+            >
+                <template v-slot:item="{ item }">
+                    {{ item.text }} ({{ item.value }})
+                </template>
+            </v-autocomplete>
         </template>
         <span>Search for Gene Ontology (GO) terms</span>
     </v-tooltip>
@@ -57,7 +61,7 @@
                 .then(response => {
                     if (response.status == 200 && response.data.hasOwnProperty("result")) {
                         this.items = response.data.result.map((el) => {
-                            return { text: el.go_name + " (" + el.go_id + ")", value: el.go_id }
+                            return { text: el.go_name, value: el.go_id }
                         });
                     }
                 }).finally(() => { this.isLoading = false; });
