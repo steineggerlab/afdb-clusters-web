@@ -188,6 +188,17 @@ app.post('/api/search/go/:taxonomy?', async (req, res) => {
     return finalizeResult(result, req, res);
 });
 
+app.get('/api/autocomplete/go/:substring', async (req, res) => {
+    const substring = req.params.substring;
+    const isGoTerm = /^GO:\d+$/.test(substring);
+    let result = await sql.all(`
+        SELECT go_id, go_name
+        FROM go_terms
+        ${isGoTerm ? 'WHERE go_id = ?' : 'WHERE go_name MATCH ?'};
+    `, substring);
+    res.send({ result });
+});
+
 app.post('/api/search/lca/:taxonomy?', async (req, res) => {
     const taxid = req.body.taxid;
     const lca_search_type = req.body.type;

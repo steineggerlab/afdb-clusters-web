@@ -76,12 +76,9 @@
                                     </template>
                                 </v-tab-item>
                                 <v-tab-item>
-                                    <v-text-field
-                                        outlined
-                                        label="GO Identifier"
-                                        style="max-width: 400px; margin: 0 auto;"
-                                        v-model="queryGo"
+                                    <GoAutocomplete
                                         :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
+                                        v-model="queryGo"
                                         :disabled="inSearch"
                                         @click:append="searchGo"
                                         @keyup.enter="searchGo"
@@ -89,9 +86,8 @@
                                         @keydown="error = null"
                                         :error="error != null"
                                         :error-messages="error ? error : []"
-                                        dark
-                                        >
-                                    </v-text-field>
+                                        ></GoAutocomplete>
+
                                     <v-radio-group 
                                         style="
                                             max-width: 400px;
@@ -159,6 +155,7 @@
 
 <script>
 import Panel from "./Panel.vue";
+import GoAutocomplete from "./GoAutocomplete.vue";
 import GoSearchResult from "./GoSearchResult.vue";
 import FoldseekSearchButton from "./FoldseekSearchButton.vue";
 import TaxonomyNcbiSearch from "./TaxonomyNcbiSearch.vue";
@@ -169,6 +166,7 @@ export default {
     name: "search",
     components: { 
         Panel,
+        GoAutocomplete,
         GoSearchResult,
         TaxonomyNcbiSearch,
         LCASearchResult,
@@ -186,7 +184,7 @@ export default {
                 {id:'A0A1G5ASE0', desc:'Histone (bacteria)'},
                 {id:'A0A1S3QU81', desc:' Gasdermin containing domain'},
             ],
-            queryGo: "GO:0006955",
+            queryGo: { text: "immune response", value: "GO:0006955" },
             goSearchType: "lower",
             queryLCA: {text: "Homo Sapiens", value: 9606},
             lcaSearchType: "lower",
@@ -221,7 +219,7 @@ export default {
         setTab() {
             if (this.$route.params.go) {
                 this.tab = 1;
-                this.queryGo = this.$route.params.go;
+                this.queryGo = { text: "" + this.$route.params.go, value: this.$route.params.go};
                 this.goSearchType = this.$route.params.type;
             } else if (this.$route.params.taxid) {
                 this.tab = 2;
@@ -254,9 +252,10 @@ export default {
         searchGo() {
             this.inSearch = true;
             this.error = null;
+            console.log(this.queryGo)
             this.$router.push({
                 name: "go",
-                params: { go: this.queryGo, type: this.goSearchType }
+                params: { go: this.queryGo.value, type: this.goSearchType }
             })
             .catch((error) => {
                 if (error && error.name == "NavigationDuplicated") {
