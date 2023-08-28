@@ -1,8 +1,11 @@
 <template>
-    <v-flex xs12 v-if="response && total > 0">
+    <v-flex xs12>
     <panel class="query-panel d-flex fill-height" fill-height>
         <template slot="header">
-            Cluster selection for <a :href="'https://search.foldseek.com/result/' + $route.params.jobid + '/0'" target="_blank" rel="noopener">{{ $route.params.jobid }}</a>
+            Cluster selection
+            <template v-if="$route.params.jobid">
+                for <a :href="'https://search.foldseek.com/result/' + $route.params.jobid + '/0'" target="_blank" rel="noopener">{{ $route.params.jobid }}</a>
+            </template>
         </template>
     
         <template slot="content">
@@ -166,7 +169,7 @@
         mixins: [ImageMixin],
         data() {
             return {
-                response: null,
+                response: [],
                 total: null,
                 page: null,
                 headers: [

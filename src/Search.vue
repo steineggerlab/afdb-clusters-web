@@ -107,11 +107,6 @@
                                         v-model="queryLCA"
                                         :value="queryLCA.text"
                                     ></TaxonomyNcbiSearch>
-                                    <v-btn
-                                        v-on:click="searchLCA"
-                                        v-on:keyup.enter="searchLCA"
-                                        :disabled="inSearch"
-                                    >Search</v-btn>
                                     <v-radio-group 
                                         style="
                                             max-width: 400px;
@@ -196,7 +191,7 @@ export default {
     },
     computed: {
         windowHeight() {
-            if (this.small) {
+            if (this.small && !this.tab == 0) {
                 return 500;
             }
             return Math.max(Math.min(860, (window.innerHeight - 48) * 0.8), 500);

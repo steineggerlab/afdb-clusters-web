@@ -1,5 +1,5 @@
 <template>
-    <v-flex xs12 v-if="response && total > 0">
+    <v-flex xs12>
     <panel class="query-panel d-flex fill-height" fill-height>
         <template slot="header">
             Cluster selection
@@ -166,7 +166,7 @@
         mixins: [ImageMixin],
         data() {
             return {
-                response: null,
+                response: [],
                 total: null,
                 page: null,
                 headers: [
