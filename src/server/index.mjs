@@ -194,7 +194,7 @@ app.get('/api/autocomplete/go/:substring', async (req, res) => {
     let result = await sql.all(`
         SELECT go_id, go_name
         FROM go_terms
-        ${isGoTerm ? 'WHERE go_id = ?' : 'WHERE go_name MATCH ?'};
+        ${isGoTerm ? 'WHERE go_id = ?' : 'WHERE go_name MATCH ? ORDER BY rank'};
     `, substring);
     res.send({ result });
 });

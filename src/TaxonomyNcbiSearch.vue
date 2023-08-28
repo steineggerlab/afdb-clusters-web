@@ -68,7 +68,7 @@ export default {
                       });
                   }
               }).finally(() => { this.loading = false; });
-      }, 1000, true)
+      }, 500, false)
   },
 }
 </script>

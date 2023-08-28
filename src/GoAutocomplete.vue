@@ -7,6 +7,7 @@
                 label="GO Term"
                 placeholder="Start typing to search GO terms"
                 hide-no-data
+                no-filter
                 :items="items"
                 :loading="isLoading"
                 :search-input.sync="search"
@@ -65,7 +66,7 @@
                         });
                     }
                 }).finally(() => { this.isLoading = false; });
-        }, 1000, true)
+        }, 300, false)
     },
   }
   </script>
