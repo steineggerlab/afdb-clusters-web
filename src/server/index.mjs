@@ -112,8 +112,7 @@ function finalizeResult(result, req, res) {
             if (tree.nodeExists(x.lca_tax_id.id) == false) {
                 return false;
             }
-            x.lca_tax_id.id = tree.getNode(x.lca_tax_id.id);
-            let currNode = x.lca_tax_id.id;
+            let currNode = tree.getNode(x.lca_tax_id.id);
             while (currNode.id != 1) {
                 if (currNode.id == req.body.tax_id.value) {
                     return true;

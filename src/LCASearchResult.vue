@@ -39,7 +39,7 @@
                 <template v-slot:header.lca_tax_id="{ header }">
                     <TaxonomyAutocomplete
                         v-model="options.tax_id"
-                        :urlFunction="(_, b) => '/search/foldseek/' + b"
+                        :urlFunction="(_, b) => '/search/lca/' + b"
                         :disabled="taxAutocompleteDisabled"
                         :options="postOptions"
                     ></TaxonomyAutocomplete>

@@ -103,9 +103,10 @@
                                     <TaxonomyNcbiSearch
                                         :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
                                         @click:append="searchLCA"
+                                        @input="searchLCA"
                                         @keyup.enter="searchLCA"
                                         v-model="queryLCA"
-                                        :value="queryLCA.text"
+                                        :value="queryLCA ? queryLCA.text : ''"
                                     ></TaxonomyNcbiSearch>
                                     <v-radio-group 
                                         style="
@@ -181,7 +182,7 @@ export default {
             ],
             queryGo: { text: "immune response", value: "GO:0006955" },
             goSearchType: "lower",
-            queryLCA: {text: "Homo Sapiens", value: 9606},
+            queryLCA: { text: "Homo sapiens", value: "9606", common_name: "human" },
             lcaSearchType: "lower",
             inSearch: false,
             response: null,
@@ -245,6 +246,9 @@ export default {
                 });
         },
         searchGo() {
+            if (!this.queryGo) {
+                return;
+            }
             this.inSearch = true;
             this.error = null;
             console.log(this.queryGo)
@@ -259,6 +263,9 @@ export default {
             });
         },
         searchLCA() {
+            if (!this.queryLCA) {
+                return;
+            }
             this.inSearch = true;
             this.error = null;
             this.$router.push({
