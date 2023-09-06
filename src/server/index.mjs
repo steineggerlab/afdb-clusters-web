@@ -107,7 +107,11 @@ function finalizeResult(result, req, res) {
     }
 
     if (is_tax_filter) {
-        result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
+        result.forEach(x => { 
+            if (x.lca_tax_id) {
+                x.lca_tax_id = tree.nodeExists(x.lca_tax_id) ? tree.getNode(x.lca_tax_id) : null;
+            }
+        })
         result = result.filter((x) => {
             if (tree.nodeExists(x.lca_tax_id.id) == false) {
                 return false;
@@ -131,7 +135,9 @@ function finalizeResult(result, req, res) {
     result.forEach((x) => {
         x.description = getDescription(x.rep_accession);
         if (!is_tax_filter) {
-            if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); 
+            if (x.lca_tax_id) {
+                x.lca_tax_id = tree.nodeExists(x.lca_tax_id) ? tree.getNode(x.lca_tax_id) : null;
+            }
         }
     });
 
@@ -325,7 +331,7 @@ app.post('/api/:query', async (req, res) => {
         res.status(404).send({ error: "No cluster found" });
         return;
     }
-    result.lca_tax_id = tree.getNode(result.lca_tax_id);
+    result.lca_tax_id = tree.nodeExists(result.lca_tax_id) ? tree.getNode(result.lca_tax_id) : null;
     res.send([ result ]);
 });
 
@@ -481,9 +487,9 @@ app.post('/api/cluster/:cluster', async (req, res) => {
         res.status(404).send({ error: "No cluster found" });
         return;
     }
-    result.lca_tax_id = tree.getNode(result.lca_tax_id);
+    result.lca_tax_id = tree.nodeExists(result.lca_tax_id) ? tree.getNode(result.lca_tax_id) : null;
     result.lineage = tree.lineage(result.lca_tax_id);
-    result.tax_id = tree.getNode(result.tax_id);
+    result.tax_id = tree.nodeExists(result.tax_id) ? tree.getNode(result.tax_id) : null;
     result.rep_lineage = tree.lineage(result.tax_id);
     result.description = getDescription(result.rep_accession);
     if (warnDB) {
@@ -540,7 +546,10 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             ORDER BY rowid
             LIMIT ? OFFSET ?;
         `, ...args, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
-        result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id); x.description = getDescription(x.accession) });
+        result.forEach((x) => {
+            x.tax_id = tree.nodeExists(x.tax_id) ? tree.getNode(x.tax_id) : null;
+            x.description = getDescription(x.accession);
+        });
         res.send({ total: total.total, result : result });
     }
 });
@@ -592,11 +601,7 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
     `, accessions);
     result.forEach((x) => {
         x.evalue = map.get(x.rep_accession);
-        if (tree.nodeExists(x.lca_tax_id)) {
-            x.lca_tax_id = tree.getNode(x.lca_tax_id);
-        } else {
-            x.lca_tax_id = null;
-        }
+        x.lca_tax_id = tree.nodeExists(x.lca_tax_id) ? tree.getNode(x.lca_tax_id) : null;
     });
     // console.log(result)
     if (req.body && req.body.tax_id) {
