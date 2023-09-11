@@ -159,13 +159,14 @@ app.get('/api/search/go/:taxonomy?', async (req, res) => {
 
     const is_dark = req.query.is_dark;
     let filter_params = [];
-    for (var i in ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+    for (let i of ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
         if (typeof(req.query[i]) == "undefined") {
             filter_params.push('0');
             filter_params.push('INF');
         } else {
-            filter_params.push(req.query[i][0])
-            filter_params.push(req.query[i][1] ?? 'INF');
+            const split = req.query[i].split(',');
+            filter_params.push(split[0] ?? '0');
+            filter_params.push(split[1] ?? 'INF');
         }
     }
 
@@ -216,13 +217,14 @@ app.get('/api/search/lca/:taxonomy?', async (req, res) => {
 
     const is_dark = req.query.is_dark;
     let filter_params = [];
-    for (var i in ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+    for (let i of ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
         if (typeof(req.query[i]) == "undefined") {
             filter_params.push('0');
             filter_params.push('INF');
         } else {
-            filter_params.push(req.query[i][0])
-            filter_params.push(req.query[i][1] ?? 'INF');
+            const split = req.query[i].split(',');
+            filter_params.push(split[0] ?? '0');
+            filter_params.push(split[1] ?? 'INF');
         }
     }
 
@@ -290,13 +292,14 @@ app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
 
     const is_dark = req.query.is_dark;
     let filter_params = [];
-    for (var i in ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+    for (let i of ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
         if (typeof(req.query[i]) == "undefined") {
             filter_params.push('0');
             filter_params.push('INF');
         } else {
-            filter_params.push(req.query[i][0])
-            filter_params.push(req.query[i][1] ?? 'INF');
+            const split = req.query[i].split(',');
+            filter_params.push(split[0] ?? '0');
+            filter_params.push(split[1] ?? 'INF');
         }
     }
 
