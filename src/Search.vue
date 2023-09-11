@@ -230,7 +230,7 @@ export default {
         search() {
             this.inSearch = true;
             this.error = null;
-            this.$axios.post("/" + this.query)
+            this.$axios.get("/" + this.query)
                 .then(response => {
                     this.$router.push({ name: 'cluster', params: { cluster: response.data[0].rep_accession } })
                 })

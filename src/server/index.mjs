@@ -77,6 +77,14 @@ app.use(express.text({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+    const period = 60 * 60 * 24;
+    if (req.method == 'GET') {
+        res.set('Cache-Control', `public, max-age=${period}`);
+    }
+    next();
+});
+
 const fileCache = new FileCache(cachePath);
 
 function finalizeResult(result, req, res) {
@@ -325,7 +333,7 @@ app.post('/api/search/foldseek/:taxonomy?', async (req, res) => {
     return finalizeResult(result, req, res);
 });
 
-app.post('/api/:query', async (req, res) => {
+app.get('/api/:query', async (req, res) => {
     let result = await sql.get("SELECT * FROM member as m LEFT JOIN cluster as c ON m.rep_accession == c.rep_accession WHERE m.accession = ?", req.params.query);
     if (!result || result.lca_tax_id == null) {
         res.status(404).send({ error: "No cluster found" });
@@ -481,7 +489,7 @@ app.get('/api/cluster/:cluster/sankey-similars', async (req, res) => {
     res.send({result: makeSankey(result)});
 });
 
-app.post('/api/cluster/:cluster', async (req, res) => {
+app.get('/api/cluster/:cluster', async (req, res) => {
     let result = await sql.get("SELECT * FROM cluster as c LEFT JOIN member as m ON c.rep_accession == m.accession WHERE c.rep_accession = ?", req.params.cluster);
     if (!result) {
         res.status(404).send({ error: "No cluster found" });
@@ -501,15 +509,15 @@ app.post('/api/cluster/:cluster', async (req, res) => {
     res.send(result);
 });
 
-app.post('/api/cluster/:cluster/members', async (req, res) => {
+app.get('/api/cluster/:cluster/members', async (req, res) => {
     let flagFilter = '';
     let args = [ req.params.cluster ];
-    if (req.body.flagFilter != null) {
+    if (req.query.flagFilter != null) {
         flagFilter = 'AND flag = ?';
-        args.push(req.body.flagFilter + 1);
+        args.push(req.query.flagFilter + 1);
     }
 
-    if (req.body.tax_id) {
+    if (req.query.tax_id) {
         let result = await sql.all(`
         SELECT * 
             FROM member
@@ -524,7 +532,7 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             x.tax_id = tree.getNode(x.tax_id);
             let currNode = x.tax_id;
             while (currNode.id != 1) {
-                if (currNode.id == req.body.tax_id.value) {
+                if (currNode.id == req.query.tax_id) {
                     return true;
                 }
                 currNode = tree.getNode(currNode.parent);
@@ -533,7 +541,7 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
         });
         const total = result.length;
         if (result && result.length > 0) {
-            result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+            result = result.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
         }
         result.forEach((x) => { x.description = getDescription(x.accession) });
         res.send({ total: total, result : result });
@@ -545,7 +553,7 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             WHERE rep_accession = ? ${flagFilter}
             ORDER BY rowid
             LIMIT ? OFFSET ?;
-        `, ...args, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
+        `, ...args, req.query.itemsPerPage, (req.query.page - 1) * req.query.itemsPerPage);
         result.forEach((x) => {
             x.tax_id = tree.nodeExists(x.tax_id) ? tree.getNode(x.tax_id) : null;
             x.description = getDescription(x.accession);
@@ -582,7 +590,7 @@ app.post('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => 
     res.send(Object.values(suggestions));
 });
 
-app.post('/api/cluster/:cluster/similars', async (req, res) => {
+app.get('/api/cluster/:cluster/similars', async (req, res) => {
     const cluster = req.params.cluster;
     const avaKey = avaDb.id(cluster);
     if (avaKey.found == false) {
@@ -604,14 +612,14 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
         x.lca_tax_id = tree.nodeExists(x.lca_tax_id) ? tree.getNode(x.lca_tax_id) : null;
     });
     // console.log(result)
-    if (req.body && req.body.tax_id) {
+    if (req.query.tax_id) {
         result = result.filter((x) => {
             let currNode = x.lca_tax_id;
             if (currNode == null) {
                 return false;
             }
             while (currNode.id != 1) {
-                if (currNode.id == req.body.tax_id.value) {
+                if (currNode.id == req.query.tax_id) {
                     return true;
                 }
                 currNode = tree.getNode(currNode.parent);
@@ -620,21 +628,21 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
         });
     }
 
-    if (req.body.sortBy.length == 0) {
-        req.body.sortBy = ['evalue'];
-        req.body.sortDesc = [false];
+    if (req.query.sortBy && req.query.sortBy.length == 0) {
+        req.query.sortBy = ['evalue'];
+        req.query.sortDesc = [false];
     }
 
     const identity = (x) => x;
     let castFun = identity;
-    if (req.body.sortBy[0] == 'evalue') {
+    if (req.query.sortBy && req.query.sortBy[0] == 'evalue') {
         castFun = parseFloat;
     }
     let sorted = result.sort((a, b) => {
-        const sortA = castFun(a[req.body.sortBy[0]]);
-        const sortB = castFun(b[req.body.sortBy[0]]);
+        const sortA = castFun(a[req.query.sortBy[0]]);
+        const sortB = castFun(b[req.query.sortBy[0]]);
         
-        if (req.body.sortDesc[0]) {
+        if (req.query.sortDesc[0]) {
             if (sortA < sortB) return 1;
             if (sortA > sortB) return -1;
             return 0;
@@ -646,7 +654,7 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
     })
     sorted = sorted.filter((x) => x.rep_accession != cluster);
     const total = sorted.length;
-    sorted = sorted.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+    sorted = sorted.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
     sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
     res.send({ total: total, similars: sorted });
 });

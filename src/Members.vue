@@ -185,7 +185,14 @@ export default {
                 return;
             }
 
-            this.$axios.post("/cluster/" + cluster + "/members", this.options)
+            let options = JSON.parse(JSON.stringify(this.options));
+            if (options.tax_id) {
+                options.tax_id = options.tax_id.value;
+            } else {
+                delete options.tax_id;
+            }
+            const params = new URLSearchParams(options);
+            this.$axios.get("/cluster/" + cluster + "/members", { params })
                 .then(response => {
                     this.members = response.data.result;
                     this.totalMembers = response.data.total;

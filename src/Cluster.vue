@@ -209,7 +209,7 @@ export default {
                 return;
             }
 
-            this.$axios.post("/cluster/" + this.$route.params.cluster)
+            this.$axios.get("/cluster/" + this.$route.params.cluster)
                 .then(response => {
                     this.response = response.data;
                 })
@@ -217,7 +217,7 @@ export default {
                     if (!result || !result.response || result.response.status != 404) {
                         return;
                     }
-                    this.$axios.post("/" + this.$route.params.cluster)
+                    this.$axios.get("/" + this.$route.params.cluster)
                         .then(response => {
                             console.log(response.data[0].rep_accession);
                             this.$router.replace({ name: "cluster", params: { cluster: response.data[0].rep_accession } });

@@ -164,7 +164,15 @@ export default {
                 return;
             }
 
-            this.$axios.post("/cluster/" + cluster + "/similars", this.options)
+
+            let options = JSON.parse(JSON.stringify(this.options));
+            if (options.tax_id) {
+                options.tax_id = options.tax_id.value;
+            } else {
+                delete options.tax_id;
+            }
+            const params = new URLSearchParams(options);
+            this.$axios.get("/cluster/" + cluster + "/similars", { params })
                 .then(response => {
                     this.entries = response.data.similars;
                     this.totalEntries = response.data.total;
