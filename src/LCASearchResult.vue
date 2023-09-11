@@ -41,7 +41,7 @@
                         v-model="options.tax_id"
                         :urlFunction="(_, b) => '/search/lca/' + b"
                         :disabled="taxAutocompleteDisabled"
-                        :options="postOptions"
+                        :options="requestOptions"
                     ></TaxonomyAutocomplete>
                 </template>
     
@@ -251,12 +251,24 @@
             }
         },
         computed: {
-            postOptions() {
+            requestOptions() {
                 const options = {
                     "taxid": this.$route.params.taxid,
                     "type": this.$route.params.type,
                 };
-                return Object.assign({}, this.options, options);
+                const obj = Object.assign({}, this.options, options);
+                let copy = JSON.parse(JSON.stringify(obj));
+                if (copy.tax_id) {
+                    copy.tax_id = copy.tax_id.value;
+                } else {
+                    delete copy.tax_id;
+                }
+                if (copy.is_dark == null) {
+                    delete copy.is_dark;
+                }
+                const params = new URLSearchParams(copy);
+                params.sort();
+                return { params };
             },
         },
         methods: {
@@ -269,7 +281,7 @@
                 }
 
                 this.loading = true;
-                this.$axios.post("/search/lca", this.postOptions)
+                this.$axios.get("/search/lca", this.requestOptions)
                     .then(response => {
                         this.response = response.data.result;
                         this.total = response.data.total;

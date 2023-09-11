@@ -88,7 +88,7 @@ app.use((req, res, next) => {
 const fileCache = new FileCache(cachePath);
 
 function finalizeResult(result, req, res) {
-    const is_tax_filter = req.body.tax_id != undefined;
+    const is_tax_filter = req.query.tax_id != undefined;
     const taxonomy_suggest = req.params.taxonomy;
 
     if (typeof(taxonomy_suggest) != "undefined") {
@@ -126,7 +126,7 @@ function finalizeResult(result, req, res) {
             }
             let currNode = tree.getNode(x.lca_tax_id.id);
             while (currNode.id != 1) {
-                if (currNode.id == req.body.tax_id.value) {
+                if (currNode.id == req.query.tax_id) {
                     return true;
                 }
                 currNode = tree.getNode(currNode.parent);
@@ -138,7 +138,7 @@ function finalizeResult(result, req, res) {
     
     const total = result.length;
     if (result && result.length > 0) {
-        result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+        result = result.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
     }
     result.forEach((x) => {
         x.description = getDescription(x.rep_accession);
@@ -153,23 +153,21 @@ function finalizeResult(result, req, res) {
     return;
 }
 
-app.post('/api/search/go/:taxonomy?', async (req, res) => {
-    const is_dark = req.body.is_dark;
-    const avg_length_range = req.body.avg_length_range;
-    const avg_plddt_range = req.body.avg_plddt_range;
-    const n_mem_range = req.body.n_mem_range;
-    const rep_length_range = req.body.rep_length_range;
-    const rep_plddt_range = req.body.rep_plddt_range;
-    const go_search_type = req.body.go_search_type;
+app.get('/api/search/go/:taxonomy?', async (req, res) => {
+    const go_search_type = req.query.go_search_type;
+    const goid = req.query.query_GO;
 
-    const goid = req.body.query_GO;
-    const filter_params = [
-        avg_length_range[0], avg_length_range[1] ?? 'INF',
-        avg_plddt_range[0],  avg_plddt_range[1]  ?? 'INF',
-        n_mem_range[0],      n_mem_range[1]      ?? 'INF',
-        rep_length_range[0], rep_length_range[1] ?? 'INF',
-        rep_plddt_range[0],  rep_plddt_range[1]  ?? 'INF'
-    ];
+    const is_dark = req.query.is_dark;
+    let filter_params = [];
+    for (var i in ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+        if (typeof(req.query[i]) == "undefined") {
+            filter_params.push('0');
+            filter_params.push('INF');
+        } else {
+            filter_params.push(req.query[i][0])
+            filter_params.push(req.query[i][1] ?? 'INF');
+        }
+    }
 
     let queries_where = [];
     if (go_search_type === 'exact') {
@@ -212,24 +210,21 @@ app.get('/api/autocomplete/go/:substring', async (req, res) => {
     res.send({ result });
 });
 
-app.post('/api/search/lca/:taxonomy?', async (req, res) => {
-    const taxid = req.body.taxid;
-    const lca_search_type = req.body.type;
+app.get('/api/search/lca/:taxonomy?', async (req, res) => {
+    const taxid = req.query.taxid;
+    const lca_search_type = req.query.type;
 
-    const is_dark = req.body.is_dark;
-    const avg_length_range = req.body.avg_length_range;
-    const avg_plddt_range = req.body.avg_plddt_range;
-    const n_mem_range = req.body.n_mem_range;
-    const rep_length_range = req.body.rep_length_range;
-    const rep_plddt_range = req.body.rep_plddt_range;
-
-    const filter_params = [
-        avg_length_range[0], avg_length_range[1] ?? 'INF',
-        avg_plddt_range[0],  avg_plddt_range[1]  ?? 'INF',
-        n_mem_range[0],      n_mem_range[1]      ?? 'INF',
-        rep_length_range[0], rep_length_range[1] ?? 'INF',
-        rep_plddt_range[0],  rep_plddt_range[1]  ?? 'INF'
-    ];
+    const is_dark = req.query.is_dark;
+    let filter_params = [];
+    for (var i in ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+        if (typeof(req.query[i]) == "undefined") {
+            filter_params.push('0');
+            filter_params.push('INF');
+        } else {
+            filter_params.push(req.query[i][0])
+            filter_params.push(req.query[i][1] ?? 'INF');
+        }
+    }
 
     let queries_where = [];
     if (lca_search_type === 'exact') {
@@ -256,8 +251,8 @@ app.post('/api/search/lca/:taxonomy?', async (req, res) => {
     return finalizeResult(result, req, res);
 });
 
-app.post('/api/search/foldseek/:taxonomy?', async (req, res) => {
-    const jobid = encodeURIComponent(req.body.jobid);
+app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
+    const jobid = encodeURIComponent(req.query.jobid);
 
     let results = [];
     if (fileCache.contains(jobid)) {
@@ -293,21 +288,18 @@ app.post('/api/search/foldseek/:taxonomy?', async (req, res) => {
         fileCache.add(jobid, JSON.stringify(results));
     }
 
-    const is_dark = req.body.is_dark;
-    const avg_length_range = req.body.avg_length_range;
-    const avg_plddt_range = req.body.avg_plddt_range;
-    const n_mem_range = req.body.n_mem_range;
-    const rep_length_range = req.body.rep_length_range;
-    const rep_plddt_range = req.body.rep_plddt_range;
+    const is_dark = req.query.is_dark;
+    let filter_params = [];
+    for (var i in ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+        if (typeof(req.query[i]) == "undefined") {
+            filter_params.push('0');
+            filter_params.push('INF');
+        } else {
+            filter_params.push(req.query[i][0])
+            filter_params.push(req.query[i][1] ?? 'INF');
+        }
+    }
 
-    const filter_params = [
-        avg_length_range[0], avg_length_range[1] ?? 'INF', 
-        avg_plddt_range[0],  avg_plddt_range[1]  ?? 'INF',
-        n_mem_range[0],      n_mem_range[1]      ?? 'INF',
-        rep_length_range[0], rep_length_range[1] ?? 'INF', 
-        rep_plddt_range[0],  rep_plddt_range[1]  ?? 'INF'
-    ];
-    
     let queries_where = [];
     queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
     queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
@@ -316,7 +308,7 @@ app.post('/api/search/foldseek/:taxonomy?', async (req, res) => {
     queries_where.push(`c.rep_plddt >= ? AND c.rep_plddt <= ?`);
     if (is_dark != undefined) {
         queries_where.push(`c.is_dark == ?`);
-        filter_params.push(is_dark)
+        filter_params.push(is_dark ? '1' : '0')
     }
 
     const accessions = results.map(r => r.accession);
@@ -329,7 +321,7 @@ app.post('/api/search/foldseek/:taxonomy?', async (req, res) => {
                 WHERE accession IN (${accessions.map(() => '?').join(',')})
             ) AND ${queries_where.join(" AND ")}
             `, ...accessions, ...filter_params);
-    
+
     return finalizeResult(result, req, res);
 });
 
@@ -562,7 +554,7 @@ app.get('/api/cluster/:cluster/members', async (req, res) => {
     }
 });
 
-app.post('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
+app.get('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
     let result = await sql.all(`
         SELECT tax_id
             FROM member
@@ -659,7 +651,7 @@ app.get('/api/cluster/:cluster/similars', async (req, res) => {
     res.send({ total: total, similars: sorted });
 });
 
-app.post('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
+app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
     const cluster = req.params.cluster;
     const avaKey = avaDb.id(cluster);
     if (avaKey.found == false) {

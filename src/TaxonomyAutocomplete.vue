@@ -23,7 +23,9 @@
 import { debounce } from './lib/debounce';
 
 export default {
-    props: ['value', 'cluster', 'urlFunction', 'disabled', 'options' ],
+    props: [
+        'value', 'cluster', 'urlFunction', 'disabled', 'options',
+    ],
     data() {
         return {
             items: [],
@@ -55,7 +57,7 @@ export default {
         querySelections: debounce(function (name) {
             this.loading = true;
             const url = this.urlFunction(encodeURIComponent(this.cluster), encodeURIComponent(name));
-            this.$axios.post(url, this.options)
+            this.$axios.get(url, this.options)
                 .then(response => {
                     this.items = response.data.map(item => {
                         return { 

@@ -44,7 +44,7 @@
                         v-model="options.tax_id"
                         :urlFunction="(_, b) => '/search/foldseek/' + b"
                         :disabled="taxAutocompleteDisabled"
-                        :options="postOptions"
+                        :options="requestOptions"
                     ></TaxonomyAutocomplete>
                 </template>
     
@@ -254,11 +254,23 @@
             }
         },
         computed: {
-            postOptions() {
+            requestOptions() {
                 const options = {
                     "jobid": this.$route.params.jobid,
                 };
-                return Object.assign({}, this.options, options);
+                const obj = Object.assign({}, this.options, options);
+                let copy = JSON.parse(JSON.stringify(obj));
+                if (copy.tax_id) {
+                    copy.tax_id = copy.tax_id.value;
+                } else {
+                    delete copy.tax_id;
+                }
+                if (copy.is_dark == null) {
+                    delete copy.is_dark;
+                }
+                const params = new URLSearchParams(copy);
+                params.sort();
+                return { params };
             },
         },
         methods: {
@@ -271,7 +283,7 @@
                 }
 
                 this.loading = true;
-                this.$axios.post("/search/foldseek", this.postOptions)
+                this.$axios.get("/search/foldseek", this.requestOptions)
                     .then(response => {
                         this.response = response.data.result;
                         this.total = response.data.total;

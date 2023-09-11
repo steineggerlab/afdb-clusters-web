@@ -251,7 +251,6 @@ export default {
             }
             this.inSearch = true;
             this.error = null;
-            console.log(this.queryGo)
             this.$router.push({
                 name: "go",
                 params: { go: this.queryGo.value, type: this.goSearchType }

@@ -41,7 +41,7 @@
                     v-model="options.tax_id"
                     :urlFunction="(_, b) => '/search/go/' + b"
                     :disabled="taxAutocompleteDisabled"
-                    :options="postOptions"
+                    :options="requestOptions"
                 ></TaxonomyAutocomplete>
             </template>
 
@@ -251,13 +251,25 @@ export default {
         }
     },
     computed: {
-        postOptions() {
+        requestOptions() {
             const options = {
                 "query_GO": this.$route.params.go,
                 "go_search_type": this.$route.params.type,
                 "search_type": "go",
             };
-            return Object.assign({}, this.options, options);
+            const obj = Object.assign({}, this.options, options);
+            let copy = JSON.parse(JSON.stringify(obj));
+            if (copy.tax_id) {
+                copy.tax_id = copy.tax_id.value;
+            } else {
+                delete copy.tax_id;
+            }
+            if (copy.is_dark == null) {
+                delete copy.is_dark;
+            }
+            const params = new URLSearchParams(copy);
+            params.sort();
+            return { params };
         },
     },
     methods: {
@@ -273,7 +285,7 @@ export default {
             }
 
             this.loading = true;
-            this.$axios.post("/search/go", this.postOptions)
+            this.$axios.get("/search/go", this.requestOptions)
                 .then(response => {
                     this.response = response.data.result;
                     this.total = response.data.total;
