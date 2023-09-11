@@ -172,6 +172,7 @@ export default {
                 delete options.tax_id;
             }
             const params = new URLSearchParams(options);
+            params.sort();
             this.$axios.get("/cluster/" + cluster + "/similars", { params })
                 .then(response => {
                     this.entries = response.data.similars;
