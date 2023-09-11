@@ -4,18 +4,18 @@
             <v-flex xs12 pa-0 >
                 <v-parallax
                     :height="windowHeight"
-                    :src="require('./assets/bg.png')"
+                    :src="require('./assets/bg-bg.jpg')"
                     dark
                 >
                     <v-row
                         align="center"
                         justify="center"
+                        class="marv-bg-fg"
                     >
                         <v-col
                             class="text-center"
                             cols="12"
                         >
-                        
                             <h1 class="text-h4 font-weight-thin mb-4">
                                 AlphaFold Clusters
                             </h1>
@@ -343,6 +343,14 @@ code {
 
 .v-parallax {
     transition: height 0.25s;
+}
+
+.marv-bg-fg {
+    background: url('./assets/bg-fg.png');
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center center;
 }
 
 </style>
