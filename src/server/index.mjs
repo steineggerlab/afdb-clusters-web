@@ -509,7 +509,7 @@ app.get('/api/cluster/:cluster/members', async (req, res) => {
     let args = [ req.params.cluster ];
     if (req.query.flagFilter != null) {
         flagFilter = 'AND flag = ?';
-        args.push(req.query.flagFilter + 1);
+        args.push((req.query.flagFilter | 0) + 1);
     }
 
     if (req.query.tax_id) {
@@ -623,21 +623,23 @@ app.get('/api/cluster/:cluster/similars', async (req, res) => {
         });
     }
 
-    if (req.query.sortBy && req.query.sortBy.length == 0) {
-        req.query.sortBy = ['evalue'];
-        req.query.sortDesc = [false];
+    let sortBy = req.query.sortBy;
+    let sortDesc = req.query.sortDesc.toLowerCase() === "true";
+    if (sortBy == "") {
+        sortBy = "evalue";
+        sortDesc = false;
     }
 
     const identity = (x) => x;
     let castFun = identity;
-    if (req.query.sortBy && req.query.sortBy[0] == 'evalue') {
+    if (sortBy == 'evalue') {
         castFun = parseFloat;
     }
     let sorted = result.sort((a, b) => {
-        const sortA = castFun(a[req.query.sortBy[0]]);
-        const sortB = castFun(b[req.query.sortBy[0]]);
+        const sortA = castFun(a[sortBy]);
+        const sortB = castFun(b[sortBy]);
         
-        if (req.query.sortDesc[0]) {
+        if (sortDesc) {
             if (sortA < sortB) return 1;
             if (sortA > sortB) return -1;
             return 0;
