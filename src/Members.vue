@@ -70,7 +70,13 @@
             </v-menu>
         </template>
         <template v-slot:header.tax_id="{ header }">
-                <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b" :disabled="taxAutocompleteDisabled"></TaxonomyAutocomplete>
+                <TaxonomyAutocomplete
+                    :cluster="cluster"
+                    v-model="options.tax_id"
+                    :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b"
+                    :options="requestOptions"
+                    :disabled="taxAutocompleteDisabled">
+                </TaxonomyAutocomplete>
         </template>
         <template v-slot:item.tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
@@ -148,7 +154,9 @@ export default {
             members: [],
             totalMembers: 0,
             loading: false,
-            options: {},
+            options: {
+                tax_id: null,
+            },
             taxAutocompleteDisabled: false,
         }
     },
@@ -163,6 +171,19 @@ export default {
             this.fetchData();
         }
     },
+    computed: {
+        requestOptions() {
+            let copy = JSON.parse(JSON.stringify(this.options));
+            if (copy.tax_id) {
+                copy.tax_id = copy.tax_id.value;
+            } else {
+                delete copy.tax_id;
+            }
+            const params = new URLSearchParams(copy);
+            params.sort();
+            return { params };
+        },
+    },
     methods: {
         sankeySelect(value) {
             if (value == null) {
@@ -172,7 +193,7 @@ export default {
                this.options.tax_id = { value: value.id, text: value.name };
                this.taxAutocompleteDisabled = true;
             }
-            this.fetchData()
+            // this.fetchData()
         },
         log(value) {
             console.log(value);
@@ -185,15 +206,7 @@ export default {
                 return;
             }
 
-            let options = JSON.parse(JSON.stringify(this.options));
-            if (options.tax_id) {
-                options.tax_id = options.tax_id.value;
-            } else {
-                delete options.tax_id;
-            }
-            const params = new URLSearchParams(options);
-            params.sort();
-            this.$axios.get("/cluster/" + cluster + "/members", { params })
+            this.$axios.get("/cluster/" + cluster + "/members", this.requestOptions)
                 .then(response => {
                     this.members = response.data.result;
                     this.totalMembers = response.data.total;
