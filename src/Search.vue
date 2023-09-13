@@ -136,11 +136,10 @@
                     <div class="text-h5 mb-0">Reference</div>
                 </v-card-title>
                 <v-card-title primary-title class="pt-0 mt-0">
-                    <p class="text-subtitle-2 mb-0">
-                        Barrio-Hernandez I, Yeo J, Jänes J, Wein T, Varadi M, Velankar S, Beltrao P, Steinegger M. 
-                        <a href="https://www.biorxiv.org/content/10.1101/2023.03.09.531927v1" target="_blank" rel="noopener">
-                            Clustering predicted structures at the scale of the known protein universe.</a>
-                        bioRxiv (2023)
+                    <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
+                        Barrio-Hernandez&nbsp;I, Yeo&nbsp;J, Jänes&nbsp;J, Mirdita&nbsp;M, Gilchrist&nbsp;CLM, Wein&nbsp;T, Varadi&nbsp;M, Velankar&nbsp;S, Beltrao&nbsp;P, Steinegger&nbsp;M. 
+                        <a href="https://nature.com/articles/s41586-023-06510-w" target="_blank" rel="noopener">Clustering predicted structures at the scale of the known protein universe.</a>
+                        Nature,&nbsp;2023.
                     </p>
                 </v-card-title>
                 </v-card>
