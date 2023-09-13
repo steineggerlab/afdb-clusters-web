@@ -121,6 +121,9 @@ function finalizeResult(result, req, res) {
             }
         })
         result = result.filter((x) => {
+            if (x.lca_tax_id == null) {
+                return false;
+            }
             if (tree.nodeExists(x.lca_tax_id.id) == false) {
                 return false;
             }
