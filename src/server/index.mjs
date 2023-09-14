@@ -203,9 +203,17 @@ app.get('/api/search/go/:taxonomy?', async (req, res) => {
     return finalizeResult(result, req, res);
 });
 
+function sanitizeFTS(input) {
+    const escaped = input.replace(/"/g, "\"\"");
+    return `*"${escaped}"*`;
+}
+
 app.get('/api/autocomplete/go/:substring', async (req, res) => {
-    const substring = req.params.substring;
+    let substring = req.params.substring;
     const isGoTerm = /^GO:\d+$/.test(substring);
+    if (!isGoTerm) {
+        substring = sanitizeFTS(substring);
+    }
     let result = await sql.all(`
         SELECT go_id, go_name
         FROM go_terms
