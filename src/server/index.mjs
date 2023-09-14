@@ -278,7 +278,7 @@ app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
                 const target = result.alignments[j].target;
                 let accession = "";
                 try {
-                    accession = target.match(/AF-(.*)-F\d-model/)[1];
+                    accession = target.match(/AF-(.*)-F\d+-model/)[1];
                 } catch (e) {
                     console.log("error retrieving accession: ", target);
                     accession = "error-retrieving-accession";
