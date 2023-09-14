@@ -57,7 +57,14 @@ const router = new VueRouter({
         { name: 'foldseek', path: '/foldseek/:jobid', component: Search },
         { name: 'cluster', path: '/cluster/:cluster', component: Cluster },
     ],
-    linkActiveClass: 'active'
+    linkActiveClass: 'active',
+    scrollBehavior (to, from, savedPosition) {
+        if (savedPosition) {
+          return savedPosition
+        } else {
+          return { x: 0, y: 0 }
+        }
+    },
 });
 
 const mq = window.matchMedia('(prefers-color-scheme: dark)')
