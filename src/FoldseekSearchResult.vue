@@ -14,6 +14,9 @@
                 :items="response"
                 :options.sync="options"
                 :server-items-length="total"
+                :footer-props="{
+                    'items-per-page-options': [10, 20, 50, 100, -1],
+                }"
             >
                 <template v-slot:item.structure="prop">
                     <div style="text-align: center;">

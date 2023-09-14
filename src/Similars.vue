@@ -34,6 +34,9 @@
         :options.sync="options"
         :server-items-length="totalEntries"
         :loading="loading"
+        :footer-props="{
+            'items-per-page-options': [10, 20, 50, 100, -1],
+        }"
     >
         <template v-slot:item.rep_accession="prop">
             <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}">{{ prop.value }}</router-link><br>

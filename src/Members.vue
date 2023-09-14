@@ -35,6 +35,9 @@
         :options.sync="options"
         :server-items-length="totalMembers"
         :loading="loading"
+        :footer-props="{
+            'items-per-page-options': [10, 20, 50, 100, -1],
+        }"
     >
         <template v-slot:item.accession="prop">
             <ExternalLinks :accession="prop.value"></ExternalLinks><br>
