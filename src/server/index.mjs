@@ -830,6 +830,7 @@ app.get('/api/structure/:structure', async (req, res) => {
 app.use((err, req, res, next) => {
     console.log(err);
     res.status(500);
+    res.removeHeader('Cache-Control');
     res.send({ error: err.response && err.response.data ? err.response.data : err.message });
 });
 
