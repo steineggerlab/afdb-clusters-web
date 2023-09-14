@@ -713,7 +713,7 @@ app.get('/api/cluster/:cluster/similars', async (req, res) => {
         const total = sorted.length;
         sorted = sorted.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
         sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
-        res.send({ total: total, similars: sorted });r
+        res.send({ total: total, similars: sorted });
         return;
     } else {
         result.forEach((x) => { x.description = getDescription(x.rep_accession) });
