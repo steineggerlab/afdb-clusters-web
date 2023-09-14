@@ -204,8 +204,7 @@ app.get('/api/search/go/:taxonomy?', async (req, res) => {
 });
 
 function sanitizeFTS(input) {
-    const escaped = input.replace(/"/g, "\"\"");
-    return `*"${escaped}"*`;
+    return input.replace(/[^a-z0-9]/gi, ' ').trim();
 }
 
 app.get('/api/autocomplete/go/:substring', async (req, res) => {
