@@ -500,9 +500,9 @@ app.get('/api/cluster/:cluster', async (req, res) => {
         return;
     }
     result.lca_tax_id = tree.nodeExists(result.lca_tax_id) ? tree.getNode(result.lca_tax_id) : null;
-    result.lineage = tree.lineage(result.lca_tax_id);
+    result.lineage = tree.nodeExists(result.lca_tax_id) ? tree.lineage(result.lca_tax_id) : null;
     result.tax_id = tree.nodeExists(result.tax_id) ? tree.getNode(result.tax_id) : null;
-    result.rep_lineage = tree.lineage(result.tax_id);
+    result.rep_lineage = tree.nodeExists(result.tax_id) ? tree.lineage(result.tax_id) : null;
     result.description = getDescription(result.rep_accession);
     if (warnDB) {
         const warnKey = warnDB.id(result.rep_accession);
