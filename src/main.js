@@ -34,7 +34,8 @@ import {
     mdiMinusBox,
     mdiOpenInNew,
     mdiDotsVertical,
-    mdiGithub
+    mdiGithub,
+    mdiExport,
 } from '@mdi/js'
 
 Vue.use(VueRouter);
@@ -112,6 +113,7 @@ Vue.use({
             DotsVertical: mdiDotsVertical,
             OpenInNew: mdiOpenInNew,
             GitHub: mdiGithub,
+            Export: mdiExport,
         };
         let apiBase = "http://localhost:3000/api";
         // let apiBase = "/api";

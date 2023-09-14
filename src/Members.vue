@@ -1,5 +1,33 @@
 <template>
-    <div>
+<Panel style="margin-top: 1em;" collapsible>
+    <template slot="header">
+        Cluster members
+    </template>
+
+    <template slot="toolbar-extra">
+        <v-menu offset-y>
+            <template v-slot:activator="{ on }">
+                <v-btn plain v-on="on">
+                    <v-icon class="mr-1">{{ $MDI.Export }}</v-icon>
+                    Export
+                </v-btn>
+            </template>
+            <v-list>
+                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/members?format=accessions&${requestOptions.params.toString()}`" target="_blank">
+                    <v-list-item-content>
+                        <v-list-item-title>Accessions</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/members?format=fasta&${requestOptions.params.toString()}`" target="_blank">
+                    <v-list-item-content>
+                        <v-list-item-title>FASTA</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+            </v-list>
+        </v-menu>
+    </template>
+        
+<template slot="content" v-if="$route.params.cluster">
     <Sankey :cluster="cluster" type="members" @select="sankeySelect"></Sankey>
     <v-data-table
         :headers="headers"
@@ -8,7 +36,6 @@
         :server-items-length="totalMembers"
         :loading="loading"
     >
-
         <template v-slot:item.accession="prop">
             <ExternalLinks :accession="prop.value"></ExternalLinks><br>
             {{ prop.item.description }}
@@ -88,7 +115,8 @@
             </v-chip>
         </template>
     </v-data-table>
-    </div>
+</template>
+</Panel>
 </template>
 
 <script>
@@ -99,10 +127,12 @@ import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Fragment from "./Fragment.vue";
 import Sankey from './Sankey.vue';
 import ImageMixin from './ImageMixin';
+import Panel from "./Panel.vue";
 
 export default {
     name: "members",
     components: {
+        Panel,
         TaxSpan,
         StructureViewer,
         ExternalLinks,

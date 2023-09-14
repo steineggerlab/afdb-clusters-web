@@ -134,26 +134,11 @@ p    </Panel>
     </v-flex>
 
     <v-flex xs12>
-    <Panel style="margin-top: 1em;" collapsible>
-        <template slot="header">
-            Cluster members
-        </template>
-        
-        <template slot="content" v-if="response">
-            <Members v-if="$route.params.cluster" :cluster="$route.params.cluster" @select="(accession) => second = accession"></Members>
-        </template>
-    </Panel>
+        <Members :cluster="$route.params.cluster" @select="(accession) => second = accession"></Members>
     </v-flex>
 
     <v-flex xs12>
-    <Panel style="margin-top: 1em;" collapsible>
-        <template slot="header">
-            Similar clusters
-        </template>
-        <template slot="content" v-if="response">
-            <Similars v-if="$route.params.cluster" :cluster="$route.params.cluster" @select="(accession) => second = accession"></Similars>
-        </template>
-    </Panel>
+        <Similars :cluster="$route.params.cluster" @select="(accession) => second = accession"></Similars>
     </v-flex>
 </v-row>
 </template>
@@ -219,7 +204,6 @@ export default {
                     }
                     this.$axios.get("/" + this.$route.params.cluster)
                         .then(response => {
-                            console.log(response.data[0].rep_accession);
                             this.$router.replace({ name: "cluster", params: { cluster: response.data[0].rep_accession } });
                         })
                         .catch(() => {});

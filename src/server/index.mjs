@@ -507,6 +507,16 @@ app.get('/api/cluster/:cluster', async (req, res) => {
     res.send(result);
 });
 
+function processAndWriteInChunks(data, chunkSize, processingFunc, writeFunc) {
+    let index = 0;
+    while (index < data.length) {
+        const chunk = data.slice(index, index + chunkSize);
+        const processedChunk = processingFunc(chunk);
+        writeFunc(processedChunk);
+        index += chunkSize;
+    }
+}
+
 app.get('/api/cluster/:cluster/members', async (req, res) => {
     let flagFilter = '';
     let args = [ req.params.cluster ];
@@ -515,9 +525,13 @@ app.get('/api/cluster/:cluster/members', async (req, res) => {
         args.push((req.query.flagFilter | 0) + 1);
     }
 
+    let paginate = !req.query.format;
+
+    let result;
+    let total = 0;
     if (req.query.tax_id) {
-        let result = await sql.all(`
-        SELECT * 
+        result = await sql.all(`
+        SELECT accession, tax_id, flag
             FROM member
             WHERE rep_accession = ? ${flagFilter}
             ORDER BY rowid;
@@ -537,26 +551,68 @@ app.get('/api/cluster/:cluster/members', async (req, res) => {
             }
             return false;
         });
-        const total = result.length;
-        if (result && result.length > 0) {
-            result = result.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
+        
+        if (paginate) {
+            total = result.length;
+            if (result && result.length > 0) {
+                result = result.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
+            }
         }
         result.forEach((x) => { x.description = getDescription(x.accession) });
-        res.send({ total: total, result : result });
     } else {
-        const total = await sql.get(`SELECT COUNT(accession) as total FROM member WHERE rep_accession = ? ${flagFilter}`, ...args);
-        let result = await sql.all(`
-        SELECT * 
+        let paginate_query = "";
+        if (paginate) {
+            total = await sql.get(`SELECT COUNT(accession) as total FROM member WHERE rep_accession = ? ${flagFilter}`, ...args);
+            total = total.total;
+            args.push((req.query.itemsPerPage) | 0);
+            args.push(((req.query.page - 1) * req.query.itemsPerPage) | 0);
+            paginate_query = "LIMIT ? OFFSET ?";
+        }
+        result = await sql.all(`
+        SELECT accession, tax_id, flag
             FROM member
             WHERE rep_accession = ? ${flagFilter}
             ORDER BY rowid
-            LIMIT ? OFFSET ?;
-        `, ...args, req.query.itemsPerPage, (req.query.page - 1) * req.query.itemsPerPage);
+            ${paginate_query};
+        `, ...args);
         result.forEach((x) => {
             x.tax_id = tree.nodeExists(x.tax_id) ? tree.getNode(x.tax_id) : null;
             x.description = getDescription(x.accession);
         });
-        res.send({ total: total.total, result : result });
+    }
+
+    if (!req.query.format) {
+        res.send({ total: total, result : result });
+        return;
+    }
+
+    const safeCluster = req.params.cluster.replace(/[^a-zA-Z0-9]/g, '');
+    switch(req.query.format) {
+        case 'accessions':
+            res.setHeader('Content-Disposition', `attachment; filename=member-accessions-${safeCluster}.txt`);
+            res.setHeader('Content-Type', 'text/plain');
+            res.charset = 'UTF-8';
+            processAndWriteInChunks(result, 10000,
+                chunk => chunk.map(member => member.accession).join('\n'),
+                chunk => res.write(chunk));
+            res.end();
+            break;
+
+        case 'fasta':
+            res.setHeader('Content-Disposition', `attachment; filename=member-sequences-${safeCluster}.fasta`);
+            res.setHeader('Content-Type', 'text/plain');
+            res.charset = 'UTF-8';
+
+            processAndWriteInChunks(result, 10000,
+                chunk => chunk.map(member => `>${member.accession} ${member.description.trimEnd()} OX=${member.tax_id.id} OS=${member.tax_id.name} Flag=${member.flag}\n${aaDb.data(aaDb.id(member.accession).value).toString('ascii')}`).join(''),
+                chunk => res.write(chunk));
+
+            res.end();
+            break;
+        
+        default:
+            res.status(400).send({ error: 'Unsupported format!' });
+            break;
     }
 });
 
@@ -626,37 +682,71 @@ app.get('/api/cluster/:cluster/similars', async (req, res) => {
         });
     }
 
-    let sortBy = req.query.sortBy;
-    let sortDesc = req.query.sortDesc.toLowerCase() === "true";
-    if (sortBy == "") {
-        sortBy = "evalue";
-        sortDesc = false;
+    if (!req.query.format) {
+        let sortBy = req.query.sortBy;
+        let sortDesc = req.query.sortDesc.toLowerCase() === "true";
+        if (sortBy == "") {
+            sortBy = "evalue";
+            sortDesc = false;
+        }
+
+        const identity = (x) => x;
+        let castFun = identity;
+        if (sortBy == 'evalue') {
+            castFun = parseFloat;
+        }
+        let sorted = result.sort((a, b) => {
+            const sortA = castFun(a[sortBy]);
+            const sortB = castFun(b[sortBy]);
+            
+            if (sortDesc) {
+                if (sortA < sortB) return 1;
+                if (sortA > sortB) return -1;
+                return 0;
+            } else {
+                if (sortA < sortB) return -1;
+                if (sortA > sortB) return 1;
+                return 0;
+            }
+        })
+        sorted = sorted.filter((x) => x.rep_accession != cluster);
+        const total = sorted.length;
+        sorted = sorted.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
+        sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
+        res.send({ total: total, similars: sorted });r
+        return;
+    } else {
+        result.forEach((x) => { x.description = getDescription(x.rep_accession) });
     }
 
-    const identity = (x) => x;
-    let castFun = identity;
-    if (sortBy == 'evalue') {
-        castFun = parseFloat;
-    }
-    let sorted = result.sort((a, b) => {
-        const sortA = castFun(a[sortBy]);
-        const sortB = castFun(b[sortBy]);
+    const safeCluster = req.params.cluster.replace(/[^a-zA-Z0-9]/g, '');
+    switch(req.query.format) {
+        case 'accessions':
+            res.setHeader('Content-Disposition', `attachment; filename=similar-accessions-${safeCluster}.txt`);
+            res.setHeader('Content-Type', 'text/plain');
+            res.charset = 'UTF-8';
+            processAndWriteInChunks(result, 10000,
+                chunk => chunk.map(similar => similar.rep_accession).join('\n'),
+                chunk => res.write(chunk));
+            res.end();
+            break;
+
+        case 'fasta':
+            res.setHeader('Content-Disposition', `attachment; filename=similar-sequences-${safeCluster}.fasta`);
+            res.setHeader('Content-Type', 'text/plain');
+            res.charset = 'UTF-8';
+
+            processAndWriteInChunks(result, 10000,
+                chunk => chunk.map(similar => `>${similar.rep_accession} ${similar.description.trimEnd()} OX=${similar.lca_tax_id.id} OS=${similar.lca_tax_id.name} Eval=${similar.evalue}\n${aaDb.data(aaDb.id(similar.rep_accession).value).toString('ascii')}`).join(''),
+                chunk => res.write(chunk));
+
+            res.end();
+            break;
         
-        if (sortDesc) {
-            if (sortA < sortB) return 1;
-            if (sortA > sortB) return -1;
-            return 0;
-        } else {
-            if (sortA < sortB) return -1;
-            if (sortA > sortB) return 1;
-            return 0;
-        }
-    })
-    sorted = sorted.filter((x) => x.rep_accession != cluster);
-    const total = sorted.length;
-    sorted = sorted.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
-    sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
-    res.send({ total: total, similars: sorted });
+        default:
+            res.status(400).send({ error: 'Unsupported format!' });
+            break;
+    }
 });
 
 app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {

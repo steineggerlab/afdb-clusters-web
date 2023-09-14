@@ -1,6 +1,33 @@
 <template>
-    <div>
-    <Sankey :cluster="cluster" type="similars" @select="sankeySelect"></Sankey>
+<Panel style="margin-top: 1em;" collapsible>
+    <template slot="header">
+        Similar clusters
+    </template>
+
+    <template slot="toolbar-extra">
+        <v-menu offset-y>
+            <template v-slot:activator="{ on }">
+                <v-btn plain v-on="on">
+                    <v-icon class="mr-1">{{ $MDI.Export }}</v-icon>
+                    Export
+                </v-btn>
+            </template>
+            <v-list>
+                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/similars?format=accessions&${requestOptions.params.toString()}`" target="_blank">
+                    <v-list-item-content>
+                        <v-list-item-title>Accessions</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/similars?format=fasta&${requestOptions.params.toString()}`" target="_blank">
+                    <v-list-item-content>
+                        <v-list-item-title>FASTA</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+            </v-list>
+        </v-menu>
+    </template>
+
+<template slot="content" v-if="$route.params.cluster">
     <v-data-table
         :headers="headers"
         :items="entries"
@@ -61,7 +88,8 @@
             </v-chip>
         </template>
     </v-data-table>
-    </div>
+</template>
+</Panel>
 </template>
 
 <script>
@@ -71,10 +99,12 @@ import ExternalLinks from "./ExternalLinks.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Sankey from "./Sankey.vue";
 import ImageMixin from './ImageMixin';
+import Panel from "./Panel.vue";
 
 export default {
     name: "Similars",
     components: {
+        Panel,
         TaxSpan,
         StructureViewer,
         ExternalLinks,
