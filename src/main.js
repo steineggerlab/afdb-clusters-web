@@ -32,6 +32,10 @@ import {
     mdiCircleHalf,
     mdiPlusBox,
     mdiMinusBox,
+    mdiOpenInNew,
+    mdiDotsVertical,
+    mdiGithub,
+    mdiExport,
 } from '@mdi/js'
 
 Vue.use(VueRouter);
@@ -49,9 +53,19 @@ const router = new VueRouter({
     routes: [
         { path: '/', redirect: { name: 'search' } },
         { name: 'search', path: '/', component: Search },
+        { name: 'go', path: '/go/:go/:type', component: Search },
+        { name: 'lca', path: '/lca/:taxid/:type', component: Search },
+        { name: 'foldseek', path: '/foldseek/:jobid', component: Search },
         { name: 'cluster', path: '/cluster/:cluster', component: Cluster },
     ],
-    linkActiveClass: 'active'
+    linkActiveClass: 'active',
+    scrollBehavior (to, from, savedPosition) {
+        if (savedPosition) {
+          return savedPosition
+        } else {
+          return { x: 0, y: 0 }
+        }
+    },
 });
 
 const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -96,6 +110,10 @@ Vue.use({
             CircleHalf: mdiCircleHalf,
             PlusBox: mdiPlusBox,
             MinusBox: mdiMinusBox,
+            DotsVertical: mdiDotsVertical,
+            OpenInNew: mdiOpenInNew,
+            GitHub: mdiGithub,
+            Export: mdiExport,
         };
         let apiBase = "http://localhost:3000/api";
         // let apiBase = "/api";

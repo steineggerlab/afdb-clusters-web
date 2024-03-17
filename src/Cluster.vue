@@ -3,11 +3,11 @@
 <v-row style="margin:1em;">
     <v-flex xs12 md8>
     <panel>
-        <template slot="header">
+        <template slot="header" v-if="response">
             Cluster: {{ response ? response.rep_accession : "Loading..." }}
         </template>
 
-        <template v-if="response.warning == true" slot="toolbar-extra">
+        <template v-if="response && response.warning == true" slot="toolbar-extra">
             <v-chip color="error">Warning</v-chip>
         </template>
 
@@ -19,7 +19,7 @@
                     Accession
                 </dt>
                 <dd>
-                    <UniprotLink :accession="response.rep_accession"></UniprotLink><br>
+                    <ExternalLinks :accession="response.rep_accession"></ExternalLinks><br>
                     {{ response.description }}
                 </dd>
                 </div>
@@ -110,7 +110,7 @@
                     </dd>
                 </div> -->
             </dl>
-            <template v-if="response.warning == true">
+            <template v-if="response && response.warning == true">
                 <v-divider  style="margin-top:0.5em"></v-divider>
                 <h3 style="margin-top:1em; color: #F44336; text-decoration: underline;">
                     Warning!
@@ -134,26 +134,11 @@ p    </Panel>
     </v-flex>
 
     <v-flex xs12>
-    <Panel style="margin-top: 1em;" collapsible>
-        <template slot="header">
-            Cluster members
-        </template>
-        
-        <template slot="content" v-if="response">
-            <Members v-if="$route.params.cluster" :cluster="$route.params.cluster" @select="(accession) => second = accession"></Members>
-        </template>
-    </Panel>
+        <Members :cluster="$route.params.cluster" @select="(accession) => second = accession"></Members>
     </v-flex>
 
     <v-flex xs12>
-    <Panel style="margin-top: 1em;" collapsible>
-        <template slot="header">
-            Similar clusters
-        </template>
-        <template slot="content" v-if="response">
-            <Similars v-if="$route.params.cluster" :cluster="$route.params.cluster" @select="(accession) => second = accession"></Similars>
-        </template>
-    </Panel>
+        <Similars :cluster="$route.params.cluster" @select="(accession) => second = accession"></Similars>
     </v-flex>
 </v-row>
 </template>
@@ -163,7 +148,7 @@ import Panel from "./Panel.vue";
 import StructureViewer from "./StructureViewer.vue";
 import Members from "./Members.vue";
 import TaxSpan from "./TaxSpan.vue";
-import UniprotLink from "./UniprotLink.vue";
+import ExternalLinks from "./ExternalLinks.vue";
 import Similars from "./Similars.vue";
 // import Annotations from "./Annotations.vue";
 
@@ -174,7 +159,7 @@ export default {
     StructureViewer,
     Members,
     TaxSpan,
-    UniprotLink,
+    ExternalLinks,
     Similars,
     // Annotations,
 },
@@ -209,11 +194,20 @@ export default {
                 return;
             }
 
-            this.$axios.post("/cluster/" + this.$route.params.cluster)
+            this.$axios.get("/cluster/" + this.$route.params.cluster)
                 .then(response => {
                     this.response = response.data;
                 })
-                .catch(() => {})
+                .catch((result) => {
+                    if (!result || !result.response || result.response.status != 404) {
+                        return;
+                    }
+                    this.$axios.get("/" + this.$route.params.cluster)
+                        .then(response => {
+                            this.$router.replace({ name: "cluster", params: { cluster: response.data[0].rep_accession } });
+                        })
+                        .catch(() => {});
+                })
                 .finally(() => {
                     this.fetching = false;
                 });

@@ -1,12 +1,42 @@
 <template>
-    <div>
-    <Sankey :cluster="cluster" type="similars" @select="sankeySelect"></Sankey>
+<Panel style="margin-top: 1em;" collapsible>
+    <template slot="header">
+        Similar clusters
+    </template>
+
+    <template slot="toolbar-extra">
+        <v-menu offset-y>
+            <template v-slot:activator="{ on }">
+                <v-btn plain v-on="on">
+                    <v-icon class="mr-1">{{ $MDI.Export }}</v-icon>
+                    Export
+                </v-btn>
+            </template>
+            <v-list>
+                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/similars?format=accessions&${requestOptions.params.toString()}`" target="_blank">
+                    <v-list-item-content>
+                        <v-list-item-title>Accessions</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/similars?format=fasta&${requestOptions.params.toString()}`" target="_blank">
+                    <v-list-item-content>
+                        <v-list-item-title>FASTA</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+            </v-list>
+        </v-menu>
+    </template>
+
+<template slot="content" v-if="$route.params.cluster">
     <v-data-table
         :headers="headers"
         :items="entries"
         :options.sync="options"
         :server-items-length="totalEntries"
         :loading="loading"
+        :footer-props="{
+            'items-per-page-options': [10, 20, 50, 100, -1],
+        }"
     >
         <template v-slot:item.rep_accession="prop">
             <router-link :to="{ name: 'cluster', params: { cluster: prop.value }}">{{ prop.value }}</router-link><br>
@@ -42,7 +72,13 @@
         </template>
 
         <template v-slot:header.lca_tax_id="{ header }">
-                <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/similars/taxonomy/' + b" :disabled="taxAutocompleteDisabled"></TaxonomyAutocomplete>
+                <TaxonomyAutocomplete
+                    :cluster="cluster"
+                    v-model="options.tax_id"
+                    :urlFunction="(a, b) => '/cluster/' + a + '/similars/taxonomy/' + b"
+                    :options="requestOptions"
+                    :disabled="taxAutocompleteDisabled">
+                </TaxonomyAutocomplete>
         </template>
 
         <template v-slot:item.lca_tax_id="prop">
@@ -50,31 +86,36 @@
         </template>
 
         <template v-slot:item.actions="{ item }">
-            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=AlphaFoldDB'">
+            <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.rep_accession + '&source=AlphaFoldDB'">
                 <v-img :src="require('./assets/marv-foldseek-small.png')" max-width="16"></v-img>
             </v-chip>
         </template>
     </v-data-table>
-    </div>
+</template>
+</Panel>
 </template>
 
 <script>
 import TaxSpan from "./TaxSpan.vue";
 import StructureViewer from "./StructureViewer.vue";
-import UniprotLink from "./UniprotLink.vue";
+import ExternalLinks from "./ExternalLinks.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Sankey from "./Sankey.vue";
+import ImageMixin from './ImageMixin';
+import Panel from "./Panel.vue";
 
 export default {
     name: "Similars",
     components: {
+        Panel,
         TaxSpan,
         StructureViewer,
-        UniprotLink,
+        ExternalLinks,
         TaxonomyAutocomplete,
         Sankey,
     },
     props: ["cluster"],
+    mixins: [ImageMixin],
     data() {
         return {
             headers: [
@@ -125,8 +166,9 @@ export default {
             entries: [],
             totalEntries: 0,
             loading: false,
-            options: {},
-            images: [],
+            options: {
+                tax_id: null,
+            },
             taxAutocompleteDisabled: false,
         }
     },
@@ -141,6 +183,19 @@ export default {
             this.fetchData();
         }
     },
+    computed: {
+        requestOptions() {
+            let copy = JSON.parse(JSON.stringify(this.options));
+            if (copy.tax_id) {
+                copy.tax_id = copy.tax_id.value;
+            } else {
+                delete copy.tax_id;
+            }
+            const params = new URLSearchParams(copy);
+            params.sort();
+            return { params };
+        },
+    },
     methods: {
         sankeySelect(value) {
             if (value == null) {
@@ -150,14 +205,7 @@ export default {
                this.options.tax_id = { value: value.id, text: value.name };
                this.taxAutocompleteDisabled = true;
             }
-            this.fetchData()
-        },
-        getImage(acession) {
-            const image = this.images.find(image => image.accession === acession);
-            if (image) {
-                return image.url;
-            }
-            return "";
+            // this.fetchData()
         },
         log(value) {
             console.log(value);
@@ -169,28 +217,11 @@ export default {
             if (!cluster) {
                 return;
             }
-
-            this.$axios.post("/cluster/" + cluster + "/similars", this.options)
+            this.$axios.get("/cluster/" + cluster + "/similars", this.requestOptions)
                 .then(response => {
                     this.entries = response.data.similars;
                     this.totalEntries = response.data.total;
-                    for (let i = 0; i < this.images.length; i++) {
-                        URL.revokeObjectURL(this.images[i].url);
-                    }
-                    this.images = [];
-                    for (let i = 0; i < this.entries.length; i++) {
-                        const accession = this.entries[i].rep_accession;
-                        this.$axios.get("/structure/" + accession)
-                            .then((response) => {
-                                this.$nglService.makeImage(response.data.seq, response.data.plddt, response.data.coordinates)
-                                    .then((image) => {
-                                        this.images.push({ accession: accession, url: URL.createObjectURL(image)});
-                                    })
-                                    .catch(e => {
-                                        console.log(e);
-                                    });
-                            });
-                    }
+                    this.fetchImages(this.entries.map(m => m.rep_accession));
                 })
                 .catch(() => {})
                 .finally(() => {

@@ -77,313 +77,280 @@ app.use(express.text({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+    const period = 60 * 60 * 24;
+    if (req.method == 'GET') {
+        res.set('Cache-Control', `public, max-age=${period}`);
+    }
+    next();
+});
+
 const fileCache = new FileCache(cachePath);
 
-async function formatFoldseekResult(result) {
-    const accessions = result.map(r => r.accession);
-    const rows = await sql.all(
-        `SELECT *
-            FROM cluster
-            WHERE rep_accession IN (
-                SELECT DISTINCT rep_accession
-                FROM member
-                WHERE accession IN (${accessions.map(() => '?').join(',')})
-            )
-            `
-        , accessions);
-    return rows;
-}
+function finalizeResult(result, req, res) {
+    const is_tax_filter = req.query.tax_id != undefined;
+    const taxonomy_suggest = req.params.taxonomy;
 
-app.post('/api/lca/:lcaid', async (req, res) => {
-    const lcaid = req.params.lcaid;
-    const search_type = req.body.lca_search_type;
-
-    let query_where = "";
-    let result;
-
-    if (search_type === 'exact') {
-        query_where = "c.lca_tax_id = ?";   
-    } else {
-        query_where = "c.lca_tax_id in (SELECT child FROM taxonomy_lineage as tl WHERE tl.parent = ?)";
+    if (typeof(taxonomy_suggest) != "undefined") {
+        let suggestions = {};
+        let count = 0;
+        result.forEach((x) => {
+            if (tree.nodeExists(x.lca_tax_id) == false) {
+                return;
+            }
+            let node = tree.getNode(x.lca_tax_id);
+            while (node.id != 1) {
+                if (node.id in suggestions || count >= 10) {
+                    break;
+                }
+                if (node.name.toLowerCase().includes(taxonomy_suggest.toLowerCase())) {
+                    suggestions[node.id] = node;
+                    count++;
+                }
+                node = tree.getNode(node.parent);
+            }
+        });
+        res.send(Object.values(suggestions));
+        return;
     }
 
-    result = await sql.all(
-        `SELECT *
-            FROM cluster as c
-            WHERE ${query_where}
-            ORDER BY c.rep_accession
-            LIMIT ? OFFSET ?;
-        `, lcaid, req.body.itemsPerPage, (req.body.page-1));
-    
-    const total = await sql.get(`SELECT COUNT(rep_accession) as total FROM cluster as c WHERE ${query_where}`, lcaid);
-
-    result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
-    // result.lca_tax_id = tree.getNode(result.lca_tax_id);
-    
-    res.send({ total: total.total, result : result });
-});
-
-app.post('/api/go/:goid', async (req, res) => {
-    const goid = req.params.goid;
-    const search_type = req.body.go_search_type;
-
-    let query_where = "";
-    let result;
-
-    if (search_type === 'exact') {
-        query_where = "go.goid = ?";   
-    } else {
-        query_where = "go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)";
-    }
-
-    result = await sql.all(
-        `SELECT *
-            FROM cluster as c
-            LEFT JOIN cluster_go as go ON go.rep_accession == c.rep_accession
-            WHERE ${query_where}
-            ORDER BY c.rep_accession
-            LIMIT ? OFFSET ?;
-        `, goid, req.body.itemsPerPage, (req.body.page-1));
-    
-    const total = await sql.get(`SELECT COUNT(rep_accession) as total FROM cluster_go as go WHERE ${query_where}`, goid);
-
-    result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
-    // result.lca_tax_id = tree.getNode(result.lca_tax_id);
-    
-    res.send({ total: total.total, result : result });
-});
-
-app.post('/api/cluster/:cluster/search/taxonomy/:suggest', async (req, res) => {
-    const bundle_data = req.body.bundle_data;
-    // console.log('bundle', bundle_data);
-
-    let result = bundle_data.map(x => { return {lca_tax_id: x.lca_tax_id.id}});
-
-    let suggestions = {};
-    let count = 0;
-    result.forEach((x) => {
-        if (tree.nodeExists(x.lca_tax_id) == false) {
-            return;
-        }
-        let node = tree.getNode(x.lca_tax_id);
-        
-        while (node.id != 1) {
-            if (node.id in suggestions || count >= 10) {
-                break;
+    if (is_tax_filter) {
+        result.forEach(x => { 
+            if (x.lca_tax_id) {
+                x.lca_tax_id = tree.nodeExists(x.lca_tax_id) ? tree.getNode(x.lca_tax_id) : null;
             }
-            if (node.name.toLowerCase().includes(req.params.suggest.toLowerCase())) {
-                suggestions[node.id] = node;
-                count++;
-            }
-            node = tree.getNode(node.parent);
-        }
-    });
-    
-    res.send(Object.values(suggestions));
-});
-
-app.post('/api/search/filter', async (req, res) => {
-    const is_dark = req.body.is_dark;
-    const is_tax_filter = req.body.tax_id != undefined;
-    const avg_length_range = req.body.avg_length_range;
-    const avg_plddt_range = req.body.avg_plddt_range;
-    const n_mem_range = req.body.n_mem_range;
-    const rep_length_range = req.body.rep_length_range;
-    const rep_plddt_range = req.body.rep_plddt_range;
-    const search_type = req.body.search_type;
-    const go_search_type = req.body.go_search_type;
-    const lca_search_type = req.body.lca_search_type;
-
-    let queries_where = [];
-    
-    let result;
-    if (search_type === 'foldseek') {
-        result = req.body.bundle;
-
+        })
         result = result.filter((x) => {
-            if (is_dark != undefined) {
-                if (x.is_dark !== is_dark) {
-                    return false;
+            if (x.lca_tax_id == null) {
+                return false;
+            }
+            if (tree.nodeExists(x.lca_tax_id.id) == false) {
+                return false;
+            }
+            let currNode = tree.getNode(x.lca_tax_id.id);
+            while (currNode.id != 1) {
+                if (currNode.id == req.query.tax_id) {
+                    return true;
                 }
-            }
-            
-            if (!(x.avg_len >= avg_length_range[0] && x.avg_len <= avg_length_range[1])) {
-                return false;
-            }
-            if (!(x.avg_plddt >= avg_plddt_range[0] && x.avg_plddt <= avg_plddt_range[1])) {
-                return false;
-            }
-            if (!(x.n_mem >= n_mem_range[0] && x.n_mem <= n_mem_range[1])) {
-                return false;
-            }
-            if (!(x.rep_len >= rep_length_range[0] && x.rep_len <= rep_length_range[1])) {
-                return false;
-            }
-            if (!(x.rep_plddt >= rep_plddt_range[0] && x.rep_plddt <= rep_plddt_range[1])) {
-                return false;
-            }
-    
-            if (is_tax_filter) {
-                if (tree.nodeExists(x.lca_tax_id.id) == false) {
-                    return false;
-                }
-                x.lca_tax_id.id = tree.getNode(x.lca_tax_id.id);
-                let currNode = x.lca_tax_id.id;
-                while (currNode.id != 1) {
-                    if (currNode.id == req.body.tax_id.value) {
-                        return true;
-                    }
-                    currNode = tree.getNode(currNode.parent);
-                }
-            } else {
-                return true;
+                currNode = tree.getNode(currNode.parent);
             }
     
             return false;
         });
-    } else if (search_type === 'go' || search_type === 'lca') {
-        let goid, lcaid;
-        if (search_type === 'go') {
-            goid = req.body.query_GO;
-            if (go_search_type === 'exact') {
-                queries_where.push("go.goid = ?")
-            } else {
-                queries_where.push("go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)");
-            }
-        }
-        else if (search_type === 'lca') {
-            lcaid = req.body.query_LCA;
-            if (lca_search_type === 'exact') {
-                queries_where.push("c.lca_tax_id = ?")
-            } else {
-                queries_where.push("c.lca_tax_id in (SELECT child FROM taxonomy_lineage as tl WHERE tl.parent = ?)");
-            }
-        }
-
-        const filter_params = [avg_length_range[0], avg_length_range[1] ?? 'INF', 
-            avg_plddt_range[0], avg_plddt_range[1] ?? 'INF', n_mem_range[0], 
-            n_mem_range[1] ?? 'INF', rep_length_range[0], rep_length_range[1] ?? 'INF', 
-            rep_plddt_range[0], rep_plddt_range[1] ?? 'INF'];
-        
-        
-        
-        queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
-        queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
-        queries_where.push(`c.n_mem >= ? AND c.n_mem <= ?`);
-        queries_where.push(`c.rep_len >= ? AND c.rep_len <= ?`);
-        queries_where.push(`c.rep_plddt >= ? AND c.rep_plddt <= ?`);
-        if (is_dark != undefined) {
-            queries_where.push(`c.is_dark == ?`);
-            filter_params.push(is_dark)
-        }
-
-        const query_where = queries_where.slice(1, queries_where.length).join(" AND ");
-
-        if (search_type === 'go') {
-            result = await sql.all(`
-                SELECT DISTINCT * 
-                    FROM cluster as c 
-                    WHERE c.rep_accession in (
-                        SELECT rep_accession 
-                            FROM cluster_go as go 
-                            WHERE ${queries_where[0]}
-                        ) AND ${query_where}
-                    `, goid, ...filter_params);
-        }
-        else if (search_type === 'lca') {
-            result = await sql.all(`
-                SELECT DISTINCT * 
-                    FROM cluster as c 
-                    WHERE ${queries_where[0]} AND ${query_where}
-                    `, lcaid, ...filter_params);
-        }
-        
-        if (is_tax_filter) {
-            result.forEach(x => { if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); })
-            result = result.filter((x) => {
-                if (tree.nodeExists(x.lca_tax_id.id) == false) {
-                    return false;
-                }
-                x.lca_tax_id.id = tree.getNode(x.lca_tax_id.id);
-                let currNode = x.lca_tax_id.id;
-                while (currNode.id != 1) {
-                    if (currNode.id == req.body.tax_id.value) {
-                        return true;
-                    }
-                    currNode = tree.getNode(currNode.parent);
-                }
-        
-                return false;
-            });
-        }
     }
     
     const total = result.length;
     if (result && result.length > 0) {
-        result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+        result = result.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
     }
     result.forEach((x) => {
         x.description = getDescription(x.rep_accession);
         if (!is_tax_filter) {
-            if (x.lca_tax_id) x.lca_tax_id = tree.getNode(x.lca_tax_id); 
+            if (x.lca_tax_id) {
+                x.lca_tax_id = tree.nodeExists(x.lca_tax_id) ? tree.getNode(x.lca_tax_id) : null;
+            }
         }
     });
 
     res.send({ total: total, result : result });
+    return;
+}
+
+app.get('/api/search/go/:taxonomy?', async (req, res) => {
+    const go_search_type = req.query.go_search_type;
+    const goid = req.query.query_GO;
+
+    const is_dark = req.query.is_dark;
+    let filter_params = [];
+    for (let i of ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+        if (typeof(req.query[i]) == "undefined") {
+            filter_params.push('0');
+            filter_params.push('INF');
+        } else {
+            const split = req.query[i].split(',');
+            filter_params.push(split[0] ?? '0');
+            filter_params.push(split[1] ?? 'INF');
+        }
+    }
+
+    let queries_where = [];
+    if (go_search_type === 'exact') {
+        queries_where.push("go.goid = ?")
+    } else {
+        queries_where.push("go.goid in (SELECT child FROM go_child as gc WHERE gc.parent = ?)");
+    }
+    queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
+    queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
+    queries_where.push(`c.n_mem >= ? AND c.n_mem <= ?`);
+    queries_where.push(`c.rep_len >= ? AND c.rep_len <= ?`);
+    queries_where.push(`c.rep_plddt >= ? AND c.rep_plddt <= ?`);
+    if (is_dark != undefined) {
+        queries_where.push(`c.is_dark == ?`);
+        filter_params.push(is_dark)
+    }
+
+    const query_where = queries_where.slice(1, queries_where.length).join(" AND ");
+    let result = await sql.all(`
+        SELECT DISTINCT *
+            FROM cluster as c
+            WHERE c.rep_accession in (
+                SELECT rep_accession
+                    FROM cluster_go as go
+                    WHERE ${queries_where[0]}
+                ) AND ${query_where}
+            `, goid, ...filter_params);
+
+    return finalizeResult(result, req, res);
 });
 
-app.get('/api/foldseek/:jobid', async (req, res) => {
-    if (fileCache.contains(req.params.jobid)) {
-        res.send(await formatFoldseekResult(JSON.parse(fileCache.get(req.params.jobid))));
-        return;
+function sanitizeFTS(input) {
+    return input.replace(/[^a-z0-9]/gi, ' ').trim();
+}
+
+app.get('/api/autocomplete/go/:substring', async (req, res) => {
+    let substring = req.params.substring;
+    const isGoTerm = /^GO:\d+$/.test(substring);
+    if (!isGoTerm) {
+        substring = sanitizeFTS(substring);
     }
-    let result = await axios.get('https://search.foldseek.com/api/result/' + req.params.jobid + '/0', {
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-    });
-    const aln = result.data;
-    let results = [];
-    for (let i = 0; i < aln.results.length; i++) {
-        let result = aln.results[i];
-        // console.log(aln.results[i]);
-        if (!result.alignments) {
-            continue;
+    let result = await sql.all(`
+        SELECT go_id, go_name
+        FROM go_terms
+        ${isGoTerm ? 'WHERE go_id = ?' : 'WHERE go_name MATCH ? ORDER BY rank'};
+    `, substring);
+    res.send({ result });
+});
+
+app.get('/api/search/lca/:taxonomy?', async (req, res) => {
+    const taxid = req.query.taxid;
+    const lca_search_type = req.query.type;
+
+    const is_dark = req.query.is_dark;
+    let filter_params = [];
+    for (let i of ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+        if (typeof(req.query[i]) == "undefined") {
+            filter_params.push('0');
+            filter_params.push('INF');
+        } else {
+            const split = req.query[i].split(',');
+            filter_params.push(split[0] ?? '0');
+            filter_params.push(split[1] ?? 'INF');
         }
-        for (let j = 0; j < result.alignments.length; j++) {
-            const target = result.alignments[j].target;
-            const accession = target.match(/AF-(.*)-F\d-model/)[1];
-            if (result.alignments[j].prob < 0.95) {
+    }
+
+    let queries_where = [];
+    if (lca_search_type === 'exact') {
+        queries_where.push("c.lca_tax_id = ?")
+    } else {
+        queries_where.push("c.lca_tax_id in (SELECT child FROM taxonomy_lineage as tl WHERE tl.parent = ?)");
+    }
+    queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
+    queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
+    queries_where.push(`c.n_mem >= ? AND c.n_mem <= ?`);
+    queries_where.push(`c.rep_len >= ? AND c.rep_len <= ?`);
+    queries_where.push(`c.rep_plddt >= ? AND c.rep_plddt <= ?`);
+    if (is_dark != undefined) {
+        queries_where.push(`c.is_dark == ?`);
+        filter_params.push(is_dark)
+    }
+
+    let result = await sql.all(`
+    SELECT DISTINCT * 
+        FROM cluster as c 
+        WHERE ${queries_where.join(" AND ")}
+    `, taxid, ...filter_params);
+
+    return finalizeResult(result, req, res);
+});
+
+app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
+    const jobid = encodeURIComponent(req.query.jobid);
+
+    let results = [];
+    if (fileCache.contains(jobid)) {
+        results = JSON.parse(fileCache.get(jobid));
+    } else {
+        let result = await axios.get('https://search.foldseek.com/api/result/' + jobid + '/0', {
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
+        });
+
+        const aln = result.data;
+        for (let i = 0; i < aln.results.length; i++) {
+            let result = aln.results[i];
+            if (!result.alignments) {
                 continue;
             }
-            results.push({
-                accession: accession,
-                eval: result.alignments[j].eval,
-                score: result.alignments[j].score,
-                seqId: result.alignments[j].seqId,
-                prob: result.alignments[j].prob,
-            });
+            for (let j = 0; j < result.alignments.length; j++) {
+                const target = result.alignments[j].target;
+                let accession = "";
+                try {
+                    accession = target.match(/AF-(.*)-F\d+-model/)[1];
+                } catch (e) {
+                    console.log("error retrieving accession: ", target);
+                    accession = "error-retrieving-accession";
+                }
+                if (result.alignments[j].prob < 0.95) {
+                    continue;
+                }
+                results.push({
+                    accession: accession,
+                    eval: result.alignments[j].eval,
+                    score: result.alignments[j].score,
+                    seqId: result.alignments[j].seqId,
+                    prob: result.alignments[j].prob,
+                });
+            }
+        }
+        
+        fileCache.add(jobid, JSON.stringify(results));
+    }
+
+    const is_dark = req.query.is_dark;
+    let filter_params = [];
+    for (let i of ['avg_length_range', 'avg_plddt_range', 'n_mem_range', 'rep_length_range', 'rep_plddt_range']) {
+        if (typeof(req.query[i]) == "undefined") {
+            filter_params.push('0');
+            filter_params.push('INF');
+        } else {
+            const split = req.query[i].split(',');
+            filter_params.push(split[0] ?? '0');
+            filter_params.push(split[1] ?? 'INF');
         }
     }
-    fileCache.add(req.params.jobid, JSON.stringify(results));
-    res.send(await formatFoldseekResult(results))
+
+    let queries_where = [];
+    queries_where.push(`c.avg_len >= ? AND c.avg_len <= ?`);
+    queries_where.push(`c.avg_plddt >= ? AND c.avg_plddt <= ?`);
+    queries_where.push(`c.n_mem >= ? AND c.n_mem <= ?`);
+    queries_where.push(`c.rep_len >= ? AND c.rep_len <= ?`);
+    queries_where.push(`c.rep_plddt >= ? AND c.rep_plddt <= ?`);
+    if (is_dark != undefined) {
+        queries_where.push(`c.is_dark == ?`);
+        filter_params.push(is_dark ? '1' : '0')
+    }
+
+    const accessions = results.map(r => r.accession);
+    let result = await sql.all(`
+        SELECT DISTINCT *
+            FROM cluster as c
+            WHERE c.rep_accession in (
+                SELECT DISTINCT rep_accession
+                FROM member
+                WHERE accession IN (${accessions.map(() => '?').join(',')})
+            ) AND ${queries_where.join(" AND ")}
+            `, ...accessions, ...filter_params);
+
+    return finalizeResult(result, req, res);
 });
 
-app.post('/api/:query', async (req, res) => {
-    // axios.get("https://rest.uniprot.org/uniprotkb/search?query=" + req.params.query, {
-    //         headers: { 'User-Agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/111.0" }
-    //     })
-    //     .then(response => {
-    //         res.send(response.data.results);
-    //     })
-    //     .catch(error => {
-    //         console.log(error);
-    //     });
+app.get('/api/:query', async (req, res) => {
     let result = await sql.get("SELECT * FROM member as m LEFT JOIN cluster as c ON m.rep_accession == c.rep_accession WHERE m.accession = ?", req.params.query);
     if (!result || result.lca_tax_id == null) {
         res.status(404).send({ error: "No cluster found" });
         return;
     }
-    result.lca_tax_id = tree.getNode(result.lca_tax_id);
+    result.lca_tax_id = tree.nodeExists(result.lca_tax_id) ? tree.getNode(result.lca_tax_id) : null;
     res.send([ result ]);
 });
 
@@ -451,14 +418,21 @@ function makeSankey(result) {
             let currentNode = node;
             // skip all ranks except superkingdom, phylum, class, order, family, genus
             while (!allowedRanks.includes(currentNode.rank)) {
-                node = tree.getNode(node.parent, true);
-                currentNode = node;
+                currentNode = tree.getNode(currentNode.parent, true);
                 if (currentNode.id == 1) {
                     break;
                 }
             }
 
-            if (!(currentNode.id in nodes) && currentNode.id != 1) {
+            let parentNode = tree.getNode(currentNode.parent, true);
+            while (!allowedRanks.includes(parentNode.rank)) {
+                parentNode = tree.getNode(parentNode.parent, true);
+                if (parentNode.id == 1) {
+                    break;
+                }
+            }
+
+            if (!(currentNode.id in nodes)) {
                 nodes[currentNode.id] = {
                     id: currentNode.id,
                     name: currentNode.name,
@@ -466,17 +440,7 @@ function makeSankey(result) {
                 };
             }
 
-            node = tree.getNode(node.parent, true);
-            let parentNode = node;
-            while (!allowedRanks.includes(parentNode.rank)) {
-                node = tree.getNode(node.parent, true);
-                parentNode = node;
-                if (parentNode.id == 1) {
-                    break;
-                }
-            }
-
-            if (!(parentNode.id in nodes) && parentNode.id != 1) {
+            if (!(parentNode.id in nodes)) {
                 nodes[parentNode.id] = {
                     id: parentNode.id,
                     name: parentNode.name,
@@ -484,6 +448,7 @@ function makeSankey(result) {
                 };
             }
 
+            node = parentNode;
             if (currentNode.id == 1 || parentNode.id == 1) {
                 break;
             }
@@ -535,12 +500,16 @@ app.get('/api/cluster/:cluster/sankey-similars', async (req, res) => {
     res.send({result: makeSankey(result)});
 });
 
-app.post('/api/cluster/:cluster', async (req, res) => {
+app.get('/api/cluster/:cluster', async (req, res) => {
     let result = await sql.get("SELECT * FROM cluster as c LEFT JOIN member as m ON c.rep_accession == m.accession WHERE c.rep_accession = ?", req.params.cluster);
-    result.lca_tax_id = tree.getNode(result.lca_tax_id);
-    result.lineage = tree.lineage(result.lca_tax_id);
-    result.tax_id = tree.getNode(result.tax_id);
-    result.rep_lineage = tree.lineage(result.tax_id);
+    if (!result) {
+        res.status(404).send({ error: "No cluster found" });
+        return;
+    }
+    result.lca_tax_id = tree.nodeExists(result.lca_tax_id) ? tree.getNode(result.lca_tax_id) : null;
+    result.lineage = tree.nodeExists(result.lca_tax_id) ? tree.lineage(result.lca_tax_id) : null;
+    result.tax_id = tree.nodeExists(result.tax_id) ? tree.getNode(result.tax_id) : null;
+    result.rep_lineage = tree.nodeExists(result.tax_id) ? tree.lineage(result.tax_id) : null;
     result.description = getDescription(result.rep_accession);
     if (warnDB) {
         const warnKey = warnDB.id(result.rep_accession);
@@ -551,17 +520,31 @@ app.post('/api/cluster/:cluster', async (req, res) => {
     res.send(result);
 });
 
-app.post('/api/cluster/:cluster/members', async (req, res) => {
+function processAndWriteInChunks(data, chunkSize, processingFunc, writeFunc) {
+    let index = 0;
+    while (index < data.length) {
+        const chunk = data.slice(index, index + chunkSize);
+        const processedChunk = processingFunc(chunk);
+        writeFunc(processedChunk);
+        index += chunkSize;
+    }
+}
+
+app.get('/api/cluster/:cluster/members', async (req, res) => {
     let flagFilter = '';
     let args = [ req.params.cluster ];
-    if (req.body.flagFilter != null) {
+    if (req.query.flagFilter != null) {
         flagFilter = 'AND flag = ?';
-        args.push(req.body.flagFilter + 1);
+        args.push((req.query.flagFilter | 0) + 1);
     }
 
-    if (req.body.tax_id) {
-        let result = await sql.all(`
-        SELECT * 
+    let paginate = !req.query.format;
+
+    let result;
+    let total = 0;
+    if (req.query.tax_id) {
+        result = await sql.all(`
+        SELECT accession, tax_id, flag
             FROM member
             WHERE rep_accession = ? ${flagFilter}
             ORDER BY rowid;
@@ -574,34 +557,79 @@ app.post('/api/cluster/:cluster/members', async (req, res) => {
             x.tax_id = tree.getNode(x.tax_id);
             let currNode = x.tax_id;
             while (currNode.id != 1) {
-                if (currNode.id == req.body.tax_id.value) {
+                if (currNode.id == req.query.tax_id) {
                     return true;
                 }
                 currNode = tree.getNode(currNode.parent);
             }
             return false;
         });
-        const total = result.length;
-        if (result && result.length > 0) {
-            result = result.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
+        
+        if (paginate) {
+            total = result.length;
+            if (result && result.length > 0) {
+                result = result.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
+            }
         }
         result.forEach((x) => { x.description = getDescription(x.accession) });
-        res.send({ total: total, result : result });
     } else {
-        const total = await sql.get(`SELECT COUNT(accession) as total FROM member WHERE rep_accession = ? ${flagFilter}`, ...args);
-        let result = await sql.all(`
-        SELECT * 
+        let paginate_query = "";
+        if (paginate) {
+            total = await sql.get(`SELECT COUNT(accession) as total FROM member WHERE rep_accession = ? ${flagFilter}`, ...args);
+            total = total.total;
+            args.push((req.query.itemsPerPage) | 0);
+            args.push(((req.query.page - 1) * req.query.itemsPerPage) | 0);
+            paginate_query = "LIMIT ? OFFSET ?";
+        }
+        result = await sql.all(`
+        SELECT accession, tax_id, flag
             FROM member
             WHERE rep_accession = ? ${flagFilter}
             ORDER BY rowid
-            LIMIT ? OFFSET ?;
-        `, ...args, req.body.itemsPerPage, (req.body.page - 1) * req.body.itemsPerPage);
-        result.forEach((x) => { x.tax_id = tree.getNode(x.tax_id); x.description = getDescription(x.accession) });
-        res.send({ total: total.total, result : result });
+            ${paginate_query};
+        `, ...args);
+        result.forEach((x) => {
+            x.tax_id = tree.nodeExists(x.tax_id) ? tree.getNode(x.tax_id) : null;
+            x.description = getDescription(x.accession);
+        });
+    }
+
+    if (!req.query.format) {
+        res.send({ total: total, result : result });
+        return;
+    }
+
+    const safeCluster = req.params.cluster.replace(/[^a-zA-Z0-9]/g, '');
+    switch(req.query.format) {
+        case 'accessions':
+            res.setHeader('Content-Disposition', `attachment; filename=member-accessions-${safeCluster}.txt`);
+            res.setHeader('Content-Type', 'text/plain');
+            res.charset = 'UTF-8';
+            processAndWriteInChunks(result, 10000,
+                chunk => chunk.map(member => member.accession).join('\n'),
+                chunk => res.write(chunk));
+            res.end();
+            break;
+
+        case 'fasta':
+            res.setHeader('Content-Disposition', `attachment; filename=member-sequences-${safeCluster}.fasta`);
+            res.setHeader('Content-Type', 'text/plain');
+            res.charset = 'UTF-8';
+
+            processAndWriteInChunks(result, 10000,
+                chunk => chunk.map(member => `>${member.accession} ${member.description.trimEnd()} OX=${member.tax_id ? member.tax_id.id : '0'} OS=${member.tax_id ? member.tax_id.name : 'unknown'} Flag=${member.flag}\n${aaDb.data(aaDb.id(member.accession).value).toString('ascii')}`).join(''),
+                chunk => res.write(chunk));
+
+            res.end();
+            break;
+        
+        default:
+            res.status(400).send({ error: 'Unsupported format!' });
+            break;
     }
 });
 
-app.post('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
+app.get('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => {
     let result = await sql.all(`
         SELECT tax_id
             FROM member
@@ -629,7 +657,7 @@ app.post('/api/cluster/:cluster/members/taxonomy/:suggest', async (req, res) => 
     res.send(Object.values(suggestions));
 });
 
-app.post('/api/cluster/:cluster/similars', async (req, res) => {
+app.get('/api/cluster/:cluster/similars', async (req, res) => {
     const cluster = req.params.cluster;
     const avaKey = avaDb.id(cluster);
     if (avaKey.found == false) {
@@ -648,21 +676,17 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
     `, accessions);
     result.forEach((x) => {
         x.evalue = map.get(x.rep_accession);
-        if (tree.nodeExists(x.lca_tax_id)) {
-            x.lca_tax_id = tree.getNode(x.lca_tax_id);
-        } else {
-            x.lca_tax_id = null;
-        }
+        x.lca_tax_id = tree.nodeExists(x.lca_tax_id) ? tree.getNode(x.lca_tax_id) : null;
     });
     // console.log(result)
-    if (req.body && req.body.tax_id) {
+    if (req.query.tax_id) {
         result = result.filter((x) => {
             let currNode = x.lca_tax_id;
             if (currNode == null) {
                 return false;
             }
             while (currNode.id != 1) {
-                if (currNode.id == req.body.tax_id.value) {
+                if (currNode.id == req.query.tax_id) {
                     return true;
                 }
                 currNode = tree.getNode(currNode.parent);
@@ -671,38 +695,74 @@ app.post('/api/cluster/:cluster/similars', async (req, res) => {
         });
     }
 
-    if (req.body.sortBy.length == 0) {
-        req.body.sortBy = ['evalue'];
-        req.body.sortDesc = [false];
+    if (!req.query.format) {
+        let sortBy = req.query.sortBy;
+        let sortDesc = req.query.sortDesc.toLowerCase() === "true";
+        if (sortBy == "") {
+            sortBy = "evalue";
+            sortDesc = false;
+        }
+
+        const identity = (x) => x;
+        let castFun = identity;
+        if (sortBy == 'evalue') {
+            castFun = parseFloat;
+        }
+        let sorted = result.sort((a, b) => {
+            const sortA = castFun(a[sortBy]);
+            const sortB = castFun(b[sortBy]);
+            
+            if (sortDesc) {
+                if (sortA < sortB) return 1;
+                if (sortA > sortB) return -1;
+                return 0;
+            } else {
+                if (sortA < sortB) return -1;
+                if (sortA > sortB) return 1;
+                return 0;
+            }
+        })
+        sorted = sorted.filter((x) => x.rep_accession != cluster);
+        const total = sorted.length;
+        sorted = sorted.slice((req.query.page - 1) * req.query.itemsPerPage, req.query.page * req.query.itemsPerPage);
+        sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
+        res.send({ total: total, similars: sorted });
+        return;
+    } else {
+        result.forEach((x) => { x.description = getDescription(x.rep_accession) });
     }
 
-    const identity = (x) => x;
-    let castFun = identity;
-    if (req.body.sortBy[0] == 'evalue') {
-        castFun = parseFloat;
-    }
-    let sorted = result.sort((a, b) => {
-        const sortA = castFun(a[req.body.sortBy[0]]);
-        const sortB = castFun(b[req.body.sortBy[0]]);
+    const safeCluster = req.params.cluster.replace(/[^a-zA-Z0-9]/g, '');
+    switch(req.query.format) {
+        case 'accessions':
+            res.setHeader('Content-Disposition', `attachment; filename=similar-accessions-${safeCluster}.txt`);
+            res.setHeader('Content-Type', 'text/plain');
+            res.charset = 'UTF-8';
+            processAndWriteInChunks(result, 10000,
+                chunk => chunk.map(similar => similar.rep_accession).join('\n'),
+                chunk => res.write(chunk));
+            res.end();
+            break;
+
+        case 'fasta':
+            res.setHeader('Content-Disposition', `attachment; filename=similar-sequences-${safeCluster}.fasta`);
+            res.setHeader('Content-Type', 'text/plain');
+            res.charset = 'UTF-8';
+
+            processAndWriteInChunks(result, 10000,
+                chunk => chunk.map(similar => `>${similar.rep_accession} ${similar.description.trimEnd()} OX=${similar.lca_tax_id ? similar.lca_tax_id.id : '0'} OS=${similar.lca_tax_id ? similar.lca_tax_id.name : 'unknown'} Eval=${similar.evalue}\n${aaDb.data(aaDb.id(similar.rep_accession).value).toString('ascii')}`).join(''),
+                chunk => res.write(chunk));
+
+            res.end();
+            break;
         
-        if (req.body.sortDesc[0]) {
-            if (sortA < sortB) return 1;
-            if (sortA > sortB) return -1;
-            return 0;
-        } else {
-            if (sortA < sortB) return -1;
-            if (sortA > sortB) return 1;
-            return 0;
-        }
-    })
-    sorted = sorted.filter((x) => x.rep_accession != cluster);
-    const total = sorted.length;
-    sorted = sorted.slice((req.body.page - 1) * req.body.itemsPerPage, req.body.page * req.body.itemsPerPage);
-    sorted.forEach((x) => { x.description = getDescription(x.rep_accession) });
-    res.send({ total: total, similars: sorted });
+        default:
+            res.status(400).send({ error: 'Unsupported format!' });
+            break;
+    }
 });
 
-app.post('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
+app.get('/api/cluster/:cluster/similars/taxonomy/:suggest', async (req, res) => {
     const cluster = req.params.cluster;
     const avaKey = avaDb.id(cluster);
     if (avaKey.found == false) {
@@ -769,6 +829,7 @@ app.get('/api/structure/:structure', async (req, res) => {
 app.use((err, req, res, next) => {
     console.log(err);
     res.status(500);
+    res.removeHeader('Cache-Control');
     res.send({ error: err.response && err.response.data ? err.response.data : err.message });
 });
 

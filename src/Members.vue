@@ -1,5 +1,33 @@
 <template>
-    <div>
+<Panel style="margin-top: 1em;" collapsible>
+    <template slot="header">
+        Cluster members
+    </template>
+
+    <template slot="toolbar-extra">
+        <v-menu offset-y>
+            <template v-slot:activator="{ on }">
+                <v-btn plain v-on="on">
+                    <v-icon class="mr-1">{{ $MDI.Export }}</v-icon>
+                    Export
+                </v-btn>
+            </template>
+            <v-list>
+                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/members?format=accessions&${requestOptions.params.toString()}`" target="_blank">
+                    <v-list-item-content>
+                        <v-list-item-title>Accessions</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/members?format=fasta&${requestOptions.params.toString()}`" target="_blank">
+                    <v-list-item-content>
+                        <v-list-item-title>FASTA</v-list-item-title>
+                    </v-list-item-content>
+                </v-list-item>
+            </v-list>
+        </v-menu>
+    </template>
+        
+<template slot="content" v-if="$route.params.cluster">
     <Sankey :cluster="cluster" type="members" @select="sankeySelect"></Sankey>
     <v-data-table
         :headers="headers"
@@ -7,10 +35,12 @@
         :options.sync="options"
         :server-items-length="totalMembers"
         :loading="loading"
+        :footer-props="{
+            'items-per-page-options': [10, 20, 50, 100, -1],
+        }"
     >
-
         <template v-slot:item.accession="prop">
-            <UniprotLink :accession="prop.value"></UniprotLink><br>
+            <ExternalLinks :accession="prop.value"></ExternalLinks><br>
             {{ prop.item.description }}
         </template>
         <template v-slot:header.structure="{ header }">
@@ -70,16 +100,16 @@
             </v-menu>
         </template>
         <template v-slot:header.tax_id="{ header }">
-                <TaxonomyAutocomplete :cluster="cluster" v-model="options.tax_id" :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b" :disabled="taxAutocompleteDisabled"></TaxonomyAutocomplete>
+                <TaxonomyAutocomplete
+                    :cluster="cluster"
+                    v-model="options.tax_id"
+                    :urlFunction="(a, b) => '/cluster/' + a + '/members/taxonomy/' + b"
+                    :options="requestOptions"
+                    :disabled="taxAutocompleteDisabled">
+                </TaxonomyAutocomplete>
         </template>
         <template v-slot:item.tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
-        </template>
-
-        <template v-slot:item.uniprot3d="{ item }">
-            <v-chip title="Search with Foldseek" :href="'https://uniprot3d.org/atlas/AFDB90v4/#' + item.accession" target="_blank">
-                <v-img :src="require('./assets/uniprot3d-removebg-preview.png')" max-width="16"></v-img>
-            </v-chip>
         </template>
 
         <template v-slot:item.actions="{ item }">
@@ -88,29 +118,33 @@
             </v-chip>
         </template>
     </v-data-table>
-    </div>
+</template>
+</Panel>
 </template>
 
 <script>
 import TaxSpan from "./TaxSpan.vue";
 import StructureViewer from "./StructureViewer.vue";
-import UniprotLink from "./UniprotLink.vue";
+import ExternalLinks from "./ExternalLinks.vue";
 import TaxonomyAutocomplete from "./TaxonomyAutocomplete.vue";
 import Fragment from "./Fragment.vue";
 import Sankey from './Sankey.vue';
-
+import ImageMixin from './ImageMixin';
+import Panel from "./Panel.vue";
 
 export default {
     name: "members",
     components: {
+        Panel,
         TaxSpan,
         StructureViewer,
-        UniprotLink,
+        ExternalLinks,
         TaxonomyAutocomplete,
         Fragment,
         Sankey,
     },
     props: ["cluster"],
+    mixins: [ImageMixin],
     data() {
         return {
             headers: [
@@ -144,12 +178,6 @@ export default {
                     width: "40%",
                 },
                 {
-                    text: "uniprot3d",
-                    value: "uniprot3d",
-                    sortable: false,
-                    width: "10%",
-                },
-                {
                     text: 'Actions',
                     value: 'actions',
                     sortable: false,
@@ -159,8 +187,9 @@ export default {
             members: [],
             totalMembers: 0,
             loading: false,
-            options: {},
-            images: [],
+            options: {
+                tax_id: null,
+            },
             taxAutocompleteDisabled: false,
         }
     },
@@ -175,6 +204,19 @@ export default {
             this.fetchData();
         }
     },
+    computed: {
+        requestOptions() {
+            let copy = JSON.parse(JSON.stringify(this.options));
+            if (copy.tax_id) {
+                copy.tax_id = copy.tax_id.value;
+            } else {
+                delete copy.tax_id;
+            }
+            const params = new URLSearchParams(copy);
+            params.sort();
+            return { params };
+        },
+    },
     methods: {
         sankeySelect(value) {
             if (value == null) {
@@ -184,14 +226,7 @@ export default {
                this.options.tax_id = { value: value.id, text: value.name };
                this.taxAutocompleteDisabled = true;
             }
-            this.fetchData()
-        },
-        getImage(acession) {
-            const image = this.images.find(image => image.accession === acession);
-            if (image) {
-                return image.url;
-            }
-            return "";
+            // this.fetchData()
         },
         log(value) {
             console.log(value);
@@ -204,27 +239,11 @@ export default {
                 return;
             }
 
-            this.$axios.post("/cluster/" + cluster + "/members", this.options)
+            this.$axios.get("/cluster/" + cluster + "/members", this.requestOptions)
                 .then(response => {
                     this.members = response.data.result;
-                    for (let i = 0; i < this.images.length; i++) {
-                        URL.revokeObjectURL(this.images[i].url);
-                    }
-                    this.images = [];
                     this.totalMembers = response.data.total;
-                    for (let i = 0; i < this.members.length; i++) {
-                        const accession = this.members[i].accession;
-                        this.$axios.get("/structure/" + accession)
-                            .then((response) => {
-                                this.$nglService.makeImage(response.data.seq, response.data.plddt, response.data.coordinates)
-                                    .then((image) => {
-                                        this.images.push({ accession: accession, url: URL.createObjectURL(image)});
-                                    })
-                                    .catch(e => {
-                                        console.log(e);
-                                    });
-                            });
-                    }
+                    this.fetchImages(this.members.map(m => m.accession));
                 })
                 .catch(() => {})
                 .finally(() => {
