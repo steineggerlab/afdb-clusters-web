@@ -289,17 +289,30 @@
             </v-flex>
             <v-flex>
                 <v-card rounded="0">
-                <v-card-title primary-title class="pb-0 mb-0">
-                    <div class="text-h5 mb-0">Reference</div>
-                </v-card-title>
-                <v-card-title primary-title class="pt-0 mt-0">
-                    <p class="text-subtitle-2 mb-0">
-                        Barrio-Hernandez I, Yeo J, Jänes J, Wein T, Varadi M, Velankar S, Beltrao P, Steinegger M. 
-                        <a href="https://www.biorxiv.org/content/10.1101/2023.03.09.531927v1" target="_blank" rel="noopener">
-                            Clustering predicted structures at the scale of the known protein universe.</a>
-                        bioRxiv (2023)
-                    </p>
-                </v-card-title>
+                    <v-layout>
+                        <v-flex xs12 md10>
+                        <v-card-title primary-title class="pb-0 mb-0">
+                            <div class="text-h5 mb-0">Reference and Acknowledgement</div>
+                        </v-card-title>
+                        <v-card-title primary-title class="pt-0 mt-0">
+                            <p class="text-subtitle-2 mb-0">
+                                Barrio-Hernandez I, Yeo J, Jänes J, Wein T, Varadi M, Velankar S, Beltrao P, Steinegger M. 
+                                <a href="https://www.biorxiv.org/content/10.1101/2023.03.09.531927v1" target="_blank" rel="noopener">
+                                    Clustering predicted structures at the scale of the known protein universe.</a>
+                                bioRxiv (2023)<br>
+                            </p>
+                            <p class="text-subtitle-2 mb-0">
+                                AFDB Clusters is a collaboration between
+                                <a href="https://en.snu.ac.kr/">Seoul National University</a>,
+                                <a href="https://www.ebi.ac.uk/">the European Bioinformatics Institute (EMBL-EBI)</a>,
+                                <a href="https://www.sib.swiss/">the SIB Swiss Institute of Bioinformatics</a>
+                            </p>
+                        </v-card-title>
+                        </v-flex>
+                        <v-flex xs12 md2>
+                            <v-btn text rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis" height="128"><img src="./assets/logo_sib.svg"  height="64"/></v-btn>
+                        </v-flex>
+                    </v-layout>
                 </v-card>
             </v-flex>
         </v-layout>
