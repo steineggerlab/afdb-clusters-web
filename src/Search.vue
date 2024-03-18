@@ -132,31 +132,33 @@
             <FoldseekSearchResult v-else-if="tab == 3" @total="small = $event > 0; inSearch = false;"></FoldseekSearchResult>
             <v-flex>
                 <v-card rounded="0">
-                    <v-layout>
-                        <v-flex xs12 md10>
-                        <v-card-title primary-title class="pb-0 mb-0">
-                            <div class="text-h5 mb-0">Reference and Acknowledgement</div>
-                        </v-card-title>
-                        <v-card-title primary-title class="pt-0 mt-0">
-                            
-                            <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
-                                Barrio-Hernandez&nbsp;I, Yeo&nbsp;J, Jänes&nbsp;J, Mirdita&nbsp;M, Gilchrist&nbsp;CLM, Wein&nbsp;T, Varadi&nbsp;M, Velankar&nbsp;S, Beltrao&nbsp;P, Steinegger&nbsp;M. 
-                                <a href="https://nature.com/articles/s41586-023-06510-w" target="_blank" rel="noopener">Clustering predicted structures at the scale of the known protein universe.</a>
-                                Nature,&nbsp;2023.
-                            </p>
-                            <p class="text-subtitle-2 mb-0">
-                                AFDB Clusters is a collaboration between
-                                <a href="https://en.snu.ac.kr/">Seoul National University</a>,
-                                <a href="https://www.ebi.ac.uk/">the European Bioinformatics Institute (EMBL-EBI)</a>,
-                                <a href="https://www.sib.swiss/">the SIB Swiss Institute of Bioinformatics</a>
-                            </p>
-                        </v-card-title>
-                        </v-flex>
-                        <v-flex xs12 md2>
-                            <v-btn text rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis" height="128"><img src="./assets/logo_sib.svg"  height="64"/></v-btn>
-                        </v-flex>
-                    </v-layout>
+                    <v-flex>
+                    <v-card-title primary-title class="pb-0 mb-0">
+                        <div class="text-h5 mb-0">Reference</div>
+                    </v-card-title>
+                    <v-card-title primary-title class="pt-0 mt-0">
+                        
+                        <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
+                            Barrio-Hernandez&nbsp;I, Yeo&nbsp;J, Jänes&nbsp;J, Mirdita&nbsp;M, Gilchrist&nbsp;CLM, Wein&nbsp;T, Varadi&nbsp;M, Velankar&nbsp;S, Beltrao&nbsp;P, Steinegger&nbsp;M. 
+                            <a href="https://nature.com/articles/s41586-023-06510-w" target="_blank" rel="noopener">Clustering predicted structures at the scale of the known protein universe.</a>
+                            Nature,&nbsp;2023.
+                        </p>
+                    </v-card-title>
+                    </v-flex>
                 </v-card>
+
+                <p class="text-subtitle-1 mb-0"
+                    style="text-align: center; padding-top: 40px;">
+                    AFDB Clusters is a collaboration between
+                    <a href="https://en.snu.ac.kr/">Seoul National University</a>,
+                    <a href="https://www.ebi.ac.uk/">the European Bioinformatics Institute (EMBL-EBI)</a>, <br>and 
+                    <a href="https://www.sib.swiss/">the SIB Swiss Institute of Bioinformatics</a>
+                </p>
+                <div style="text-align: center; padding-bottom: 40px;">
+                <v-btn text rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis" height="128">
+                    <img src="./assets/logo_sib.svg" height="64" style="filter: grayscale(100%);"/>
+                </v-btn>
+            </div>
             </v-flex>
         </v-layout>
     </v-container>
