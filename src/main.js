@@ -116,6 +116,7 @@ Vue.use({
             Export: mdiExport,
         };
         let apiBase = "http://localhost:3000/api";
+        // let apiBase = "https://cluster.foldseek.com/api";
         // let apiBase = "/api";
         let defaultHeaders = {};
 
