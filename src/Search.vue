@@ -147,22 +147,21 @@
                     </v-flex>
                 </v-card>
 
-                <p class="text-subtitle-1 mb-0"
-                    style="text-align: center; padding-top: 40px;">
+                <p class="text-subtitle-1 mb-0 collab">
                     AFDB Clusters is a collaboration between
-                    <a href="https://en.snu.ac.kr/">Seoul National University</a>,
-                    <a href="https://www.ebi.ac.uk/">the European Bioinformatics Institute (EMBL-EBI)</a>, <br>and 
-                    <a href="https://www.sib.swiss/">the SIB Swiss Institute of Bioinformatics</a>
+                    <a href="https://en.snu.ac.kr/">Seoul National University</a>, the
+                    <a href="https://www.ebi.ac.uk/">European Bioinformatics Institute</a>, <br>and the
+                    <a href="https://www.sib.swiss/">Swiss Institute of Bioinformatics</a>.
                 </p>
                 <div style="text-align: center; padding-top: 12px; padding-bottom: 40px;">
                     <a style="margin: 12px" rel="external noopener" target="_blank" href="https://en.snu.ac.kr/" height="128">
-                        <img src="./assets/snu_logo_opt.svg" height="64" style="filter: grayscale(100%);"/>
+                        <img class="logos" src="./assets/snu_logo_opt.svg" height="64"/>
                     </a>
                     <a style="margin: 12px" rel="external noopener" target="_blank" href="https://www.ebi.ac.uk/" height="128">
-                        <img src="./assets/embl-logo-vector.png" height="64" style="filter: grayscale(100%);"/>
+                        <img class="logos" src="./assets/embl_logo.svg" height="64"/>
                     </a>
                     <a style="margin: 12px" rel="external noopener" target="_blank" href="https://www.sib.swiss/" height="128">
-                        <img src="./assets/logo_sib.svg" height="64" style="filter: grayscale(100%);"/>
+                        <img class="logos" src="./assets/logo_sib.svg" height="64"/>
                     </a>
                 </div>
             </v-flex>
@@ -371,6 +370,38 @@ code {
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-position: center center;
+}
+
+.logos {
+    padding: 4px;
+    filter: grayscale(100%);
+}
+
+.collab {
+    text-align: center;
+    padding-top: 40px;
+    font-weight: lighter;
+    line-height: 1.2;
+}
+
+.collab a { 
+    text-decoration: none;
+    font-weight: 400;
+    color: #999;
+}
+
+@media (prefers-color-scheme: dark) {
+    .logos {
+        /* padding: 8px; */
+        /* filter: brightness(0) invert(1); */
+        filter: grayscale(100%) invert();
+        /* background-color: #ddd; */
+        /* border-radius: 4px; */
+    }
+
+    .collab {
+        color: #999;
+    }
 }
 
 </style>
