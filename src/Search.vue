@@ -154,11 +154,17 @@
                     <a href="https://www.ebi.ac.uk/">the European Bioinformatics Institute (EMBL-EBI)</a>, <br>and 
                     <a href="https://www.sib.swiss/">the SIB Swiss Institute of Bioinformatics</a>
                 </p>
-                <div style="text-align: center; padding-bottom: 40px;">
-                <v-btn text rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis" height="128">
-                    <img src="./assets/logo_sib.svg" height="64" style="filter: grayscale(100%);"/>
-                </v-btn>
-            </div>
+                <div style="text-align: center; padding-top: 12px; padding-bottom: 40px;">
+                    <a style="margin: 12px" rel="external noopener" target="_blank" href="https://en.snu.ac.kr/" height="128">
+                        <img src="./assets/snu_logo_opt.svg" height="64" style="filter: grayscale(100%);"/>
+                    </a>
+                    <a style="margin: 12px" rel="external noopener" target="_blank" href="https://www.ebi.ac.uk/" height="128">
+                        <img src="./assets/embl-logo-vector.png" height="64" style="filter: grayscale(100%);"/>
+                    </a>
+                    <a style="margin: 12px" rel="external noopener" target="_blank" href="https://www.sib.swiss/" height="128">
+                        <img src="./assets/logo_sib.svg" height="64" style="filter: grayscale(100%);"/>
+                    </a>
+                </div>
             </v-flex>
         </v-layout>
     </v-container>
