@@ -269,6 +269,7 @@ app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
     let results = [];
     if (fileCache.contains(jobid)) {
         results = JSON.parse(fileCache.get(jobid));
+        
     } else {
         let result = await axios.get('https://search.foldseek.com/api/result/' + jobid + '/0', {
             maxBodyLength: Infinity,
@@ -278,11 +279,13 @@ app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
         const aln = result.data;
         for (let i = 0; i < aln.results.length; i++) {
             let result = aln.results[i];
-            if (!result.alignments) {
+            if (!result.alignments || !result.alignments[0]) {
                 continue;
             }
-            for (let j = 0; j < result.alignments.length; j++) {
-                const target = result.alignments[j].target;
+            
+            for (let j = 0; j < result.alignments[0].length; j++) {
+                const target = result.alignments[0][j].target;
+                
                 let accession = "";
                 try {
                     accession = target.match(/AF-(.*)-F\d+-model/)[1];
@@ -290,15 +293,15 @@ app.get('/api/search/foldseek/:taxonomy?', async (req, res) => {
                     console.log("error retrieving accession: ", target);
                     accession = "error-retrieving-accession";
                 }
-                if (result.alignments[j].prob < 0.95) {
+                if (result.alignments[0][j].prob < 0.95) {
                     continue;
                 }
                 results.push({
                     accession: accession,
-                    eval: result.alignments[j].eval,
-                    score: result.alignments[j].score,
-                    seqId: result.alignments[j].seqId,
-                    prob: result.alignments[j].prob,
+                    eval: result.alignments[0][j].eval,
+                    score: result.alignments[0][j].score,
+                    seqId: result.alignments[0][j].seqId,
+                    prob: result.alignments[0][j].prob,
                 });
             }
         }
