@@ -41,7 +41,7 @@
                 </div>
                 <div style=" grid-area: 2 / 1 / 3 / 4;">
                 <dt>
-                    Lowest common ancestor and lineage
+                    Taxonomy
                 </dt>
                 <dd>
                     <template v-for="(taxonomy, index) in response.rep_lineage" ><TaxSpan :taxonomy="taxonomy" :key="taxonomy.id"></TaxSpan><template v-if="index < (response.rep_lineage.length -1)"> &#187;&nbsp;</template></template>
