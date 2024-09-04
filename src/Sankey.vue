@@ -124,6 +124,37 @@ export default {
                     {   
                         return (d.sourceLinks.length == 0) ? colors[nodeIdx[d.id] % colors.length] : "#888";
                     })
+                    .on("mouseover", (event, d) => {
+                        // Create the tooltip div
+                        const tooltip = select('body').append('div')
+                            .attr('class', 'tooltip')
+                            .html(`
+                                <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 8px; padding-right: 8px;">
+                                    <p style="font-size: 0.6rem; margin-bottom: 0px;">#${d.id}</p>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="font-weight: bold; font-size: 0.875rem;">${d.name}</div>
+                                        <span style="background-color: rgba(255, 167, 38, 0.25); color: #ffa726; font-weight: bold; padding: 4px 8px; border-radius: 12px; font-size: 0.875rem; margin-left: 10px;">${d.rank}</span>
+                                    </div>
+                                    <hr style="margin: 8px 0; border: none; border-top: 1px solid #fff; opacity: 0.2;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem;">
+                                        <div style="font-weight: bold;">Clade Reads</div>
+                                        <div style="margin-left: 10px;">${d.value}</div>
+                                    </div>
+                                </div>
+                            `)
+                            .style('left', `${d.x + d.dx}px`)
+                            .style('top', `${d.y + window.scrollY}px`);
+                    })
+                    .on("mousemove", (event, d) => {
+                        // Move the tooltip as the mouse moves
+                        select('.tooltip')
+                            .style('left', `${event.pageX + 10}px`)
+                            .style('top', `${event.pageY + 10}px`);
+                    })
+                    .on("mouseout", () => {
+                        // Remove the tooltip when mouse leaves
+                        select('.tooltip').remove();
+                    }) 
                     .on('click', (event, d) => {
                         if (event.target.classList.contains('active')) {
                             selectAll('rect.node, text.label').classed('active', false);
@@ -134,8 +165,6 @@ export default {
                             this.$emit('select', { name: d.name, id: d.id });
                         }
                     })
-                .append('title')
-                    .text((d) => `${d.name}: ${d.value}`);
                 
             const link = container
                 .append('g')
@@ -222,5 +251,16 @@ svg rect.node.active {
     svg text {
         font-size: 10px;
     }
+}
+
+/* Node Hover Tooltip */
+.tooltip {
+    position: absolute;
+    background-color: rgba(38, 50, 56, 0.95);
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    pointer-events: none;
+    z-index: 10;
 }
 </style>
