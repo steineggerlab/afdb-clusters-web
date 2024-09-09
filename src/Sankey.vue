@@ -1,19 +1,19 @@
 <template>
-    <svg class="hide" ref="svg"></svg>
+	<svg class="hide" ref="svg"></svg>
 </template>
 
 <script>
 import * as d3sankey from "d3-sankey";
-import { select, selectAll, scaleOrdinal, color } from 'd3';
-import { sankey } from './lib/sankeyD3/sankey.js';
+import { select, selectAll, scaleOrdinal, color } from "d3";
+import { sankey } from "./lib/sankeyD3/sankey.js";
 
 export default {
-    name: 'Sankey',
-    props: ['cluster', 'type'],
-    data: () => ({
-        response: null,
-        sankeyRankOrder: ["superkingdom", "kingdom", "phylum", "class", "order", "family", "genus", "species", "no rank"],
-        fullRankOrder: [
+	name: "Sankey",
+	props: ["cluster", "type"],
+	data: () => ({
+		response: null,
+		sankeyRankOrder: ["superkingdom", "kingdom", "phylum", "class", "order", "family", "genus", "species", "no rank"],
+		fullRankOrder: [
 			"superkingdom",
 			"kingdom",
 			"subkingdom",
@@ -40,7 +40,7 @@ export default {
 			"no rank",
 			"clade",
 		],
-        colors: [
+		colors: [
 			"#57291F",
 			"#C0413B",
 			"#D77B5F",
@@ -65,29 +65,29 @@ export default {
 			"#FFCD87",
 			"#BC7576",
 		],
-	}
-	),
-    watch: {
-        cluster() {
-            this.fetchData();
-        },
-        response() {
-            this.newRender(this.response);
-        }
-    },
-    mounted() {
-        this.fetchData();
-    },
-    methods: {
+	}),
+	watch: {
+		cluster() {
+			this.fetchData();
+		},
+		response() {
+			this.newRender(this.response);
+		},
+	},
+	mounted() {
+		this.fetchData();
+	},
+	methods: {
 		fetchData() {
-			this.$axios.get("/cluster/" + this.cluster + "/sankey-" + this.type)
-				.then(response => {
+			this.$axios
+				.get("/cluster/" + this.cluster + "/sankey-" + this.type)
+				.then((response) => {
 					this.response = response.data.result;
 				})
-				.catch(() => {})
+				.catch(() => {});
 		},
 
-        // Helper functions for drawing Sankey
+		// Helper functions for drawing Sankey
 		nodeHeight(d) {
 			let nodeHeight = d.y1 - d.y0;
 			if (nodeHeight < 1) {
@@ -96,60 +96,60 @@ export default {
 				return d.y1 - d.y0;
 			}
 		},
-        formatCladeReads(value) {
+		formatCladeReads(value) {
 			if (value >= 1000) {
 				return `${(value / 1000).toFixed(2)}k`;
 			}
-				return value.toString();
+			return value.toString();
 		},
 		formatProportion(value) {
 			return `${value.toFixed(3)}%`;
 		},
 
-	// Function to store lineage data for each node
-	storeLineage(nodes, links) {
-  // Create a map for quick access to nodes by their id
-  const nodeMap = new Map();
-  
-  // Initialize the nodeMap with nodes, each having an empty lineage array
-  nodes.forEach((node) => {
-    nodeMap.set(node.id, { ...node, lineage: [],  children: [] });
-  });
+		// Function to store lineage data for each node
+		storeLineage(nodes, links) {
+			// Create a map for quick access to nodes by their id
+			const nodeMap = new Map();
 
-  // Process each link to build lineage
-  links.forEach((link) => {
-    const parentNode = nodeMap.get(link.source);
-    const childNode = nodeMap.get(link.target);
+			// Initialize the nodeMap with nodes, each having an empty lineage array
+			nodes.forEach((node) => {
+				nodeMap.set(node.id, { ...node, lineage: [], children: [] });
+			});
 
-    if (parentNode && childNode) {
-      // Add the child node to the parent's children array
-		parentNode.children.push(childNode);
-    }
-  });
+			// Process each link to build lineage
+			links.forEach((link) => {
+				const parentNode = nodeMap.get(link.source);
+				const childNode = nodeMap.get(link.target);
 
-  // Helper function to propagate lineage updates to children recursively
-  function propagateLineage(node) {
-    node.children.forEach((childNode) => {
-      // Update the child's lineage with the parent's lineage and the parent itself
-      childNode.lineage = [...node.lineage, node];
-      
-      // Recursively propagate to the child's children
-      propagateLineage(childNode);
-    });
-  }
+				if (parentNode && childNode) {
+					// Add the child node to the parent's children array
+					parentNode.children.push(childNode);
+				}
+			});
 
-  // Start by propagating lineage from the root nodes (nodes with no incoming links)
-  nodes.forEach((node) => {
-    if (nodeMap.get(node.id).lineage.length === 0) {
-      propagateLineage(nodeMap.get(node.id));
-    }
-  });
+			// Helper function to propagate lineage updates to children recursively
+			function propagateLineage(node) {
+				node.children.forEach((childNode) => {
+					// Update the child's lineage with the parent's lineage and the parent itself
+					childNode.lineage = [...node.lineage, node];
 
-  // Return the map of nodes with lineage information
-  return nodeMap;
-},
+					// Recursively propagate to the child's children
+					propagateLineage(childNode);
+				});
+			}
 
-	// Parse data function
+			// Start by propagating lineage from the root nodes (nodes with no incoming links)
+			nodes.forEach((node) => {
+				if (nodeMap.get(node.id).lineage.length === 0) {
+					propagateLineage(nodeMap.get(node.id));
+				}
+			});
+
+			// Return the map of nodes with lineage information
+			return nodeMap;
+		},
+
+		// Parse data function
 		parseData(data, isFullGraph = false) {
 			const nodes = [];
 			const allNodes = [];
@@ -163,8 +163,8 @@ export default {
 
 			data.nodes.forEach((d) => {
 				const targetValue = data.links
-					.filter(link => link.target === d.id) // Find links where d.id is the target
-					.map(link => link.value);
+					.filter((link) => link.target === d.id) // Find links where d.id is the target
+					.map((link) => link.value);
 
 				let node = {
 					id: d.id,
@@ -187,8 +187,8 @@ export default {
 					nodesByRank[d.rank].push(node);
 
 					// Include all ranks for lineage tracking
-						node.lineage = [...nodeLineages.get(d.id).lineage, node]; 
-				} 
+					node.lineage = [...nodeLineages.get(d.id).lineage, node];
+				}
 			});
 
 			// Step 2: Filter top 10 nodes by clade_reads for each rank in rankOrder
@@ -254,17 +254,16 @@ export default {
 			return { nodes, links };
 		},
 		// Check if nodes array contains an object with the same id as lineage[i]
-hasId(nodes, idToCheck) {
-  return nodes.some(node => node.id === idToCheck);
-}
-,
-        // Main function for rendering Sankey
+		hasId(nodes, idToCheck) {
+			return nodes.some((node) => node.id === idToCheck);
+		},
+		// Main function for rendering Sankey
 		newRender(items) {
 			const { nodes, links } = this.parseData(items);
-			
+
 			// Check if nodes and links are not empty
 			if (!nodes.length || !links.length) {
-				select(this.$refs.svg).classed('hide', true);
+				select(this.$refs.svg).classed("hide", true);
 				return;
 			}
 
@@ -274,16 +273,16 @@ hasId(nodes, idToCheck) {
 			const width = 960;
 			const height = 670;
 			const nodeWidth = 20;
-      		const nodePadding = 13;
+			const nodePadding = 13;
 			const marginBottom = 50; // Margin for rank labels
 			const marginRight = 150;
 
-			const svg = 
-				select(container)
-				.attr('viewBox', [0, 0, width, height + marginBottom])
-				.classed('hide', false);
+			const svg = select(container)
+				.attr("viewBox", [0, 0, width, height + marginBottom])
+				.classed("hide", false);
 
-			const sankeyGenerator = d3sankey.sankey()
+			const sankeyGenerator = d3sankey
+				.sankey()
 				.nodeId((d) => d.id)
 				.nodeAlign(d3sankey.sankeyJustify)
 				.nodeWidth(nodeWidth)
@@ -293,33 +292,33 @@ hasId(nodes, idToCheck) {
 					[10, 10],
 					[width - marginRight, height - 6],
 				]);
-                const graph = sankeyGenerator({
-                    nodes: nodes.map((d) => Object.assign({}, d)),
-                    links: links.map((d) => Object.assign({}, d)),
-                });
-                
-                const color = scaleOrdinal().range(this.colors);
-                const unclassifiedLabelColor = "#696B7E";
-                
-                // Manually adjust nodes position to align by rank
-                const columnWidth = (width - marginRight) / this.sankeyRankOrder.length;
-                const columnMap = this.sankeyRankOrder.reduce((acc, rank, index) => {
-                    const leftMargin = 10;
-                    acc[rank] = index * columnWidth + leftMargin;
-                    return acc;
-                }, {});
-                
-                graph.nodes.forEach((node) => {
-                    node.x0 = columnMap[node.rank];
-                    node.x1 = node.x0 + sankeyGenerator.nodeWidth();
-                    
-                    if (node.type === "unclassified") {
-                        node.color = unclassifiedLabelColor;
-                    } else {
-                        node.color = color(node.id); // Assign color to node
-                    }
-                });
-                
+			const graph = sankeyGenerator({
+				nodes: nodes.map((d) => Object.assign({}, d)),
+				links: links.map((d) => Object.assign({}, d)),
+			});
+
+			const color = scaleOrdinal().range(this.colors);
+			const unclassifiedLabelColor = "#696B7E";
+
+			// Manually adjust nodes position to align by rank
+			const columnWidth = (width - marginRight) / this.sankeyRankOrder.length;
+			const columnMap = this.sankeyRankOrder.reduce((acc, rank, index) => {
+				const leftMargin = 10;
+				acc[rank] = index * columnWidth + leftMargin;
+				return acc;
+			}, {});
+
+			graph.nodes.forEach((node) => {
+				node.x0 = columnMap[node.rank];
+				node.x1 = node.x0 + sankeyGenerator.nodeWidth();
+
+				if (node.type === "unclassified") {
+					node.color = unclassifiedLabelColor;
+				} else {
+					node.color = color(node.id); // Assign color to node
+				}
+			});
+
 			// Re-run the layout to ensure correct vertical positioning
 			sankeyGenerator.update(graph);
 
@@ -391,8 +390,8 @@ hasId(nodes, idToCheck) {
 				.append("path")
 				.attr("d", d3sankey.sankeyLinkHorizontal())
 				.attr("stroke", (d) => (d.target.type === "unclassified" ? unclassifiedLabelColor : color(d.source.color))) // Set link color to source node color with reduced opacity
-				.attr("stroke-width", (d) => Math.max(1, d.width))
-				// .attr("clip-path", (d, i) => `url(#clip-path-${this.instanceId}-${i})`);
+				.attr("stroke-width", (d) => Math.max(1, d.width));
+			// .attr("clip-path", (d, i) => `url(#clip-path-${this.instanceId}-${i})`);
 
 			// Create node group (node + labels) and add mouse events
 			const nodeGroup = svg
@@ -404,11 +403,13 @@ hasId(nodes, idToCheck) {
 				.attr("class", (d) => "node-group taxid-" + d.id)
 				.attr("transform", (d) => `translate(${d.x0}, ${d.y0})`)
 				.on("mouseover", (event, d) => {
-					highlightLineage(d)
+					highlightLineage(d);
 					// Create the tooltip div
-					const tooltip = select('body').append('div')
-						.attr('class', 'tooltip')
-						.html(`
+					const tooltip = select("body")
+						.append("div")
+						.attr("class", "tooltip")
+						.html(
+							`
 							<div style="padding-top: 4px; padding-bottom: 4px; padding-left: 8px; padding-right: 8px;">
 								<p style="font-size: 0.6rem; margin-bottom: 0px;">#${d.id}</p>
 								<div style="display: flex; justify-content: space-between; align-items: center;">
@@ -421,31 +422,32 @@ hasId(nodes, idToCheck) {
 									<div style="margin-left: 10px;">${d.value}</div>
 								</div>
 							</div>
-						`)
-						.style('left', `${d.x + d.dx}px`)
-						.style('top', `${d.y + window.scrollY}px`);
+						`
+						)
+						.style("left", `${d.x + d.dx}px`)
+						.style("top", `${d.y + window.scrollY}px`);
 				})
 				.on("mousemove", (event, d) => {
 					// Move the tooltip as the mouse moves
-					select('.tooltip')
-						.style('left', `${event.pageX + 10}px`)
-						.style('top', `${event.pageY + 10}px`);
+					select(".tooltip")
+						.style("left", `${event.pageX + 10}px`)
+						.style("top", `${event.pageY + 10}px`);
 				})
 				.on("mouseout", () => {
 					resetHighlight();
 					// Remove the tooltip when mouse leaves
-					select('.tooltip').remove();
-				}) 
-				.on('click', (event, d) => {
-					if (event.target.classList.contains('active')) {
-						selectAll('rect.node, text.label').classed('active', false);
-						this.$emit('select', null);
-					} else {
-						selectAll('rect.node, text.label').classed('active', false);
-						selectAll('.taxid-' + d.id).classed('active', true);
-						this.$emit('select', { name: d.name, id: d.id });
-					}
+					select(".tooltip").remove();
 				})
+				.on("click", (event, d) => {
+					if (event.target.classList.contains("active")) {
+						selectAll("rect.node, text.label").classed("active", false);
+						this.$emit("select", null);
+					} else {
+						selectAll("rect.node, text.label").classed("active", false);
+						selectAll(".taxid-" + d.id).classed("active", true);
+						this.$emit("select", { name: d.name, id: d.id });
+					}
+				});
 
 			// Create node rectangles
 			nodeGroup
@@ -487,104 +489,127 @@ hasId(nodes, idToCheck) {
 			// Highlight nodes matching search query
 			// this.highlightNodes(this.searchQuery);
 		},
-        render(items) {
-            // from spring colors :) (https://wondernote.org/color-palettes-for-web-digital-blog-graphic-design-with-hexadecimal-codes/)
-            const colors = ['#afddd5', '#ffa700', '#ffcccd', '#f56093', '#64864a', '#dfe6e6', '#dfdec0', '#ff7e5a', '#ffbd00', '#7db954', '#feddcb', '#ffc700', '#cee8e5', '#c6b598', '#fee100', '#fac4c4', '#e0e7ad', '#fdbb9f', '#eadcc3', '#eef3b4', '#ffb27b', '#ff284b', '#7abaa1', '#cfeae4'];
-            const width = 960;
-            const height = 270;
-            
-            const nodeWidth = 35;
-            const nodePadding = 9;
+		render(items) {
+			// from spring colors :) (https://wondernote.org/color-palettes-for-web-digital-blog-graphic-design-with-hexadecimal-codes/)
+			const colors = [
+				"#afddd5",
+				"#ffa700",
+				"#ffcccd",
+				"#f56093",
+				"#64864a",
+				"#dfe6e6",
+				"#dfdec0",
+				"#ff7e5a",
+				"#ffbd00",
+				"#7db954",
+				"#feddcb",
+				"#ffc700",
+				"#cee8e5",
+				"#c6b598",
+				"#fee100",
+				"#fac4c4",
+				"#e0e7ad",
+				"#fdbb9f",
+				"#eadcc3",
+				"#eef3b4",
+				"#ffb27b",
+				"#ff284b",
+				"#7abaa1",
+				"#cfeae4",
+			];
+			const width = 960;
+			const height = 270;
 
-            const tax_to_layer = {};
-            for (const node of items.nodes) {
-                node.posX = ['superkingdom', 'kingdom', 'phylum', 'family', 'genus', 'species'].indexOf(node.rank);
-                node.posX = node.posX * 100;
-                tax_to_layer[node.id] = node.posX;
-            }
+			const nodeWidth = 35;
+			const nodePadding = 9;
 
-            items.links = items.links.sort((a, b) => {
-                const aLayer = tax_to_layer[a.target];
-                const bLayer = tax_to_layer[b.target];
-                if (aLayer != bLayer) {
-                    return aLayer - bLayer;
-                }
-                return b.value - a.value;
-            });
+			const tax_to_layer = {};
+			for (const node of items.nodes) {
+				node.posX = ["superkingdom", "kingdom", "phylum", "family", "genus", "species"].indexOf(node.rank);
+				node.posX = node.posX * 100;
+				tax_to_layer[node.id] = node.posX;
+			}
 
-            let groupedLinks = {};
-            let eliminatedNodes = new Set();
-            let nodeIdx = {};
-            for (const link of items.links) {
-                const key = `${tax_to_layer[link.target]}`;
-                if (groupedLinks[key]) {
-                    if (groupedLinks[key].length < 10 && !eliminatedNodes.has(link.target)) {
-                        nodeIdx[link.source] = groupedLinks[key].length;
-                        nodeIdx[link.target] = groupedLinks[key].length;
-                        groupedLinks[key].push(link);
-                    } else {
-                        eliminatedNodes.add(link.source);
-                    }
-                } else { 
-                    if (!eliminatedNodes.has(link.target)) {
-                        nodeIdx[link.source] = 0;
-                        nodeIdx[link.target] = 0;
-                        groupedLinks[key] = [ link ];
-                    }
-                }
-            }
+			items.links = items.links.sort((a, b) => {
+				const aLayer = tax_to_layer[a.target];
+				const bLayer = tax_to_layer[b.target];
+				if (aLayer != bLayer) {
+					return aLayer - bLayer;
+				}
+				return b.value - a.value;
+			});
 
-            const newLinks = [].concat(...Object.values(groupedLinks));
-            const filterNodes = new Set(newLinks.flatMap(link => [link.source, link.target]));
-            const newNodes = items.nodes.filter(node => filterNodes.has(node.id)).reverse();
+			let groupedLinks = {};
+			let eliminatedNodes = new Set();
+			let nodeIdx = {};
+			for (const link of items.links) {
+				const key = `${tax_to_layer[link.target]}`;
+				if (groupedLinks[key]) {
+					if (groupedLinks[key].length < 10 && !eliminatedNodes.has(link.target)) {
+						nodeIdx[link.source] = groupedLinks[key].length;
+						nodeIdx[link.target] = groupedLinks[key].length;
+						groupedLinks[key].push(link);
+					} else {
+						eliminatedNodes.add(link.source);
+					}
+				} else {
+					if (!eliminatedNodes.has(link.target)) {
+						nodeIdx[link.source] = 0;
+						nodeIdx[link.target] = 0;
+						groupedLinks[key] = [link];
+					}
+				}
+			}
 
-            if (newNodes.length == 0) {
-                select(this.$refs.svg).classed('hide', true);
-                return;
-            }
-            
-            const svg = select(this.$refs.svg)
-                .attr('viewBox', [0, 0, width, height])
-                .classed('hide', false);
+			const newLinks = [].concat(...Object.values(groupedLinks));
+			const filterNodes = new Set(newLinks.flatMap((link) => [link.source, link.target]));
+			const newNodes = items.nodes.filter((node) => filterNodes.has(node.id)).reverse();
 
-            svg.selectAll('*').remove();
-            
-            const s = sankey();
-            s
-                .nodes(newNodes)
-                .links(newLinks)
-                .size([width - 170, height - 10])
-                .align('none')
-                .nodeWidth(nodeWidth)
-                .nodePadding(nodePadding)
-                .yOrderComparator((a, b) => {
-                    return b.value - a.value;
-                })
-            s.layout(10);
+			if (newNodes.length == 0) {
+				select(this.$refs.svg).classed("hide", true);
+				return;
+			}
 
-            const container = svg.append('g')
-                .attr('transform', 'translate(0,5)')
+			const svg = select(this.$refs.svg).attr("viewBox", [0, 0, width, height]).classed("hide", false);
 
-            container.append('g')
-                    .attr('stroke', '#000')
-                    .attr('stroke-width', '0')
-                .selectAll('rect')
-                .data(s.nodes())
-                .join('rect')
-                    .attr('class', (d) => 'node taxid-' + d.id)
-                    .attr('x', (d) => d.x + 1)
-                    .attr('y', (d) => d.y)
-                    .attr('height', (d) => d.dy)
-                    .attr('width', (d) => d.dx - 2)
-                    .attr('fill', (d) => 
-                    {   
-                        return (d.sourceLinks.length == 0) ? colors[nodeIdx[d.id] % colors.length] : "#888";
-                    })
-                    .on("mouseover", (event, d) => {
-                        // Create the tooltip div
-                        const tooltip = select('body').append('div')
-                            .attr('class', 'tooltip')
-                            .html(`
+			svg.selectAll("*").remove();
+
+			const s = sankey();
+			s.nodes(newNodes)
+				.links(newLinks)
+				.size([width - 170, height - 10])
+				.align("none")
+				.nodeWidth(nodeWidth)
+				.nodePadding(nodePadding)
+				.yOrderComparator((a, b) => {
+					return b.value - a.value;
+				});
+			s.layout(10);
+
+			const container = svg.append("g").attr("transform", "translate(0,5)");
+
+			container
+				.append("g")
+				.attr("stroke", "#000")
+				.attr("stroke-width", "0")
+				.selectAll("rect")
+				.data(s.nodes())
+				.join("rect")
+				.attr("class", (d) => "node taxid-" + d.id)
+				.attr("x", (d) => d.x + 1)
+				.attr("y", (d) => d.y)
+				.attr("height", (d) => d.dy)
+				.attr("width", (d) => d.dx - 2)
+				.attr("fill", (d) => {
+					return d.sourceLinks.length == 0 ? colors[nodeIdx[d.id] % colors.length] : "#888";
+				})
+				.on("mouseover", (event, d) => {
+					// Create the tooltip div
+					const tooltip = select("body")
+						.append("div")
+						.attr("class", "tooltip")
+						.html(
+							`
                                 <div style="padding-top: 4px; padding-bottom: 4px; padding-left: 8px; padding-right: 8px;">
                                     <p style="font-size: 0.6rem; margin-bottom: 0px;">#${d.id}</p>
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -597,126 +622,121 @@ hasId(nodes, idToCheck) {
                                         <div style="margin-left: 10px;">${d.value}</div>
                                     </div>
                                 </div>
-                            `)
-                            .style('left', `${d.x + d.dx}px`)
-                            .style('top', `${d.y + window.scrollY}px`);
-                    })
-                    .on("mousemove", (event, d) => {
-                        // Move the tooltip as the mouse moves
-                        select('.tooltip')
-                            .style('left', `${event.pageX + 10}px`)
-                            .style('top', `${event.pageY + 10}px`);
-                    })
-                    .on("mouseout", () => {
-                        // Remove the tooltip when mouse leaves
-                        select('.tooltip').remove();
-                    }) 
-                    .on('click', (event, d) => {
-                        if (event.target.classList.contains('active')) {
-                            selectAll('rect.node, text.label').classed('active', false);
-                            this.$emit('select', null);
-                        } else {
-                            selectAll('rect.node, text.label').classed('active', false);
-                            selectAll('.taxid-' + d.id).classed('active', true);
-                            this.$emit('select', { name: d.name, id: d.id });
-                        }
-                    })
-                
-            const link = container
-                .append('g')
-                    .attr('fill', 'none')
-                .selectAll('g')
-                .data(s.links())
-                .join('g')
-                    .attr("stroke", "#88888844")
-                    .style("mix-blend-mode", "multiply");
-            
-            link.append('path')
-                .attr('d', s.link())
-                .attr('stroke-width', (d) => Math.max(1, d.dy));
-            
-            link.append('title')
-                .text((d) => `${d.source.name} → ${d.target.name}: ${d.value}`);
-            
-            container.append('g')
-                .selectAll('text')
-                .data(s.nodes())
-                .join('g')
-                    .attr('transform', (d) => `translate(${(d.x + d.dx) + 3},${d.y + ((d.dy) / 2) + 1})`)
-                .append('text')
-                    .attr('class', (d) => 'label taxid-' + d.id)
-                    .attr('text-anchor', 'start')
-                    .attr('dominant-baseline', 'middle')
-                    .text((d) => d.name)
-                    .on('click', (event, d) => {
-                        if (event.target.classList.contains('active')) {
-                            selectAll('rect.node, text.label').classed('active', false);
-                            this.$emit('select', null);
-                        } else {
-                            selectAll('rect.node, text.label').classed('active', false);
-                            selectAll('.taxid-' + d.id).classed('active', true);
-                            this.$emit('select', { name: d.name, id: d.id });
-                        }
-                    })
-        }
-    }
+                            `
+						)
+						.style("left", `${d.x + d.dx}px`)
+						.style("top", `${d.y + window.scrollY}px`);
+				})
+				.on("mousemove", (event, d) => {
+					// Move the tooltip as the mouse moves
+					select(".tooltip")
+						.style("left", `${event.pageX + 10}px`)
+						.style("top", `${event.pageY + 10}px`);
+				})
+				.on("mouseout", () => {
+					// Remove the tooltip when mouse leaves
+					select(".tooltip").remove();
+				})
+				.on("click", (event, d) => {
+					if (event.target.classList.contains("active")) {
+						selectAll("rect.node, text.label").classed("active", false);
+						this.$emit("select", null);
+					} else {
+						selectAll("rect.node, text.label").classed("active", false);
+						selectAll(".taxid-" + d.id).classed("active", true);
+						this.$emit("select", { name: d.name, id: d.id });
+					}
+				});
+
+			const link = container.append("g").attr("fill", "none").selectAll("g").data(s.links()).join("g").attr("stroke", "#88888844").style("mix-blend-mode", "multiply");
+
+			link
+				.append("path")
+				.attr("d", s.link())
+				.attr("stroke-width", (d) => Math.max(1, d.dy));
+
+			link.append("title").text((d) => `${d.source.name} → ${d.target.name}: ${d.value}`);
+
+			container
+				.append("g")
+				.selectAll("text")
+				.data(s.nodes())
+				.join("g")
+				.attr("transform", (d) => `translate(${d.x + d.dx + 3},${d.y + d.dy / 2 + 1})`)
+				.append("text")
+				.attr("class", (d) => "label taxid-" + d.id)
+				.attr("text-anchor", "start")
+				.attr("dominant-baseline", "middle")
+				.text((d) => d.name)
+				.on("click", (event, d) => {
+					if (event.target.classList.contains("active")) {
+						selectAll("rect.node, text.label").classed("active", false);
+						this.$emit("select", null);
+					} else {
+						selectAll("rect.node, text.label").classed("active", false);
+						selectAll(".taxid-" + d.id).classed("active", true);
+						this.$emit("select", { name: d.name, id: d.id });
+					}
+				});
+		},
+	},
 };
 </script>
 
 <style>
 .theme--dark svg text {
-    fill: white;
+	fill: white;
 }
 .theme--light svg text {
-    fill: black;
+	fill: black;
 }
 
 svg.hide {
-    display: none;
+	display: none;
 }
 
 svg text {
-    cursor: pointer;
-    font-size: calc(30px + (8 - 16) * ((100vw - 320px) / (640 - 320)));
+	cursor: pointer;
+	font-size: calc(30px + (8 - 16) * ((100vw - 320px) / (640 - 320)));
 }
 
 svg text.label.active {
-    font-weight: bold;
+	font-weight: bold;
 }
 
 svg rect.node {
-    cursor: pointer;
+	cursor: pointer;
 }
 
 svg rect.node.active {
-    stroke-width: 2px;
-    stroke: #333;
+	stroke-width: 2px;
+	stroke: #333;
 }
 
 @media (min-width: 641px) {
-    svg text {
-        font-size: calc(16px + (4 - 8) * ((100vw - 640px) / (1280 - 640)));
-    }
+	svg text {
+		font-size: calc(16px + (4 - 8) * ((100vw - 640px) / (1280 - 640)));
+	}
 }
 
 @media (min-width: 1280px) {
-    svg {
-        width: 1280px;
-    }
-    
-    svg text {
-        font-size: 10px;
-    }
+	svg {
+		width: 1280px;
+	}
+
+	svg text {
+		font-size: 10px;
+	}
 }
 
 /* Node Hover Tooltip */
 .tooltip {
-    position: absolute;
-    background-color: rgba(38, 50, 56, 0.95);
-    padding: 10px;
-    border-radius: 8px;
-    color: white;
-    pointer-events: none;
-    z-index: 10;
+	position: absolute;
+	background-color: rgba(38, 50, 56, 0.95);
+	padding: 10px;
+	border-radius: 8px;
+	color: white;
+	pointer-events: none;
+	z-index: 10;
 }
 </style>
