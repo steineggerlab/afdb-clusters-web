@@ -79,6 +79,14 @@ export default {
         this.fetchData();
     },
     methods: {
+		fetchData() {
+			this.$axios.get("/cluster/" + this.cluster + "/sankey-" + this.type)
+				.then(response => {
+					this.response = response.data.result;
+				})
+				.catch(() => {})
+		},
+
         // Helper functions for drawing Sankey
 		nodeHeight(d) {
 			let nodeHeight = d.y1 - d.y0;
@@ -97,17 +105,163 @@ export default {
 		formatProportion(value) {
 			return `${value.toFixed(3)}%`;
 		},
-        fetchData() {
-            this.$axios.get("/cluster/" + this.cluster + "/sankey-" + this.type)
-                .then(response => {
-                    this.response = response.data.result;
-                })
-                .catch(() => {})
-        },
+
+	// Function to store lineage data for each node
+	storeLineage(nodes, links) {
+  // Create a map for quick access to nodes by their id
+  const nodeMap = new Map();
+  
+  // Initialize the nodeMap with nodes, each having an empty lineage array
+  nodes.forEach((node) => {
+    nodeMap.set(node.id, { ...node, lineage: [],  children: [] });
+  });
+
+  // Process each link to build lineage
+  links.forEach((link) => {
+    const parentNode = nodeMap.get(link.source);
+    const childNode = nodeMap.get(link.target);
+
+    if (parentNode && childNode) {
+      // Add the child node to the parent's children array
+		parentNode.children.push(childNode);
+    }
+  });
+
+  // Helper function to propagate lineage updates to children recursively
+  function propagateLineage(node) {
+    node.children.forEach((childNode) => {
+      // Update the child's lineage with the parent's lineage and the parent itself
+      childNode.lineage = [...node.lineage, node];
+      
+      // Recursively propagate to the child's children
+      propagateLineage(childNode);
+    });
+  }
+
+  // Start by propagating lineage from the root nodes (nodes with no incoming links)
+  nodes.forEach((node) => {
+    if (nodeMap.get(node.id).lineage.length === 0) {
+      propagateLineage(nodeMap.get(node.id));
+    }
+  });
+
+  // Return the map of nodes with lineage information
+  return nodeMap;
+},
+
+	// Parse data function
+		parseData(data, isFullGraph = false) {
+			const nodes = [];
+			const allNodes = [];
+			const links = [];
+			const allLinks = [];
+			const nodesByRank = {}; // Store nodes by rank for filtering top 10
+
+			// Step 1: Create nodes and save lineage data for ALL NODES (excluding clade ranks)
+			// Build the node map with lineage
+			const nodeLineages = this.storeLineage(data.nodes, data.links);
+
+			data.nodes.forEach((d) => {
+				const targetValue = data.links
+					.filter(link => link.target === d.id) // Find links where d.id is the target
+					.map(link => link.value);
+
+				let node = {
+					id: d.id,
+					name: d.name,
+					rank: d.rank,
+					// proportion: parseFloat(d.proportion),
+					clade_reads: targetValue.length > 0 ? targetValue[0] : 0,
+					lineage: [],
+					type: "",
+				};
+
+				if (d.rank !== "no rank") {
+					// Declare type as 'classified'
+					node.type = "classified";
+
+					// Add classified node to its corresponding rank collection
+					if (!nodesByRank[d.rank]) {
+						nodesByRank[d.rank] = [];
+					}
+					nodesByRank[d.rank].push(node);
+
+					// Include all ranks for lineage tracking
+						node.lineage = [...nodeLineages.get(d.id).lineage, node]; 
+				} 
+			});
+
+			// Step 2: Filter top 10 nodes by clade_reads for each rank in rankOrder
+			// + Add filtered rank nodes & unclassified nodes to sankey diagram
+			this.sankeyRankOrder.forEach((rank) => {
+				if (nodesByRank[rank]) {
+					// Store all nodes
+					allNodes.push(...nodesByRank[rank]);
+
+					// Sort nodes by clade_reads in descending order and select the top nodes based on slider value
+					const topNodes = nodesByRank[rank].sort((a, b) => b.clade_reads - a.clade_reads).slice(0, isFullGraph ? nodesByRank[rank].length : 10); // Don't apply taxaLimit when parsing fullGraphData
+					nodes.push(...topNodes);
+				}
+			});
+
+			// Step 3: Create links based on filtered nodes' lineage
+			nodes.forEach((node) => {
+				// Find the previous node in the lineage that is in rankOrder
+				const lineage = node.lineage;
+				console.log("lineage", node.name, node.lineage);
+				let previousNode = null;
+
+				for (let i = lineage.length - 2; i >= 0; i--) {
+					// Start from the second last item
+					if (this.sankeyRankOrder.includes(lineage[i].rank) && this.hasId(nodes, lineage[i].id)) {
+						previousNode = lineage[i];
+						break;
+					}
+				}
+
+				if (previousNode) {
+					links.push({
+						source: previousNode.id,
+						target: node.id,
+						value: node.clade_reads,
+					});
+				}
+			});
+
+			// Store links for all nodes
+			allNodes.forEach((node) => {
+				// Find the previous node in the lineage that is in rankOrder
+				const lineage = node.lineage;
+				let previousNode = null;
+
+				for (let i = lineage.length - 2; i >= 0; i--) {
+					// Start from the second last item
+					if (this.sankeyRankOrder.includes(lineage[i].rank) && allNodes.includes(lineage[i])) {
+						previousNode = lineage[i];
+						break;
+					}
+				}
+
+				if (previousNode) {
+					allLinks.push({
+						source: previousNode.id,
+						target: node.id,
+						value: node.clade_reads,
+					});
+				}
+			});
+
+			return { nodes, links };
+		},
+		// Check if nodes array contains an object with the same id as lineage[i]
+hasId(nodes, idToCheck) {
+  return nodes.some(node => node.id === idToCheck);
+}
+,
         // Main function for rendering Sankey
 		newRender(items) {
-			const { nodes, links } = items;
-
+			const { nodes, links } = this.parseData(items);
+			
 			// Check if nodes and links are not empty
 			if (!nodes.length || !links.length) {
 				select(this.$refs.svg).classed('hide', true);
@@ -174,7 +328,6 @@ export default {
 			svg
 				.append("g")
 				.selectAll("text")
-				// .data(rankLabels)
 				.data(this.sankeyRankOrder)
 				.enter()
 				.append("text")
@@ -251,6 +404,7 @@ export default {
 				.attr("class", (d) => "node-group taxid-" + d.id)
 				.attr("transform", (d) => `translate(${d.x0}, ${d.y0})`)
 				.on("mouseover", (event, d) => {
+					highlightLineage(d)
 					// Create the tooltip div
 					const tooltip = select('body').append('div')
 						.attr('class', 'tooltip')
@@ -278,6 +432,7 @@ export default {
 						.style('top', `${event.pageY + 10}px`);
 				})
 				.on("mouseout", () => {
+					resetHighlight();
 					// Remove the tooltip when mouse leaves
 					select('.tooltip').remove();
 				}) 
