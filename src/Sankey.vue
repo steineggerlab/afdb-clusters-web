@@ -208,7 +208,6 @@ export default {
 			nodes.forEach((node) => {
 				// Find the previous node in the lineage that is in rankOrder
 				const lineage = node.lineage;
-				console.log("lineage", node.name, node.lineage);
 				let previousNode = null;
 
 				for (let i = lineage.length - 2; i >= 0; i--) {
@@ -270,12 +269,12 @@ export default {
 			const container = this.$refs.svg;
 			select(container).selectAll("*").remove(); // Clear the previous diagram
 
-			const width = 960;
-			const height = 670;
-			const nodeWidth = 20;
+			const width = 900;
+			const height = 360;
+			const nodeWidth = 30;
 			const nodePadding = 13;
 			const marginBottom = 50; // Margin for rank labels
-			const marginRight = 150;
+			const marginRight = 100;
 
 			const svg = select(container)
 				.attr("viewBox", [0, 0, width, height + marginBottom])
@@ -468,7 +467,7 @@ export default {
 				.attr("dy", "0.35em")
 				.attr("text-anchor", "start")
 				.text((d) => d.name)
-				.style("font-size", "10px")
+				.style("font-size", "9px")
 				.style("fill", (d) => (d.type === "unclassified" ? unclassifiedLabelColor : "black"))
 				.style("cursor", "pointer");
 
