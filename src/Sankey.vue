@@ -269,12 +269,12 @@ export default {
 			const container = this.$refs.svg;
 			select(container).selectAll("*").remove(); // Clear the previous diagram
 
-			const width = 900;
+			const width = 960;
 			const height = 360;
 			const nodeWidth = 30;
 			const nodePadding = 13;
 			const marginBottom = 50; // Margin for rank labels
-			const marginRight = 100;
+			const marginRight = 70;
 
 			const svg = select(container)
 				.attr("viewBox", [0, 0, width, height + marginBottom])
