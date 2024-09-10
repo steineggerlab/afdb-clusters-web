@@ -88,14 +88,6 @@ export default {
 		},
 
 		// Helper functions for drawing Sankey
-		nodeHeight(d) {
-			let nodeHeight = d.y1 - d.y0;
-			if (nodeHeight < 1) {
-				return 1.5;
-			} else {
-				return d.y1 - d.y0;
-			}
-		},
 		formatCladeReads(value) {
 			if (value >= 1000) {
 				return `${(value / 1000).toFixed(2)}k`;
@@ -275,6 +267,7 @@ export default {
 			const nodePadding = 13;
 			const marginBottom = 50; // Margin for rank labels
 			const marginRight = 70;
+			const leftMargin = 10;
 
 			const svg = select(container)
 				.attr("viewBox", [0, 0, width, height + marginBottom])
@@ -301,14 +294,15 @@ export default {
 
 			// Manually adjust nodes position to align by rank
 			const columnWidth = (width - marginRight) / this.sankeyRankOrder.length;
-			const columnMap = this.sankeyRankOrder.reduce((acc, rank, index) => {
-				const leftMargin = 10;
-				acc[rank] = index * columnWidth + leftMargin;
-				return acc;
-			}, {});
+
+			const tax_to_ranklayer = {};
+			for (const node of graph.nodes) {
+				node.posX = this.sankeyRankOrder.indexOf(node.rank) * columnWidth + leftMargin;
+				tax_to_ranklayer[node.id] = node.posX;
+			}
 
 			graph.nodes.forEach((node) => {
-				node.x0 = columnMap[node.rank];
+				node.x0 = tax_to_ranklayer[node.id];
 				node.x1 = node.x0 + sankeyGenerator.nodeWidth();
 
 				if (node.type === "unclassified") {
@@ -329,7 +323,7 @@ export default {
 				.data(this.sankeyRankOrder)
 				.enter()
 				.append("text")
-				.attr("x", (rank) => columnMap[rank] + sankeyGenerator.nodeWidth() / 2)
+				.attr("x", (d) => this.sankeyRankOrder.indexOf(d) * columnWidth + leftMargin + sankeyGenerator.nodeWidth() / 2)
 				.attr("y", height + marginBottom / 2)
 				.attr("dy", "0.35em")
 				.attr("text-anchor", "middle")
@@ -404,7 +398,7 @@ export default {
 				.on("mouseover", (event, d) => {
 					highlightLineage(d);
 					// Create the tooltip div
-					const tooltip = select("body")
+					select("body")
 						.append("div")
 						.attr("class", "tooltip")
 						.html(
@@ -452,7 +446,7 @@ export default {
 			nodeGroup
 				.append("rect")
 				.attr("width", (d) => d.x1 - d.x0)
-				.attr("height", (d) => this.nodeHeight(d))
+				 .attr("height", (d) => Math.max(1, d.y1 - d.y0))
 				.attr("fill", (d) => (d.type === "unclassified" ? unclassifiedLabelColor : d.color))
 				.attr("class", (d) => "node taxid-" + d.id) // Apply the CSS class for cursor
 				.style("cursor", "pointer");
@@ -463,7 +457,7 @@ export default {
 				.attr("id", (d) => `nodeName-${d.id}`)
 				.attr("class", (d) => "label taxid-" + d.id)
 				.attr("x", (d) => d.x1 - d.x0 + 3)
-				.attr("y", (d) => this.nodeHeight(d) / 2)
+				.attr("y", (d) => (d.y1 - d.y0) / 2)
 				.attr("dy", "0.35em")
 				.attr("text-anchor", "start")
 				.text((d) => d.name)
@@ -477,10 +471,10 @@ export default {
 				.attr("id", (d) => `cladeReads-${d.id}`)
 				.attr("class", "clade-reads")
 				.attr("x", (d) => (d.x1 - d.x0) / 2)
-				.attr("y", -5)
+				.attr("y", -4)
 				.attr("dy", "0.35em")
 				.attr("text-anchor", "middle")
-				.style("font-size", "10px")
+				.style("font-size", "9px")
 				.style("fill", (d) => (d.type === "unclassified" ? unclassifiedLabelColor : "black"))
 				.text((d) => this.formatCladeReads(d.value))
 				.style("cursor", "pointer");
