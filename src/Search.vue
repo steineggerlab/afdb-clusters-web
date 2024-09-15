@@ -17,10 +17,10 @@
                             cols="12"
                         >
                             <h1 class="text-h4 font-weight-thin mb-4">
-                                AlphaFold Clusters
+                                BFVD Clusters
                             </h1>
                             <h4 class="subheading">
-                                Investigate the <a href="https://foldseek.com" target="_blank" rel="noopener">Foldseek</a> clustered <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener">AlphaFold database</a>
+                                The missing viral bits of the <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener">AlphaFold database</a>
                             </h4>
                             
                             <br>
@@ -34,7 +34,7 @@
                                 dark
                             >
                                 <v-tab>UniProt</v-tab>
-                                <v-tab>Gene Ontology</v-tab>
+                                <!-- <v-tab>Gene Ontology</v-tab> -->
                                 <v-tab>Taxonomy</v-tab>
                                 <v-tab>Structure</v-tab>
                             </v-tabs>
@@ -75,7 +75,7 @@
                                         </v-chip-group>
                                     </template>
                                 </v-tab-item>
-                                <v-tab-item>
+                                <!-- <v-tab-item>
                                     <GoAutocomplete
                                         :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
                                         v-model="queryGo"
@@ -98,7 +98,7 @@
                                         <v-radio name="goSearchType" label="Include lower GO lineage" value="lower" dark></v-radio>
                                         <v-radio name="goSearchType" label="Exact GO term" value="exact" dark ></v-radio>
                                     </v-radio-group>
-                                </v-tab-item>
+                                </v-tab-item> -->
                                 <v-tab-item>
                                     <TaxonomyNcbiSearch
                                         :append-icon="inSearch ? $MDI.ProgressWrench : $MDI.Magnify"
@@ -127,9 +127,11 @@
                     </v-row>
                 </v-parallax>
             </v-flex>
-            <GoSearchResult v-if="tab == 1" @total="small = $event > 0; inSearch = false;"></GoSearchResult>
-            <LCASearchResult v-else-if="tab == 2" @total="small = $event > 0; inSearch = false;"></LCASearchResult>
-            <FoldseekSearchResult v-else-if="tab == 3" @total="small = $event > 0; inSearch = false;"></FoldseekSearchResult>
+            <!-- <GoSearchResult v-if="tab == 1" @total="small = $event > 0; inSearch = false;"></GoSearchResult> -->
+            <!-- <LCASearchResult v-else-if="tab == 2" @total="small = $event > 0; inSearch = false;"></LCASearchResult> -->
+            <!-- <FoldseekSearchResult v-else-if="tab == 3" @total="small = $event > 0; inSearch = false;"></FoldseekSearchResult> -->
+            <LCASearchResult v-if="tab == 1" @total="small = $event > 0; inSearch = false;"></LCASearchResult>
+            <FoldseekSearchResult v-else-if="tab == 2" @total="small = $event > 0; inSearch = false;"></FoldseekSearchResult>
             <v-flex>
                 <v-card rounded="0">
                     <v-flex>
@@ -139,15 +141,15 @@
                     <v-card-title primary-title class="pt-0 mt-0">
                         
                         <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
-                            Barrio-Hernandez&nbsp;I, Yeo&nbsp;J, Jänes&nbsp;J, Mirdita&nbsp;M, Gilchrist&nbsp;CLM, Wein&nbsp;T, Varadi&nbsp;M, Velankar&nbsp;S, Beltrao&nbsp;P, Steinegger&nbsp;M. 
-                            <a href="https://nature.com/articles/s41586-023-06510-w" target="_blank" rel="noopener">Clustering predicted structures at the scale of the known protein universe.</a>
-                            Nature,&nbsp;2023.
+                            Kim&nbsp;R, Levy&nbsp;Karin&nbsp;E, Steinegger&nbsp;M. 
+                            <a href="https://nature.com/articles/s41586-023-06510-w" target="_blank" rel="noopener">BFVD - a large repository of predicted viral protein structures.</a>
+                            bioRxiv,&nbsp;2024.
                         </p>
                     </v-card-title>
                     </v-flex>
                 </v-card>
 
-                <p class="text-subtitle-1 mb-0 collab">
+                <!-- <p class="text-subtitle-1 mb-0 collab">
                     AFDB Clusters is a collaboration between
                     <a href="https://en.snu.ac.kr/">Seoul National University</a>, the
                     <a href="https://www.ebi.ac.uk/">European Bioinformatics Institute</a>, <br>and the
@@ -163,7 +165,7 @@
                     <a style="margin: 12px" rel="external noopener" target="_blank" href="https://www.sib.swiss/" height="128">
                         <img class="logos" src="./assets/logo_sib.svg" height="64"/>
                     </a>
-                </div>
+                </div> -->
             </v-flex>
         </v-layout>
     </v-container>
@@ -238,11 +240,13 @@ export default {
                 this.queryGo = { text: "" + this.$route.params.go, value: this.$route.params.go};
                 this.goSearchType = this.$route.params.type;
             } else if (this.$route.params.taxid) {
-                this.tab = 2;
+                // this.tab = 2;
+                this.tab = 1;
                 this.queryLCA = {text: "" + this.$route.params.taxid, value: this.$route.params.taxid};
                 this.lcaSearchType = this.$route.params.type;
             } else if (this.$route.params.jobid) {
-                this.tab = 3;
+                // this.tab = 3;
+                this.tab = 2;
             } else {
                 this.tab = 0;
             }

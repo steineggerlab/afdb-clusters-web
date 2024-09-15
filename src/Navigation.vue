@@ -7,9 +7,9 @@
     <v-spacer></v-spacer>
     <v-toolbar-items class="hidden-sm-and-down">
         <v-btn v-for="link in links" :key="link.title" text :href="link.href" rel="external noopener" target="_blank">{{ link.title }}</v-btn>
-        <v-btn icon rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis">
+        <!-- <v-btn icon rel="external noopener" target="_blank" href="https://github.com/steineggerlab/afdb-clusters-analysis">
             <v-icon>{{ $MDI.GitHub }}</v-icon>
-        </v-btn>
+        </v-btn> -->
     </v-toolbar-items>
     <v-menu class="hidden-md-and-up">
         <template v-slot:activator="{ on }">
@@ -45,6 +45,7 @@ export default {
             // { title: "Dark enzymes prediction", href: "https://github.com/jurgjn/af-protein-universe" },
             // { title: "Data download", href: "https://afdb-cluster.steineggerlab.workers.dev" },
             // { title: "Beltrao Lab", href: "https://imsb.ethz.ch/research/beltrao.html" },
+            { title: "Data download", href: "https://bfvd.steineggerlab.workers.dev/" },
             { title: "Steinegger Lab", href: "https://steineggerlab.com/en/" },
         ]
     }),

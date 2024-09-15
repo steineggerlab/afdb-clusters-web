@@ -201,21 +201,21 @@
                         value: "avg_len",
                         sortable: false,
                     },
-                    {
-                        text: "Avg. pLDDT",
-                        value: "avg_plddt",
-                        sortable: false,
-                    },
+                    // {
+                    //     text: "Avg. pLDDT",
+                    //     value: "avg_plddt",
+                    //     sortable: false,
+                    // },
                     {
                         text: "Members",
                         value: "n_mem",
                         sortable: false,
                     },
-                    {
-                        text: "Dark",
-                        value: "is_dark",
-                        sortable: false,
-                    },
+                    // {
+                    //     text: "Dark",
+                    //     value: "is_dark",
+                    //     sortable: false,
+                    // },
                     {
                         text: "Rep. pLDDT",
                         value: "rep_plddt",

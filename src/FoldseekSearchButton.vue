@@ -90,7 +90,7 @@ export default {
                 new Promise((resolve, reject) => {
                     this.$axios.post('https://search.foldseek.com/api/ticket', convertToQueryUrl({
                         q: extractAtomRecords(e.target.result),
-                        database: ["afdb50", "afdb-swissprot", "afdb-proteome"],
+                        database: ["bfvd"],
                         mode: "3diaa"
                     }), {
                         headers: {
