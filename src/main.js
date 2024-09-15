@@ -115,9 +115,9 @@ Vue.use({
             GitHub: mdiGithub,
             Export: mdiExport,
         };
-        let apiBase = "http://localhost:3000/api";
+        // let apiBase = "http://localhost:3000/api";
         // let apiBase = "https://cluster.foldseek.com/api";
-        // let apiBase = "/api";
+        let apiBase = "/api";
         let defaultHeaders = {};
 
         const axiosConfig = {

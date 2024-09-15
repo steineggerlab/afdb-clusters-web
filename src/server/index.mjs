@@ -510,7 +510,11 @@ app.get('/api/cluster/:cluster', async (req, res) => {
         return;
     }
     result.lca_tax_id = tree.nodeExists(result.lca_tax_id) ? tree.getNode(result.lca_tax_id) : null;
-    result.lineage = tree.nodeExists(result.lca_tax_id.id) ? tree.lineage(result.lca_tax_id) : null;
+    if (result.lca_tax_id != null) {
+        result.lineage = tree.nodeExists(result.lca_tax_id.id) ? tree.lineage(result.lca_tax_id) : null;
+    } else {
+        result.lineage = [{ id: 0, rank: "root", name: "root" }];
+    }
     result.tax_id = tree.nodeExists(result.tax_id) ? tree.getNode(result.tax_id) : null;
     result.rep_lineage = tree.nodeExists(result.tax_id.id) ? tree.lineage(result.tax_id) : null;
     result.description = getDescription(result.rep_accession);
@@ -807,18 +811,18 @@ app.get('/api/structure/:structure', async (req, res) => {
     const structure = req.params.structure;
     const aaKey = aaDb.id(structure);
     if (aaKey.found == false) {
-        throw Error(f`${structure} not found in aa db`);
+        throw Error(`${structure} not found in aa db`);
     }
     const aaLength = aaDb.length(aaKey.value) - 2;
 
     const key = caDb.id(structure);
     if (key.found == false) {
-        throw Error(f`${structure} not found in ca db`);
+        throw Error(`${structure} not found in ca db`);
     }
 
     const plddtKey = plddtDB.id(structure);
     if (plddtKey.found == false) {
-        throw Error(f`${structure} not found in plddt db`);
+        throw Error(`${structure} not found in plddt db`);
     }
     const plddt = plddtDB.data(plddtKey.value).toString('ascii');
 
