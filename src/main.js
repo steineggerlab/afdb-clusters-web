@@ -46,7 +46,7 @@ import App from './App.vue';
 import Search from './Search.vue';
 import Cluster from './Cluster.vue';
 
-window.document.title = "AFDB Clusters";
+window.document.title = "BFVD Clusters";
 
 const router = new VueRouter({
     mode: 'history',
@@ -115,9 +115,10 @@ Vue.use({
             GitHub: mdiGithub,
             Export: mdiExport,
         };
-        // let apiBase = "http://localhost:3000/api";
+        let apiBase = "http://localhost:3000/api";
         // let apiBase = "https://cluster.foldseek.com/api";
-        let apiBase = "/api";
+        // let apiBase = "https://bfvd.foldseek.com/api";
+        // let apiBase = "/api";
         let defaultHeaders = {};
 
         const axiosConfig = {
