@@ -132,10 +132,10 @@ export default {
                     text: "Average length",
                     value: "avg_len",
                 },
-                {
-                    text: "Average pLDDT",
-                    value: "avg_plddt",
-                },
+                // {
+                //     text: "Average pLDDT",
+                //     value: "avg_plddt",
+                // },
                 {
                     text: "Number of members",
                     value: "n_mem",
@@ -145,10 +145,10 @@ export default {
                     value: "lca_tax_id",
                     sortable: false,
                 },
-                {
-                    text: "Dark cluster",
-                    value: "is_dark",
-                },
+                // {
+                //     text: "Dark cluster",
+                //     value: "is_dark",
+                // },
                 {
                     text: "Rep pLDDT",
                     value: "rep_plddt",
@@ -214,12 +214,14 @@ export default {
         fetchData() {
             this.loading = true;
             const cluster = this.cluster;
+            console.log(cluster);
             if (!cluster) {
                 return;
             }
             this.$axios.get("/cluster/" + cluster + "/similars", this.requestOptions)
                 .then(response => {
                     this.entries = response.data.similars;
+                    console.log(this.entries);
                     this.totalEntries = response.data.total;
                     this.fetchImages(this.entries.map(m => m.rep_accession));
                 })

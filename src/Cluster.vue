@@ -51,7 +51,7 @@
                 <v-divider  style="margin-top:0.5em"></v-divider>
                 <h3 style="margin-top:1em">
                     Cluster summary
-                    <v-tooltip top>
+                    <!--<v-tooltip top>
                         <template v-slot:activator="{ on }">
                             <span v-on="on">
                                 <v-icon v-on="on">{{ $MDI.HelpCircleOutline }}</v-icon>
@@ -60,7 +60,7 @@
                         <span>
                             These values are computed among the members with the <strong>clustered step</strong> AFDB/Foldseek.
                         </span>
-                    </v-tooltip>
+                    </v-tooltip>-->
                 </h3>
                 <dl class="dl-4">
                 <div>
@@ -72,12 +72,12 @@
                 </dd>
                 </div>
                 <div>
-                <dt>
+                <!-- <dt>
                     Dark cluster
                 </dt>
                 <dd>
                     {{ response.is_dark ? 'yes' : 'no' }}
-                </dd>
+                </dd> -->
                 </div>
                 <div>
                 <dt>
@@ -88,12 +88,12 @@
                 </dd>
                 </div>
                 <div>
-                <dt>
+                <!-- <dt>
                     Average pLDDT
                 </dt>
                 <dd>
                     {{ response.avg_plddt.toFixed(2) }}
-                </dd>
+                </dd> -->
                 </div>
                 <div style=" grid-area: 2 / 1 / 3 / 5;">
                 <dt>

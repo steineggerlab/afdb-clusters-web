@@ -18,11 +18,11 @@
                         <v-list-item-title>Accessions</v-list-item-title>
                     </v-list-item-content>
                 </v-list-item>
-                <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/members?format=fasta&${requestOptions.params.toString()}`" target="_blank">
+                <!-- <v-list-item :href="`${$axios.defaults.baseURL}/cluster/${$route.params.cluster}/members?format=fasta&${requestOptions.params.toString()}`" target="_blank">
                     <v-list-item-content>
                         <v-list-item-title>FASTA</v-list-item-title>
                     </v-list-item-content>
-                </v-list-item>
+                </v-list-item> -->
             </v-list>
         </v-menu>
     </template>
@@ -43,7 +43,7 @@
             <ExternalLinks :accession="prop.value"></ExternalLinks><br>
             {{ prop.item.description }}
         </template>
-        <template v-slot:header.structure="{ header }">
+        <!-- <template v-slot:header.structure="{ header }">
             {{ header.text }}
             <v-tooltip top>
                 <template v-slot:activator="{ on }">
@@ -60,11 +60,11 @@
             <div v-ripple="{ class: `primary--text` }" style="text-align: center; cursor: pointer;" @click="$emit('select', prop.item.accession)">
                 <img :src="getImage(prop.item.accession)" style="height:75px"/>
             </div>
-        </template>
-        <template v-slot:item.flag="prop">
+        </template> -->
+        <!-- <template v-slot:item.flag="prop">
             <Fragment :flag="prop.value"></Fragment>
-        </template>
-        <template v-slot:header.flag="{ header }">
+        </template> -->
+        <!-- <template v-slot:header.flag="{ header }">
             <v-menu
                 :close-on-content-click="false"
                 offset-y>
@@ -98,7 +98,7 @@
                     </v-chip-group>
                 </v-card>
             </v-menu>
-        </template>
+        </template> -->
         <template v-slot:header.tax_id="{ header }">
                 <TaxonomyAutocomplete
                     :cluster="cluster"
@@ -111,12 +111,12 @@
         <template v-slot:item.tax_id="prop">
             <TaxSpan :taxonomy="prop.value"></TaxSpan>
         </template>
-
+<!-- 
         <template v-slot:item.actions="{ item }">
             <v-chip title="Search with Foldseek" :href="'https://search.foldseek.com/search?accession=' + item.accession + '&source=AlphaFoldDB'" target="_blank">
                 <v-img :src="require('./assets/marv-foldseek-small.png')" max-width="16"></v-img>
             </v-chip>
-        </template>
+        </template> -->
     </v-data-table>
 </template>
 </Panel>
@@ -148,12 +148,12 @@ export default {
     data() {
         return {
             headers: [
-                {
-                    text: "Structure",
-                    value: "structure",
-                    sortable: false,
-                    width: "10%",
-                },
+                // {
+                //     text: "Structure",
+                //     value: "structure",
+                //     sortable: false,
+                //     width: "10%",
+                // },
                 {
                     text: "Accession",
                     value: "accession",
@@ -165,24 +165,24 @@ export default {
                 //     value: "len",
                 //     sortable: false,
                 // },
-                {
-                    text: "Clustered step",
-                    value: "flag",
-                    sortable: false,
-                    width: "10%",
-                },
+                // {
+                //     text: "Clustered step",
+                //     value: "flag",
+                //     sortable: false,
+                //     width: "10%",
+                // },
                 {
                     text: "Taxonomy",
                     value: "tax_id",
                     sortable: false,
                     width: "40%",
                 },
-                {
-                    text: 'Actions',
-                    value: 'actions',
-                    sortable: false,
-                    width: "10%",
-                },
+                // {
+                //     text: 'Actions',
+                //     value: 'actions',
+                //     sortable: false,
+                //     width: "10%",
+                // },
             ],
             members: [],
             totalMembers: 0,
@@ -243,7 +243,7 @@ export default {
                 .then(response => {
                     this.members = response.data.result;
                     this.totalMembers = response.data.total;
-                    this.fetchImages(this.members.map(m => m.accession));
+                    // this.fetchImages(this.members.map(m => m.accession));
                 })
                 .catch(() => {})
                 .finally(() => {

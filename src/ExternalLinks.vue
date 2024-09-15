@@ -1,5 +1,5 @@
 <template>
-    <v-menu
+    <!-- <v-menu
         :close-on-content-click="false">
         <template v-slot:activator="{ on }">
             <slot v-if="$slots['accession']" name="accession"></slot>
@@ -21,7 +21,8 @@
                 </v-list-item-content>
             </v-list-item>
         </v-list>
-    </v-menu>
+    </v-menu> -->
+    <a :href="'https://www.uniprot.org/uniprotkb/' + accession" target="_blank" rel="noopener">{{ accession }}</a>
 </template>
 
 <script>
