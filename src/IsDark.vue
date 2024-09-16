@@ -13,9 +13,9 @@ export default {
     computed: {
         flagText() {
             if (this.isDark == 0) {
-                return "Bright";
+                return "Non-singleton";
             } else if (this.isDark == 1) {
-                return "Dark";
+                return "Singleton";
             }
         },
         flagColor() {
