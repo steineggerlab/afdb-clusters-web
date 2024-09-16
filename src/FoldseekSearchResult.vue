@@ -2,7 +2,7 @@
     <v-flex xs12>
     <panel class="query-panel d-flex fill-height" fill-height>
         <template slot="header">
-            Cluster selection
+            Entry selection
             <template v-if="$route.params.jobid">
                 for <a :href="'https://search.foldseek.com/result/' + $route.params.jobid + '/0'" target="_blank" rel="noopener">{{ $route.params.jobid }}</a>
             </template>

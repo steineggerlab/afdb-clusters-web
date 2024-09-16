@@ -2,7 +2,7 @@
     <v-flex xs12>
     <panel class="query-panel d-flex fill-height" fill-height>
         <template slot="header">
-            Cluster selection
+            Entry selection
         </template>
     
         <template slot="content">
