@@ -194,13 +194,12 @@ export default {
     data() {
         return {
             tab: 0,
-            query: "B4DKH6",
+            query: "A0A2Z4HFS2",
             selectedExample: 1,
             examples: [
-                {id:'A0A849TG76', desc:'predicted \'Transporter\' protein'},
-                {id:'B4DKH6', desc:'Bactericidal permeability-increasing protein'},
-                {id:'A0A1G5ASE0', desc:'Histone (bacteria)'},
-                {id:'A0A1S3QU81', desc:' Gasdermin containing domain'},
+                {id:'A0A2Z4HFS2', desc:'Spike Glycoprotein'},
+                {id:'P21405', desc:'Replicase polyprotein P2AB'},
+                {id:'A0A0R5U5Y9', desc:'Hemagglutinin'},
             ],
             queryGo: { text: "immune response", value: "GO:0006955" },
             goSearchType: "lower",
