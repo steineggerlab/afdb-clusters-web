@@ -145,10 +145,10 @@ export default {
                     value: "lca_tax_id",
                     sortable: false,
                 },
-                // {
-                //     text: "Dark cluster",
-                //     value: "is_dark",
-                // },
+                {
+                    text: "Singleton cluster",
+                    value: "is_dark",
+                },
                 {
                     text: "Rep pLDDT",
                     value: "rep_plddt",

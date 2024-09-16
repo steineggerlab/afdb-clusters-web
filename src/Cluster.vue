@@ -72,12 +72,12 @@
                 </dd>
                 </div>
                 <div>
-                <!-- <dt>
-                    Dark cluster
+                <dt>
+                    Singleton cluster
                 </dt>
                 <dd>
                     {{ response.is_dark ? 'yes' : 'no' }}
-                </dd> -->
+                </dd>
                 </div>
                 <div>
                 <dt>

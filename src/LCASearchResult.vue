@@ -208,11 +208,11 @@
                         value: "n_mem",
                         sortable: false,
                     },
-                    // {
-                    //     text: "Dark",
-                    //     value: "is_dark",
-                    //     sortable: false,
-                    // },
+                    {
+                        text: "Singleton",
+                        value: "is_dark",
+                        sortable: false,
+                    },
                     {
                         text: "Rep. pLDDT",
                         value: "rep_plddt",
