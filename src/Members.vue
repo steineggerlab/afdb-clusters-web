@@ -1,7 +1,7 @@
 <template>
 <Panel style="margin-top: 1em;" collapsible>
     <template slot="header">
-        Cluster members
+        UniRef members
     </template>
 
     <template slot="toolbar-extra">

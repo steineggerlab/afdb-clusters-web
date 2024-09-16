@@ -1,7 +1,7 @@
 <template>
 <Panel style="margin-top: 1em;" collapsible>
     <template slot="header">
-        Similar clusters
+        Similar entries
     </template>
 
     <template slot="toolbar-extra">

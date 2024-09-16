@@ -46,7 +46,7 @@ import App from './App.vue';
 import Search from './Search.vue';
 import Cluster from './Cluster.vue';
 
-window.document.title = "BFVD Clusters";
+window.document.title = "BFVD";
 
 const router = new VueRouter({
     mode: 'history',

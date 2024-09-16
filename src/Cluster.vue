@@ -4,7 +4,7 @@
     <v-flex xs12 md8>
     <panel>
         <template slot="header" v-if="response">
-            Cluster: {{ response ? response.rep_accession : "Loading..." }}
+            Entry: {{ response ? response.rep_accession : "Loading..." }}
         </template>
 
         <template v-if="response && response.warning == true" slot="toolbar-extra">
@@ -13,7 +13,7 @@
 
         <template slot="content" v-if="response">
             <h3>Representative summary</h3>
-            <dl class="dl-3">
+            <dl class="dl-4">
                 <div>
                 <dt>
                     Accession
@@ -39,7 +39,15 @@
                     {{ response.rep_plddt.toFixed(2) }}
                 </dd>
                 </div>
-                <div style=" grid-area: 2 / 1 / 3 / 4;">
+                <div>
+                <dt>
+                    Singleton cluster
+                </dt>
+                <dd>
+                    {{ response.is_dark ? 'yes' : 'no' }}
+                </dd>
+                </div>
+                <div style=" grid-area: 2 / 1 / 3 / 5;">
                 <dt>
                     Taxonomy
                 </dt>
@@ -50,7 +58,7 @@
                 </dl>
                 <v-divider  style="margin-top:0.5em"></v-divider>
                 <h3 style="margin-top:1em">
-                    Cluster summary
+                    UniRef cluster summary
                     <!--<v-tooltip top>
                         <template v-slot:activator="{ on }">
                             <span v-on="on">
@@ -69,14 +77,6 @@
                 </dt>
                 <dd>
                     {{ response.n_mem }}
-                </dd>
-                </div>
-                <div>
-                <dt>
-                    Singleton cluster
-                </dt>
-                <dd>
-                    {{ response.is_dark ? 'yes' : 'no' }}
                 </dd>
                 </div>
                 <div>
@@ -139,6 +139,23 @@ p    </Panel>
 
     <v-flex xs12>
         <Similars :cluster="$route.params.cluster" @select="(accession) => second = accession"></Similars>
+    </v-flex>
+
+    <v-flex xs12 class="mt-3">
+        <v-card rounded="0">
+            <v-flex>
+            <v-card-title primary-title class="pb-0 mb-0">
+                <div class="text-h5 mb-0">Reference</div>
+            </v-card-title>
+            <v-card-title primary-title class="pt-0 mt-0">
+                <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
+                    Kim&nbsp;R, Levy&nbsp;Karin&nbsp;E, Steinegger&nbsp;M.
+                    <a href="https://www.biorxiv.org/content/10.1101/2024.09.08.611582v1" target="_blank" rel="noopener">BFVD - a large repository of predicted viral protein structures.</a>
+                    bioRxiv,&nbsp;2024.09.08.61158,&nbsp;2024.
+                </p>
+            </v-card-title>
+            </v-flex>
+        </v-card>
     </v-flex>
 </v-row>
 </template>

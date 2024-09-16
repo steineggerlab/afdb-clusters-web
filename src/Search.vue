@@ -17,7 +17,7 @@
                             cols="12"
                         >
                             <h1 class="text-h4 font-weight-thin mb-4">
-                                BFVD Clusters
+                                BFVD
                             </h1>
                             <h4 class="subheading">
                                 The missing viral bits of the <a href="https://alphafold.ebi.ac.uk" target="_blank" rel="noopener">AlphaFold database</a>
@@ -142,8 +142,8 @@
                         
                         <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
                             Kim&nbsp;R, Levy&nbsp;Karin&nbsp;E, Steinegger&nbsp;M. 
-                            <a href="https://nature.com/articles/s41586-023-06510-w" target="_blank" rel="noopener">BFVD - a large repository of predicted viral protein structures.</a>
-                            bioRxiv,&nbsp;2024.
+                            <a href="https://www.biorxiv.org/content/10.1101/2024.09.08.611582v1" target="_blank" rel="noopener">BFVD - a large repository of predicted viral protein structures.</a>
+                            bioRxiv,&nbsp;2024.09.08.61158,&nbsp;2024.
                         </p>
                     </v-card-title>
                     </v-flex>
@@ -203,7 +203,7 @@ export default {
             ],
             queryGo: { text: "immune response", value: "GO:0006955" },
             goSearchType: "lower",
-            queryLCA: { text: "Homo sapiens", value: "9606", common_name: "human" },
+            queryLCA: { text: "Tobacco mosaic virus", value: "12242", common_name: "Tobacco mosaic virus" },
             lcaSearchType: "lower",
             inSearch: false,
             response: null,
