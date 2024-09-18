@@ -514,10 +514,14 @@ app.get('/api/cluster/:cluster', async (req, res) => {
     if (result.lca_tax_id != null) {
         result.lineage = tree.nodeExists(result.lca_tax_id.id) ? tree.lineage(result.lca_tax_id) : null;
     } else {
-        result.lineage = [{ id: 0, rank: "root", name: "root" }];
+        result.lineage = [{ id: 0, rank: "unknown", name: "unknown" }];
     }
     result.tax_id = tree.nodeExists(result.tax_id) ? tree.getNode(result.tax_id) : null;
-    result.rep_lineage = tree.nodeExists(result.tax_id.id) ? tree.lineage(result.tax_id) : null;
+    if (result.tax_id != null) {
+        result.rep_lineage = tree.nodeExists(result.tax_id.id) ? tree.lineage(result.tax_id) : null;
+    } else {
+        result.rep_lineage = [{ id: 0, rank: "unknown", name: "unknown" }];
+    }
     result.description = getDescription(result.rep_accession);
     if (warnDB) {
         const warnKey = warnDB.id(result.rep_accession);
