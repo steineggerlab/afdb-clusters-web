@@ -69,6 +69,7 @@ async function parseTree(pathDir) {
     let myTree = new Tree();
     await myTree.parseNodeList(fI.topology);
     await myTree.parseNames(fI.nodeNames);
+    await myTree.parseMerged(fI.mergedNodes);
     return myTree;
 }
 
@@ -94,6 +95,8 @@ function openFolderSources(pathDir) {
                     data['nodeNames'] = createReadStream(`${pathDir}/${file}`);
                 if (file === 'nodes.dmp')
                     data['topology'] = createReadStream(`${pathDir}/${file}`);
+                if (file === 'merged.dmp')
+                    data['mergedNodes'] = createReadStream(`${pathDir}/${file}`);
             });
             if (!("nodeNames" in data) || !("topology" in data))
                 reject('Mssing');
@@ -154,6 +157,10 @@ class Tree {
     *nodes() {
         let c = 0;
         for (const k in this.nodePool) {
+            if (k.r == -1) {
+                // skip merged nodes
+                continue;
+            }
             yield this.getNode(k);
             c++;
         }
@@ -165,7 +172,11 @@ class Tree {
     }
 
     getNode(id, numeric_rank = false) {
-        const node = this.nodePool[id];
+        let node = this.nodePool[id];
+        // resolve merged nodes
+        while (node.r === -1) {
+            node = this.nodePool[node.p];
+        }
         return {
             id: node.i,
             name: node.n,
@@ -191,6 +202,32 @@ class Tree {
                     i: id,
                     p: Number(arr[1]),
                     r: rank_to_idx[arr[2]]
+                };
+                n += 1;
+            });
+            rl.on('close', () => {
+                resolve(n);
+            });
+        });
+    }
+
+    async parseMerged(fStream) {
+        return new Promise((resolve, reject) => {
+            let n = 0;
+            const rl = createInterface({
+                input: fStream,
+                output: new Writable()
+            });
+            rl.on('line', data => {
+                const arr = bcpLineSplit(data);
+                // if (!(arr[2] in rank_to_idx)) {
+                    // console.log(`Rank ${arr[2]} not found`);
+                // }
+                const id = Number(arr[0]);
+                this.nodePool[id] = {
+                    i: id,
+                    p: Number(arr[1]),
+                    r: -1
                 };
                 n += 1;
             });
