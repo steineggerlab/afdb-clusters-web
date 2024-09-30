@@ -317,7 +317,7 @@ export default {
 			sankeyGenerator.update(graph);
 
 			// Add rank column labels
-			const rankLabels = ["D", "K", "P", "C", "O", "F", "G", "S"];
+			const rankLabels = ["D", "K", "P", "F", "G", "S"];
 			svg
 				.append("g")
 				.selectAll("text")
