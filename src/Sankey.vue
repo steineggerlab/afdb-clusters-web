@@ -1,18 +1,19 @@
 <template>
-	<svg class="hide" ref="svg"></svg>
+	<div class="d-flex flex-column">
+		<svg class="hide" ref="svg"></svg>
+	</div>
 </template>
 
 <script>
 import * as d3sankey from "d3-sankey";
-import { select, selectAll, scaleOrdinal, color } from "d3";
-import { sankey } from "./lib/sankeyD3/sankey.js";
+import { select, selectAll, scaleOrdinal } from "d3";
 
 export default {
 	name: "Sankey",
 	props: ["cluster", "type"],
 	data: () => ({
 		response: null,
-		sankeyRankOrder: ["superkingdom", "kingdom", "phylum", "class", "order", "family", "genus", "species", "no rank"],
+		sankeyRankOrder: ["superkingdom", "kingdom", "phylum", "family", "genus", "species", "no rank"],
 		fullRankOrder: [
 			"superkingdom",
 			"kingdom",
@@ -446,7 +447,7 @@ export default {
 			nodeGroup
 				.append("rect")
 				.attr("width", (d) => d.x1 - d.x0)
-				 .attr("height", (d) => Math.max(1, d.y1 - d.y0))
+				.attr("height", (d) => Math.max(1, d.y1 - d.y0))
 				.attr("fill", (d) => (d.type === "unclassified" ? unclassifiedLabelColor : d.color))
 				.attr("class", (d) => "node taxid-" + d.id) // Apply the CSS class for cursor
 				.style("cursor", "pointer");
