@@ -463,7 +463,6 @@ export default {
 				.attr("text-anchor", "start")
 				.text((d) => d.name)
 				.style("font-size", "9px")
-				.style("fill", (d) => (d.type === "unclassified" ? unclassifiedLabelColor : "black"))
 				.style("cursor", "pointer");
 
 			// Add label above node (proportion/clade reads)
@@ -476,7 +475,6 @@ export default {
 				.attr("dy", "0.35em")
 				.attr("text-anchor", "middle")
 				.style("font-size", "9px")
-				.style("fill", (d) => (d.type === "unclassified" ? unclassifiedLabelColor : "black"))
 				.text((d) => this.formatCladeReads(d.value))
 				.style("cursor", "pointer");
 
