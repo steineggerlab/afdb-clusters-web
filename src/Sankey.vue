@@ -1,6 +1,6 @@
 <template>
 	<div class="d-flex flex-column">
-		<svg class="hide" ref="svg"></svg>
+		<svg class="hide" ref="svg" width="100%"></svg>
 	</div>
 </template>
 
@@ -260,7 +260,7 @@ export default {
 			}
 
 			const container = this.$refs.svg;
-			select(container).selectAll("*").remove(); // Clear the previous diagram
+			select(container).selectAll("*").remove().classed("hide", false); // Clear the previous diagram
 
 			const width = 960;
 			const height = 360;
@@ -522,10 +522,6 @@ svg rect.node.active {
 }
 
 @media (min-width: 1280px) {
-	svg {
-		width: 1280px;
-	}
-
 	svg text {
 		font-size: 10px;
 	}
