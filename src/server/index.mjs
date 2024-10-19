@@ -529,6 +529,17 @@ app.get('/api/cluster/:cluster', async (req, res) => {
     } else {
         result.warning = false;
     }
+    let hosts = await sql.all("SELECT tax_id FROM taxonomy_host WHERE accession = ?", req.params.cluster);
+    result.hosts = [];
+    if (hosts) {
+        for (let i = 0; i < hosts.length; i++) {
+            let taxid = hosts[i].tax_id - 0;
+            if (tree.nodeExists(taxid)) {
+                result.hosts.push(tree.getNode(taxid))
+            }
+        }
+    }
+
     res.send(result);
 });
 

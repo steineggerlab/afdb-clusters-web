@@ -54,6 +54,12 @@
                 <dd>
                     <template v-for="(taxonomy, index) in response.rep_lineage" ><TaxSpan :taxonomy="taxonomy" :key="taxonomy.id"></TaxSpan><template v-if="index < (response.rep_lineage.length -1)"> &#187;&nbsp;</template></template>
                 </dd>
+                <dt v-if="response.hosts.length > 0">
+                    Host
+                </dt>
+                <dd v-if="response.hosts.length > 0">
+                    <template v-for="(taxonomy, index) in response.hosts" ><TaxSpan :taxonomy="taxonomy" :key="taxonomy.id"></TaxSpan><template v-if="index < (response.hosts.length -1)"> ,&nbsp;</template></template>
+                </dd>
                 </div>
                 </dl>
                 <v-divider  style="margin-top:0.5em"></v-divider>
