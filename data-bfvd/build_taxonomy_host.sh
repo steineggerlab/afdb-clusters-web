@@ -5,8 +5,8 @@
 sqlite3 $1 << EOF
 
 CREATE TABLE taxonomy_host (
-  accession TEXT PRIMARY KEY,
-  tax_id TEXT,
+  accession TEXT,
+  tax_id TEXT
 );
 
 .mode tabs
@@ -15,3 +15,5 @@ CREATE TABLE taxonomy_host (
 
 CREATE INDEX taxonomy_host_idx
 ON taxonomy_host(accession);
+
+EOF
