@@ -220,7 +220,6 @@ export default {
             this.$axios.get("/cluster/" + this.$route.params.cluster)
                 .then(response => {
                     this.response = response.data;
-                    console.log(this.response)
                 })
                 .catch((result) => {
                     if (!result || !result.response || result.response.status != 404) {

@@ -214,14 +214,12 @@ export default {
         fetchData() {
             this.loading = true;
             const cluster = this.cluster;
-            console.log(cluster);
             if (!cluster) {
                 return;
             }
             this.$axios.get("/cluster/" + cluster + "/similars", this.requestOptions)
                 .then(response => {
                     this.entries = response.data.similars;
-                    console.log(this.entries);
                     this.totalEntries = response.data.total;
                     this.fetchImages(this.entries.map(m => m.rep_accession));
                 })
