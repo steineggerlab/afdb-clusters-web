@@ -133,6 +133,14 @@
         <template slot="header">
             Representative structure
         </template>
+        
+        <template slot="toolbar-extra">
+            <v-btn plain :href="'https://bfvd.steineggerlab.workers.dev/pdb/' + response.rep_accession + '.pdb'">
+                <v-icon class="mr-1">{{ $MDI.FileDownloadOutline }}</v-icon>
+                PDB
+            </v-btn>
+        </template>
+        
         <template slot="content" v-if="response">
             <StructureViewer v-if="$route.params.cluster" :cluster="$route.params.cluster" :second="second" bgColorDark="#2e2e2e" @reset="second = ''"></StructureViewer>
         </template>
