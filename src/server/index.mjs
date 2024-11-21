@@ -17,6 +17,7 @@ import { convertToQueryUrl } from './utils.mjs';
 const dataPath =  process.env.DATA_PATH || './data';
 const cachePath = process.env.CACHE_PATH || './data/cache';
 const port = process.env.EXPRESS_PORT || 3000;
+const host = process.env.EXPRESS_HOST || '127.0.0.1';
 
 console.time();
 console.log('Loading taxonomy...')
@@ -856,6 +857,6 @@ app.use((err, req, res, next) => {
     res.send({ error: err.response && err.response.data ? err.response.data : err.message });
 });
 
-app.listen(port, () => {
-    console.log(`AFDB-clusters server listening on port ${port}`)
+app.listen(port, host, () => {
+    console.log(`AFDB-clusters server listening on port ${host}:${port}`)
 });
