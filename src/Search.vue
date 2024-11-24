@@ -141,9 +141,9 @@
                     <v-card-title primary-title class="pt-0 mt-0">
                         
                         <p class="text-subtitle-1 mb-0" style="word-break: break-word;">
-                            Kim&nbsp;R, Levy&nbsp;Karin&nbsp;E, Steinegger&nbsp;M. 
-                            <a href="https://www.biorxiv.org/content/10.1101/2024.09.08.611582v1" target="_blank" rel="noopener">BFVD - a large repository of predicted viral protein structures.</a>
-                            bioRxiv,&nbsp;2024.09.08.61158,&nbsp;2024.
+                            Kim&nbsp;R, Levy&nbsp;Karin&nbsp;E, Mirdita&nbsp;M, Steinegger&nbsp;M.
+                            <a href="https://academic.oup.com/nar/advance-article/doi/10.1093/nar/gkae1119/7906834" target="_blank" rel="noopener">BFVD - a large repository of predicted viral protein structures.</a>
+                            Nucleic Acids Research,&nbsp;gkae1119,&nbsp;2024.
                         </p>
                     </v-card-title>
                     </v-flex>
