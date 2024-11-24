@@ -1,0 +1,42 @@
+svg.logoplot .axis path,
+svg.logoplot .axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+svg.logoplot .glyph-G,
+svg.logoplot .glyph-S,
+svg.logoplot .glyph-T,
+svg.logoplot .glyph-Y,
+svg.logoplot .glyph-C {
+  fill: green;
+}
+svg.logoplot .glyph-Q,
+svg.logoplot .glyph-N {
+  fill: purple;
+}
+svg.logoplot .glyph-K,
+svg.logoplot .glyph-R,
+svg.logoplot .glyph-H {
+  fill: blue;
+}
+svg.logoplot .glyph-D,
+svg.logoplot .glyph-E {
+  fill: red;
+}
+svg.logoplot .glyph-A,
+svg.logoplot .glyph-V,
+svg.logoplot .glyph-L,
+svg.logoplot .glyph-I,
+svg.logoplot .glyph-P,
+svg.logoplot .glyph-W,
+svg.logoplot .glyph-F,
+svg.logoplot .glyph-M {
+  fill: black;
+}
+
+.theme--dark svg.logoplot .axis path,
+.theme--dark svg.logoplot .axis line {
+  stroke: rgba(255, 255, 255, 0.7);
+}

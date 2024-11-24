@@ -36,6 +36,7 @@ import {
     mdiDotsVertical,
     mdiGithub,
     mdiExport,
+    mdiChartBarStacked,
 } from '@mdi/js'
 
 Vue.use(VueRouter);
@@ -114,6 +115,7 @@ Vue.use({
             OpenInNew: mdiOpenInNew,
             GitHub: mdiGithub,
             Export: mdiExport,
+            ChartBarStacked: mdiChartBarStacked
         };
         // let apiBase = "http://localhost:3000/api";
         // let apiBase = "https://cluster.foldseek.com/api";

@@ -7,8 +7,59 @@
             Entry: {{ response ? response.rep_accession : "Loading..." }}
         </template>
 
-        <template v-if="response && response.warning == true" slot="toolbar-extra">
-            <v-chip color="error">Warning</v-chip>
+        <template slot="toolbar-extra">
+            <v-chip v-if="response && response.warning == true" color="error">Warning</v-chip>
+
+            <v-menu offset-y left>
+                <template v-slot:activator="{ on: menu, attrs }">
+                    <v-btn plain v-bind="attrs" v-on="menu">
+                        <v-icon>{{ $MDI.NotificationClearAll }}</v-icon>
+                        MSA
+                    </v-btn>
+                </template>
+                <v-list>
+                    <v-list-item :href="'https://bfvd.steineggerlab.workers.dev/a3m/' + response.rep_accession + '.a3m'">
+                        <v-list-item-icon>
+                            <v-icon>{{ $MDI.FileDownloadOutline }}</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-content>
+                            <v-list-item-title>
+                                MSA (.a3m)
+                            </v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
+                    <v-dialog v-model="dialog" fullscreen>
+                        <template v-slot:activator="{ on, attrs }">
+                            <v-list-item v-bind="attrs" v-on="on">
+                                <v-list-item-icon>
+                                    <v-icon>{{ $MDI.ChartBarStacked }}</v-icon>
+                                </v-list-item-icon>
+                                <v-list-item-content>
+                                    <v-list-item-title>
+                                        Conservation
+                                    </v-list-item-title>
+                                </v-list-item-content>
+                            </v-list-item>
+                        </template>
+
+                        <Panel>
+                            <template slot="header">
+                                MSA conservation
+                            </template>
+
+                            <template slot="toolbar-extra">
+                                <v-btn color="primary" text @click="dialog = false">
+                                    Close
+                                </v-btn>
+                            </template>
+                            
+                            <template slot="content">
+                                <MsaLogoPlot :accession="$route.params.cluster"></MsaLogoPlot>
+                            </template>
+                        </Panel>
+                    </v-dialog>
+                </v-list>
+            </v-menu>
         </template>
 
         <template slot="content" v-if="response">
@@ -181,21 +232,24 @@ import Members from "./Members.vue";
 import TaxSpan from "./TaxSpan.vue";
 import ExternalLinks from "./ExternalLinks.vue";
 import Similars from "./Similars.vue";
+import MsaLogoPlot from "./logoplot/MsaLogoPlot.vue"
 // import Annotations from "./Annotations.vue";
 
 export default {
     name: "cluster",
     components: {
-    Panel,
-    StructureViewer,
-    Members,
-    TaxSpan,
-    ExternalLinks,
-    Similars,
-    // Annotations,
-},
+        Panel,
+        StructureViewer,
+        Members,
+        TaxSpan,
+        ExternalLinks,
+        Similars,
+        MsaLogoPlot
+        // Annotations,
+    },
     data() {
         return {
+            dialog: false,
             cluster: null,
             response: null,
             fetching: false,
