@@ -4,7 +4,7 @@
             <v-flex xs12 pa-0 >
                 <v-parallax
                     :height="windowHeight"
-                    :src="require('./assets/bg-bg.png')"
+                    :src="require('./assets/BFVD-bg.png')"
                     dark
                 >
                     <v-row
@@ -369,7 +369,7 @@ code {
 
 .marv-bg-fg {
     background: url('./assets/bg-fg.png');
-    background-size: 100% auto;
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-position: center center;
