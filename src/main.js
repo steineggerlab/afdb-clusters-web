@@ -119,8 +119,8 @@ Vue.use({
         };
         // let apiBase = "http://localhost:3000/api";
         // let apiBase = "https://cluster.foldseek.com/api";
-        let apiBase = "https://bfvd.foldseek.com/api";
-        // let apiBase = "/api";
+        // let apiBase = "https://bfvd.foldseek.com/api";
+        let apiBase = "/api";
         let defaultHeaders = {};
 
         const axiosConfig = {
