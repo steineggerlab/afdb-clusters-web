@@ -4,7 +4,7 @@
             <v-flex xs12 pa-0 >
                 <v-parallax
                     :height="windowHeight"
-                    :src="require('./assets/bg-bg.jpg')"
+                    :src="require('./assets/bg-bg.png')"
                     dark
                 >
                     <v-row
