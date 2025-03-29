@@ -28,6 +28,16 @@
                             </v-list-item-title>
                         </v-list-item-content>
                     </v-list-item>
+                    <v-list-item :href="'https://bfvd.steineggerlab.workers.dev/pae/' + response.rep_accession + '.json'">
+                        <v-list-item-icon>
+                            <v-icon>{{ $MDI.FileDownloadOutline }}</v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-content>
+                            <v-list-item-title>
+                                PAE (.json)
+                            </v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
                     <v-dialog v-model="dialog" fullscreen>
                         <template v-slot:activator="{ on, attrs }">
                             <v-list-item v-bind="attrs" v-on="on">
